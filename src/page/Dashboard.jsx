@@ -67,7 +67,8 @@ const Dashboard = () => {
           <div className="space-y-2">
             {recentActivity.map((activity, index) => (
               <div key={index} className="flex flex-col border-b border-yellow-400/40 pb-2 sm:pb-3">
-                <p className="text-sm sm:text-base text-yellow-300">{activity.description}</p>
+                <p className="text-sm sm:text-base text-white">{activity.description}</p>
+
               </div>
             ))}
           </div>

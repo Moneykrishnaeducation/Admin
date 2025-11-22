@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Search } from "lucide-react";
 import { useTheme } from '../context/ThemeContext';
+import TableStructure from '../commonComponent/TableStructure';
 
 const Tickets = () => {
   const { isDarkMode } = useTheme();
@@ -42,6 +43,19 @@ const Tickets = () => {
     );
   };
 
+  // Columns definition for TableStructure
+  const columns = [
+    {
+      Header: "Created Date",
+      accessor: "created_at",
+      Cell: (value) => value.toLocaleDateString(),
+    },
+    { Header: "Ticket ID", accessor: "id" },
+    { Header: "User ID", accessor: "user_id" },
+    { Header: "Username", accessor: "username" },
+    { Header: "Subject", accessor: "subject" },
+  ];
+
   return (
     <div className={`${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'} h-full px-4 py-6 md:px-8`}>
 
@@ -65,97 +79,51 @@ const Tickets = () => {
         ))}
       </div>
 
-      {/* TABLE CONTAINER */}
-      <div className={`rounded-lg border ${isDarkMode ? 'border-gray-800 bg-black' : 'border-gray-300 bg-white'} shadow-md p-4`}>
-
-        {/* 🔎 SEARCH BAR */}
-        <div className="flex justify-end mb-4">
-          <div className={`flex items-center gap-2 border border-yellow-500 rounded-md px-3 py-2 w-full sm:w-72 
-            ${isDarkMode ? "bg-black" : "bg-white"} hover:bg-gray-900 transition`}>
-            <Search size={18} className="text-yellow-400" />
-            <input
-              type="text"
-              placeholder="Search tickets..."
-              value={searchText}
-              onChange={(e) => setSearchText(e.target.value)}
-              className={`bg-transparent w-full focus:outline-none
-                ${isDarkMode ? "text-yellow-300 placeholder-yellow-400" : "text-black placeholder-gray-500"}`}
-            />
-          </div>
+      {/* SEARCH BAR */}
+      <div className="flex justify-end mb-4">
+        <div className={`flex items-center gap-2 border border-yellow-500 rounded-md px-3 py-2 w-full sm:w-72 
+          ${isDarkMode ? "bg-black" : "bg-white"} hover:bg-gray-900 transition`}>
+          <Search size={18} className="text-yellow-400" />
+          <input
+            type="text"
+            placeholder="Search tickets..."
+            value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
+            className={`bg-transparent w-full focus:outline-none
+              ${isDarkMode ? "text-yellow-300 placeholder-yellow-400" : "text-black placeholder-gray-500"}`}
+          />
         </div>
+      </div>
 
-        {/* TABLE */}
-        <div className="overflow-x-auto rounded-lg">
-  <table className="min-w-full text-left text-sm md:text-base bg-black">
-    
-    {/* TABLE HEADER */}
-    <thead>
-      <tr className="border-b-2 border-yellow-400">
-        <th className="p-3 text-yellow-400 font-semibold">Created Date</th>
-        <th className="p-3 text-yellow-400 font-semibold">Ticket ID</th>
-        <th className="p-3 text-yellow-400 font-semibold">User ID</th>
-        <th className="p-3 text-yellow-400 font-semibold">Username</th>
-        <th className="p-3 text-yellow-400 font-semibold">Subject</th>
-
-        {activeTab !== "Closed" && (
-          <th className="p-3 text-yellow-400 font-semibold">Action</th>
-        )}
-      </tr>
-    </thead>
-
-    {/* TABLE BODY */}
-    <tbody>
-      {filteredTickets.length > 0 ? (
-        filteredTickets.map((ticket) => (
-          <tr 
-            key={ticket.id}
-            className="border-b border-white/20 hover:bg-white/5 transition"
-          >
-            <td className="p-3 text-white">{ticket.created_at.toLocaleDateString()}</td>
-            <td className="p-3 text-white">{ticket.id}</td>
-            <td className="p-3 text-white">{ticket.user_id}</td>
-            <td className="p-3 text-white">{ticket.username}</td>
-            <td className="p-3 text-white">{ticket.subject}</td>
-
-            {/* Active Tabs Actions */}
-            {activeTab === "Waiting" && (
-              <td className="p-3">
+      {/* TABLE */}
+      <div className={`rounded-lg border ${isDarkMode ? 'border-gray-800 bg-black' : 'border-gray-300 bg-white'} shadow-md p-4`}>
+        <TableStructure
+          columns={columns}
+          data={filteredTickets}
+          actionsColumn={(row) => {
+            if (activeTab === "Waiting") {
+              return (
                 <button
-                  onClick={() => openTicket(ticket.id)}
+                  onClick={() => openTicket(row.id)}
                   className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded"
                 >
                   Open
                 </button>
-              </td>
-            )}
-
-            {activeTab === "Pending" && (
-              <td className="p-3">
+              );
+            }
+            if (activeTab === "Pending") {
+              return (
                 <button
-                  onClick={() => closeTicket(ticket.id)}
+                  onClick={() => closeTicket(row.id)}
                   className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
                 >
                   Close
                 </button>
-              </td>
-            )}
-          </tr>
-        ))
-      ) : (
-        <tr>
-          <td 
-            className="p-4 text-center text-yellow-400"
-            colSpan={activeTab === "Closed" ? 5 : 6}
-          >
-            No matching tickets found.
-          </td>
-        </tr>
-      )}
-    </tbody>
-
-  </table>
-</div>
-
+              );
+            }
+            return null;
+          }}
+        />
       </div>
     </div>
   );

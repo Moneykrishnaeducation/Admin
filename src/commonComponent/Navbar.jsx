@@ -24,7 +24,7 @@ const Navbar = ({ isSidebarOpen, setIsSidebarOpen }) => {
     { path: "/pendingrequest", icon: CreditCard, label: "Pending request" },
     { path: "/tradingaccounts", icon: CreditCard, label: "Trading Accounts" },
     { path: "/demo", icon: CreditCard, label: "Demo Accounts" },
-    { path: "/mam", icon: Users, label: "Mam Account" },
+    { path: "/mamaccount", icon: Users, label: "Mam Account" },
     { path: "/propfirm", icon: Handshake, label: "Prop Firm" },
     { path: "/partnership", icon: Handshake, label: "Partnership" },
     { path: "/transactions", icon: Repeat, label: "Transactions" },

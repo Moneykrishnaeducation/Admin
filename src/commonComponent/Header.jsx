@@ -151,16 +151,24 @@ const Header = ({ isSidebarOpen, setIsSidebarOpen }) => {
         </button>
       </>
 
-      {/* LOGO */}
-      <div id="logo" className="flex-1 flex justify-center">
-        <Link to="/dashboard">
-          <img
-            className="h-10 object-contain mx-auto cursor-pointer hover:scale-105 transition-transform duration-300"
-            src="https://vtindex.com/img/logo/logo.svg"
-            alt="logo"
-          />
-        </Link>
-      </div>
+      {/* CENTER PROFILE SECTION (REPLACES LOGO) */}
+<div className="flex-1 flex justify-center">
+  <Link to="/profile" className="flex flex-col items-center">
+    {/* <FaUserCircle
+      className={`text-3xl md:text-4xl ${
+        isDarkMode ? "text-white" : "text-black"
+      }`}
+    /> */}
+    <span
+      className={`text-xs md:text-lg mt-1 ${
+        isDarkMode ? "text-white" : "text-black"
+      }`}
+    >
+      {userName}
+    </span>
+  </Link>
+</div>
+
 
       {/* RIGHT SECTION */}
       <div className="flex items-center space-x-3 md:space-x-5">
@@ -187,23 +195,7 @@ const Header = ({ isSidebarOpen, setIsSidebarOpen }) => {
           {isDarkMode ? <FaSun /> : <FaMoon />}
         </button>
 
-        {/* PROFILE */}
-        <div className="flex items-center space-x-1">
-          <Link to="/profile" className="flex items-center space-x-1">
-            <FaUserCircle
-              className={`${iconSize} ${
-                isDarkMode ? "text-white" : "text-black"
-              }`}
-            />
-            <span
-              className={`hidden md:inline ${
-                isDarkMode ? "text-white" : "text-black"
-              } text-xs md:text-sm`}
-            >
-              {userName}
-            </span>
-          </Link>
-        </div>
+       
 
         {/* LOGOUT ICON */}
          <button
