@@ -36,8 +36,8 @@ const Navbar = ({ isSidebarOpen, setIsSidebarOpen }) => {
 
   return (
     <nav
-      className={`fixed top-0 left-0 h-[100vh] w-[60vw] md:w-[40vw] lg:w-[16vw] ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'} px-3 py-5 transform transition-transform duration-300 z-50 shadow-lg
-      ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0`}
+      className={`fixed top-0 left-0 h-[100vh] w-[60vw] md:w-[40vw] lg:w-[16vw] ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'} px-3 py-5  z-50 shadow-lg
+      ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"}`}
     >
       {/* Logo */}
       <div id="logo" className="mb-10">

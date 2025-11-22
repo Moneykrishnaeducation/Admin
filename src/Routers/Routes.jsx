@@ -14,7 +14,7 @@ const AppRoutes = () => {
     localStorage.setItem('current_page', location.pathname);
   }, [location.pathname]);
 
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   return (
     <div className="w-screen flex">
