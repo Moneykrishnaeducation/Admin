@@ -1,6 +1,6 @@
-import React from "react";
+import React, { useState } from "react";
 import Navbar from "../commonComponent/Navbar";
-import { useState } from "react";
+import { Users, CreditCard, Repeat } from "lucide-react"; // import icons
 
 const Dashboard = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -10,49 +10,66 @@ const Dashboard = () => {
     { label: "Trading Accounts", value: 450 },
     { label: "Transactions", value: 3200 },
     { label: "Tickets", value: 28 },
+    { label: "Users", value: 1200 },
+    { label: "Trading Accounts", value: 450 },
+    { label: "Transactions", value: 3200 },
+    { label: "Tickets", value: 28 },
+    { label: "Users", value: 1200 },
   ];
 
+  const recentActivity = new Array(9).fill(null).map((_, index) => ({
+    title: `Activity #${index + 1}`,
+    description: "Details about this activity will appear here.",
+  }));
+
   return (
-    <div className="flex">
+    <div className="flex flex-col md:flex-row">
       {/* Sidebar */}
       <Navbar isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} />
 
       {/* Main Content */}
-      <div className="flex-1 min-h-screen bg-black text-yellow-400 p-8 transition-all duration-300">
+      <div className="flex-1 min-h-screen bg-black text-yellow-400 p-4 sm:p-8 transition-all duration-300">
         {/* Header */}
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold">Dashboard</h1>
-          <button
-            className="bg-yellow-400 text-black px-4 py-2 rounded hover:bg-yellow-500 transition-colors"
-            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-          >
-            {isSidebarOpen ? "Close Sidebar" : "Open Sidebar"}
+        <div className="flex justify-between items-center mb-2"></div>
+
+        {/* Stats Buttons with icons */}
+        <div className="flex flex-col sm:flex-row justify-center gap-4 sm:gap-6 mb-6">
+          <button className="flex items-center justify-center gap-2 bg-yellow-500 text-black px-4 sm:px-6 py-2 sm:py-3 rounded-full hover:bg-yellow-600 transition-all text-sm sm:text-base">
+            <Users className="w-5 h-5" />
+            User Account
+          </button>
+          <button className="flex items-center justify-center gap-2 bg-yellow-500 text-black px-4 sm:px-6 py-2 sm:py-3 rounded-full hover:bg-yellow-600 transition-all text-sm sm:text-base">
+            <CreditCard className="w-5 h-5" />
+            Trading Account
+          </button>
+          <button className="flex items-center justify-center gap-2 bg-yellow-500 text-black px-4 sm:px-6 py-2 sm:py-3 rounded-full hover:bg-yellow-600 transition-all text-sm sm:text-base">
+            <Repeat className="w-5 h-5" />
+            Transaction
           </button>
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {stats.map((stat) => (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-8">
+          {stats.map((stat, index) => (
             <div
-              key={stat.label}
-              className="bg-gray-900 p-6 rounded shadow-lg hover:shadow-yellow-500 transition-shadow"
+              key={index}
+              className="bg-black p-4 sm:p-6 rounded-xl text-center border border-yellow-300/20 shadow-[0px_0px_6px_rgba(255,255,255,0.2),0px_0px_10px_rgba(255,255,0,0.15)] hover:shadow-[0px_0px_10px_rgba(255,255,255,0.35),0px_0px_15px_rgba(255,255,0,0.25)] transition-all duration-300"
             >
-              <p className="text-sm text-yellow-300">{stat.label}</p>
-              <h2 className="text-2xl font-bold">{stat.value}</h2>
+              <p className="text-sm sm:text-lg text-yellow-300">{stat.label}</p>
+              <h2 className="text-xl sm:text-2xl font-bold mt-1">{stat.value}</h2>
             </div>
           ))}
         </div>
 
-        {/* Placeholder Content */}
-        <div className="mt-10">
-          <div className="bg-gray-900 p-6 rounded shadow-lg mb-6">
-            <h2 className="text-xl font-semibold mb-2">Recent Activities</h2>
-            <p>Activity logs will appear here...</p>
-          </div>
-
-          <div className="bg-gray-900 p-6 rounded shadow-lg">
-            <h2 className="text-xl font-semibold mb-2">Notifications</h2>
-            <p>No new notifications.</p>
+        {/* Recent Activity */}
+        <div className="mt-6 sm:mt-10">
+          <h2 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4">Recent Activities</h2>
+          <div className="space-y-2">
+            {recentActivity.map((activity, index) => (
+              <div key={index} className="flex flex-col border-b border-yellow-400/40 pb-2 sm:pb-3">
+                <p className="text-sm sm:text-base text-yellow-300">{activity.description}</p>
+              </div>
+            ))}
           </div>
         </div>
       </div>

@@ -5,6 +5,8 @@ import { ThemeProvider } from "../context/ThemeContext";
 import Navbar from "../commonComponent/Navbar";
 import Main from "../commonComponent/Mainpage";
 import Dashboard from "../page/Dashboard";
+import Mail from "../page/Mail";
+import Settings from "../page/Settings";
 
 const AppRoutes = () => {
   const location = useLocation();
@@ -25,6 +27,8 @@ const AppRoutes = () => {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/" element={<Dashboard />} />
           <Route path="*" element={<Dashboard />} />
+          <Route path="/mail" element={<Mail />} />
+          <Route path="/settings" element={<Settings />} />
         </Routes>
       </Main>
     </div>
