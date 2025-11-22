@@ -7,6 +7,7 @@ import Main from "../commonComponent/Mainpage";
 import Dashboard from "../page/Dashboard";
 import Mail from "../page/Mail";
 import Settings from "../page/Settings";
+import Propfirm from "../page/Propfirm";
 
 const AppRoutes = () => {
   const location = useLocation();
@@ -25,10 +26,11 @@ const AppRoutes = () => {
       <Main isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen}>
         <Routes>
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/settings" element={<Settings />} />
+          <Route path="/propfirm" element={<Propfirm />} />
           <Route path="/" element={<Dashboard />} />
           <Route path="*" element={<Dashboard />} />
           <Route path="/mail" element={<Mail />} />
-          <Route path="/settings" element={<Settings />} />
         </Routes>
       </Main>
     </div>

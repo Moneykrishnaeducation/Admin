@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-const ServerConfig = () => {
+const Settings = () => {
   const [serverData, setServerData] = useState({
     serverIP: "188.240.63.221",
     loginID: "1054",
@@ -119,4 +119,4 @@ const ServerConfig = () => {
   );
 };
 
-export default ServerConfig;
+export default Settings;
