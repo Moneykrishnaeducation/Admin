@@ -1,0 +1,242 @@
+import React, { useState } from 'react';
+import styled from 'styled-components';
+
+const Login = () => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setErrorMessage('');
+
+    // Replace this with your actual login API call
+    try {
+      // Mocking API request here
+      const response = await fakeApiCall({ email, password });
+
+      if (response.success) {
+        // Handle successful login (redirect, show dashboard, etc.)
+      } else {
+        setErrorMessage(response.message);
+      }
+    } catch (error) {
+      setErrorMessage('Something went wrong. Please try again later.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const fakeApiCall = async ({ email, password }) => {
+    // Simulate an API call with a delay
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        if (email === 'test@example.com' && password === 'password') {
+          resolve({ success: true });
+        } else {
+          resolve({ success: false, message: 'Invalid email or password' });
+        }
+      }, 2000);
+    });
+  };
+
+  return (
+    <StyledWrapper>
+      <div className="box">
+    <div className="login">      
+      <form className="loginBx" method="POST" action="/api/login/" id="signinForm">
+        <h2>
+          <i className="fa-solid fa-right-to-bracket"></i>
+          Login
+          <i className="fa-solid fa-heart"></i>
+        </h2>
+        <label htmlFor="username">Email</label>
+        <input type="email" id="username" name="email" placeholder="Email" autoComplete="email" required />
+
+        <label htmlFor="signinPassword">Password</label>
+        <div className="password-wrapper">
+          <input type="password" id="signinPassword" name="password" placeholder="Password" autoComplete="current-password" required />
+          <i className="fa-regular fa-eye" id="togglePassword"></i>
+        </div>
+
+        <button type="submit">Sign in <span className="spinner" id="loadingSpinner"></span></button>
+        <div id="error-message" style={{color: 'red', display: 'none'}}></div>
+      </form>
+    </div>
+  </div>
+    </StyledWrapper>
+  );
+}
+
+const StyledWrapper = styled.div`
+  body {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  color: #fff;
+  overflow: hidden;
+}
+
+@property --a {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+.box {
+  position: relative;
+  width: 400px;
+  height: 200px;
+  background: repeating-conic-gradient(
+    from var(--a),
+    var(--#D4AF37) 0%,
+    var(--#D4AF37) 5%,
+    transparent 5%,
+    transparent 40%,
+    var(--#FFD36D) 50%
+  );
+  filter: drop-shadow(0 15px 50px rgba(0,0,0,0.9));
+  border-radius: 20px;
+  animation: rotating 6s linear infinite;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: 0.5s;
+}
+
+@keyframes rotating {
+  0% { --a: 0deg; }
+  100% { --a: 360deg; }
+}
+
+.box::before {
+  content: "";
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: repeating-conic-gradient(
+    from var(--a),
+    rgba(212,175,55,0.9) 0%,
+    rgba(212,175,55,0.85) 6%,
+    transparent 6%,
+    transparent 42%,
+    rgba(255,211,109,0.25) 52%
+  );
+  filter: drop-shadow(0 15px 50px rgba(0,0,0,0.9));
+  border-radius: 20px;
+  animation: rotating 6s linear infinite;
+  animation-delay: -1s;
+}
+
+.box::after {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  background: var(--#0f0f10);
+  filter: drop-shadow(0 8px 30px rgba(0,0,0,0.8));
+  border-radius: 15px;
+}
+
+.box:hover { width: 450px; height: 500px; }
+.box:hover .login { inset: 40px; }
+.box:hover .loginBx { transform: translateY(0px); }
+
+.login {
+  position: absolute;
+  inset: 60px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  border-radius: 10px;
+  background: linear-gradient(180deg, rgba(0,0,0,0.55), rgba(10,10,10,0.35));
+  color: #fff;
+  z-index: 1000;
+  box-shadow: inset 0 10px 20px rgba(0,0,0,0.8);
+  border-bottom: 2px solid rgba(212,175,55,0.12);
+  transition: 0.5s;
+  overflow: hidden;
+}
+
+.loginBx {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  gap: 20px;
+  width: 70%;
+  transform: translateY(126px);
+  transition: 0.5s;
+}
+
+h2 { text-transform: uppercase; font-weight: 600; letter-spacing: 0.2em; text-align: center; }
+
+h2 i {
+  color: var(--#D4AF37);
+  text-shadow: 0 0 6px rgba(212,175,55,0.9), 0 0 26px rgba(212,175,55,0.25);
+}
+
+label { align-self: flex-start; color: var(--#FFD36D); font-size: 0.95em; margin-left: 5px; }
+
+input {
+  width: 100%;
+  padding: 10px 20px;
+  outline: none;
+  border: none;
+  font-size: 1em;
+  color: #fff;
+  background: rgba(255,255,255,0.03);
+  border-bottom: 2px solid rgba(212,175,55,0.12);
+  border-radius: 30px;
+}
+
+input::placeholder { color: #bfb38a; }
+
+button {
+  width: 60%;
+  background: linear-gradient(180deg, var(--#D4AF37), var(--#FFD36D));
+  border: 1px solid rgba(0,0,0,0.6);
+  font-weight: 600;
+  color: #080707;
+  cursor: pointer;
+  transition: 0.25s;
+  border-radius: 30px;
+  font-size: 1.1em;
+  padding: 10px 14px;
+}
+
+button:hover { box-shadow: 0 6px 18px rgba(212,175,55,0.25), 0 0 40px rgba(212,175,55,0.06); transform: translateY(-2px); }
+button:focus { outline: 2px solid rgba(212,175,55,0.35); outline-offset: 2px; }
+button:disabled { background: #333; color: #777; cursor: not-allowed; }
+
+.password-wrapper { position: relative; width: 100%; }
+.password-wrapper input { padding-right: 40px; }
+.password-wrapper i { position: absolute; top: 50%; right: 15px; transform: translateY(-50%); color: #cfc09a; cursor: pointer; font-size: 1em; transition: color 0.3s; }
+.password-wrapper i:hover { color: var(--#D4AF37); }
+
+.spinner {
+  display: none;
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(255,255,255,0.08);
+  border-top: 2px solid var(--#D4AF37);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+#error-message { color: #ffb3a7; margin-top: 10px; text-align: center; font-size: 0.9em; padding: 5px; border-radius: 4px; }
+
+@media (max-width: 480px) {
+  .box { width: 90vw; }
+  .box:hover { width: 95vw; height: 500px; }
+  .loginBx { width: 90%; }
+}`;
+
+export default Login;
