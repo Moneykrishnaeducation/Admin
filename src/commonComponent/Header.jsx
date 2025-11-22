@@ -15,8 +15,8 @@ const Header = ({ isSidebarOpen, setIsSidebarOpen }) => {
   const [showNotifications, setShowNotifications] = useState(false);
 
   const [notifications, setNotifications] = useState([]);
-  const [loadingNotifications, setLoadingNotifications] = useState(true);
-  const [userName, setUserName] = useState("John Doe");
+  const [loadingNotifications] = useState(false);
+  const [userName] = useState("Admin User");
 
   const [showLogoutPopup, setShowLogoutPopup] = useState(false);
   const [logoutLoading, setLogoutLoading] = useState(false);
@@ -29,54 +29,7 @@ const Header = ({ isSidebarOpen, setIsSidebarOpen }) => {
 
   const iconSize = "text-lg md:text-xl";
 
-  // 🔥 Fetch Notifications from API
-  useEffect(() => {
-    const fetchNotifications = async () => {
-      try {
-        const response = await apiCall("client/notifications/", "GET");
-
-        // expected response example:
-        // [{ id: 1, message: "New message", type: "info" }]
-        if (response?.notifications) {
-          setNotifications(
-            response.notifications.map((n) => ({
-              ...n,
-              icon:
-                n.type === "success"
-                  ? <CheckCircle className="w-5 h-5 text-green-400" />
-                  : n.type === "warning"
-                  ? <AlertCircle className="w-5 h-5 text-yellow-400" />
-                  : n.type === "error"
-                  ? <AlertCircle className="w-5 h-5 text-red-400" />
-                  : <Info className="w-5 h-5 text-blue-400" />,
-            }))
-          );
-        }
-      } catch (error) {
-        console.error("Failed to fetch notifications:", error);
-      } finally {
-        setLoadingNotifications(false);
-      }
-    };
-
-    fetchNotifications();
-  }, []);
-
-  // 🔥 Fetch User Profile from API
-  useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const response = await apiCall("api/profile/", "GET");
-        if (response?.name) {
-          setUserName(response.name);
-        }
-      } catch (error) {
-        console.error("Failed to fetch profile:", error);
-      }
-    };
-
-    fetchProfile();
-  }, []);
+  // 🔥 User Profile set to static value (skipped API call)
 
   // 🔹 Mark single notification as read
   const markAsRead = (id) => {
@@ -102,17 +55,11 @@ const Header = ({ isSidebarOpen, setIsSidebarOpen }) => {
       document.removeEventListener("mousedown", handleClickOutside);
   }, [showNotifications]);
 
-  // 🔹 Handle logout
+  // 🔹 Handle logout (skipped API call)
   const handleLogout = async () => {
     setLogoutLoading(true);
     try {
-      // Call logout API to log the activity on the server
-      const response = await apiCall("logout/", "POST");
-      if (response && response.message) {
-        console.log("Logout successful:", response.message);
-      }
-
-      // Clear stored tokens and user data
+      // Clear stored tokens and user data (skipped API call)
       const keysToRemove = [
         'jwt_token', 'accessToken', 'refresh_token', 'refreshToken',
         'user_role', 'userRole', 'user_email', 'userEmail', 'user_name', 'userName',
@@ -132,26 +79,6 @@ const Header = ({ isSidebarOpen, setIsSidebarOpen }) => {
       });
 
       // Navigate to login page
-      navigate("/");
-    } catch (error) {
-      console.error("Logout failed:", error);
-      // Even if API call fails, clear local data and redirect
-      const keysToRemove = [
-        'jwt_token', 'accessToken', 'refresh_token', 'refreshToken',
-        'user_role', 'userRole', 'user_email', 'userEmail', 'user_name', 'userName',
-        'current_page'
-      ];
-      keysToRemove.forEach(key => {
-        localStorage.removeItem(key);
-        sessionStorage.removeItem(key);
-      });
-      localStorage.removeItem('login_verification_pending');
-
-      // Trigger cross-tab logout
-      import('../utils/api').then(({ triggerCrossTabLogout }) => {
-        triggerCrossTabLogout();
-      });
-
       navigate("/");
     } finally {
       setLogoutLoading(false);

@@ -14,28 +14,19 @@ const AppRoutes = () => {
     localStorage.setItem('current_page', location.pathname);
   }, [location.pathname]);
 
-  const hideLayout = location.pathname === "/"; // hide navbar & main on login
-
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   return (
     <div className="w-screen flex">
-      {!hideLayout && (
-        <Navbar isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} />
-      )}
+      <Navbar isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} />
 
-      {!hideLayout ? (
-        <Main isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen}>
-          <Routes>
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="*" element={<Dashboard />} />
-          </Routes>
-        </Main>
-      ) : (
+      <Main isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen}>
         <Routes>
+          <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/" element={<Dashboard />} />
+          <Route path="*" element={<Dashboard />} />
         </Routes>
-      )}
+      </Main>
     </div>
   );
 };
