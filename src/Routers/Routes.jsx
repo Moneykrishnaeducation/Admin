@@ -8,6 +8,7 @@ import Dashboard from "../page/Dashboard";
 import Mail from "../page/Mail";
 import Settings from "../page/Settings";
 import Propfirm from "../page/Propfirm";
+import Tickets from "../page/Tickets";
 
 const AppRoutes = () => {
   const location = useLocation();
@@ -28,6 +29,7 @@ const AppRoutes = () => {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/propfirm" element={<Propfirm />} />
+          <Route path="/tickets" element={<Tickets />} />
           <Route path="/" element={<Dashboard />} />
           <Route path="*" element={<Dashboard />} />
           <Route path="/mail" element={<Mail />} />

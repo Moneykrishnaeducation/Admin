@@ -260,63 +260,71 @@ const TabsPage = () => {
               + Create Package
             </button>
           </div>
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="border-b-2 border-yellow-400">
-                <th className="p-2 text-yellow-400 font-bold">Package Name</th>
-                <th className="p-2 text-yellow-400 font-bold">Price</th>
-                <th className="p-2 text-yellow-400 font-bold">Bonus Fund</th>
-                <th className="p-2 text-yellow-400 font-bold">Tradable Fund</th>
-                <th className="p-2 text-yellow-400 font-bold">Leverage</th>
-                <th className="p-2 text-yellow-400 font-bold">Status</th>
-                <th className="p-2 text-yellow-400 font-bold">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {currentItems.map((pkg) => (
-                <React.Fragment key={pkg.id}>
-                  <tr className="border-b border-white/20 hover:shadow-lg hover:bg-yellow-400/5 transition-all">
-                    <td className="p-2 text-white">{pkg.name}</td>
-                    <td className="p-2 text-white">{pkg.price}</td>
-                    <td className="p-2 text-white">{pkg.bonusFund}</td>
-                    <td className="p-2 text-white">{pkg.tradableFund}</td>
-                    <td className="p-2 text-white">{pkg.leverage}</td>
-                    <td className="p-2 text-white">{pkg.status ? 'Active' : 'Inactive'}</td>
-                    <td className="p-2">
-                      <button
-                        onClick={() => toggleExpand(pkg.id)}
-                        className="text-yellow-400 hover:text-yellow-300"
-                      >
-                        {expandedRows.has(pkg.id) ? '▼' : '▶'}
-                      </button>
-                    </td>
-                  </tr>
-                  {expandedRows.has(pkg.id) && (
-                    <tr className="bg-yellow-400/10 border-b border-white/20">
-                      <td colSpan="7" className="p-4">
-                        <div className="grid grid-cols-2 gap-4 text-sm text-white">
-                          <div>Maximum Cutoff: {pkg.maxCutoff}</div>
-                          <div>Target: {pkg.target}</div>
-                          <div>Target Time: {pkg.targetTime}</div>
-                          <div>Profit Share: {pkg.profitShare}</div>
-                          <div>Created: {pkg.created}</div>
-                          <div className="col-span-2">
-                            Status Toggle:
-                            <button
-                              onClick={() => toggleStatus(pkg.id)}
-                              className={`ml-2 px-3 py-1 rounded ${toggledStatuses.has(pkg.id) ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`}
-                            >
-                              {toggledStatuses.has(pkg.id) ? 'On' : 'Off'}
-                            </button>
-                          </div>
-                        </div>
-                      </td>
-                    </tr>
-                  )}
-                </React.Fragment>
-              ))}
-            </tbody>
-          </table>
+         <div className="overflow-x-auto rounded-lg shadow-lg bg-black">
+  <table className="w-full text-left border-collapse">
+    <thead>
+      <tr className="border-b-2 border-yellow-400">
+        <th className="p-2 text-yellow-400 font-bold">Package Name</th>
+        <th className="p-2 text-yellow-400 font-bold">Price</th>
+        <th className="p-2 text-yellow-400 font-bold">Bonus Fund</th>
+        <th className="p-2 text-yellow-400 font-bold">Tradable Fund</th>
+        <th className="p-2 text-yellow-400 font-bold">Leverage</th>
+        <th className="p-2 text-yellow-400 font-bold">Status</th>
+        <th className="p-2 text-yellow-400 font-bold">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {currentItems.map((pkg) => (
+        <React.Fragment key={pkg.id}>
+          <tr className="border-b border-white/20 hover:bg-yellow-400/5 transition-all">
+            <td className="p-2 text-white">{pkg.name}</td>
+            <td className="p-2 text-white">{pkg.price}</td>
+            <td className="p-2 text-white">{pkg.bonusFund}</td>
+            <td className="p-2 text-white">{pkg.tradableFund}</td>
+            <td className="p-2 text-white">{pkg.leverage}</td>
+            <td className="p-2 text-white">{pkg.status ? "Active" : "Inactive"}</td>
+            <td className="p-2">
+              <button
+                onClick={() => toggleExpand(pkg.id)}
+                className="text-yellow-400 hover:text-yellow-300"
+              >
+                {expandedRows.has(pkg.id) ? "▼" : "▶"}
+              </button>
+            </td>
+          </tr>
+
+          {expandedRows.has(pkg.id) && (
+            <tr className="bg-yellow-400/10 border-b border-white/20">
+              <td colSpan="7" className="p-4">
+                <div className="grid grid-cols-2 gap-4 text-sm text-white">
+                  <div>Maximum Cutoff: {pkg.maxCutoff}</div>
+                  <div>Target: {pkg.target}</div>
+                  <div>Target Time: {pkg.targetTime}</div>
+                  <div>Profit Share: {pkg.profitShare}</div>
+                  <div>Created: {pkg.created}</div>
+                  <div className="col-span-2">
+                    Status Toggle:
+                    <button
+                      onClick={() => toggleStatus(pkg.id)}
+                      className={`ml-2 px-3 py-1 rounded ${
+                        toggledStatuses.has(pkg.id)
+                          ? "bg-green-500 text-white"
+                          : "bg-red-500 text-white"
+                      }`}
+                    >
+                      {toggledStatuses.has(pkg.id) ? "On" : "Off"}
+                    </button>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          )}
+        </React.Fragment>
+      ))}
+    </tbody>
+  </table>
+</div>
+
           <div className="mt-4 flex justify-between items-center">
             <div className="flex items-center space-x-2">
               <label htmlFor="itemsPerPage" className="text-yellow-400">Items per page:</label>
@@ -368,7 +376,7 @@ const TabsPage = () => {
               />
             </div>
           </div>
-          <table className="w-full text-left border-collapse">
+          <table className="w-full text-left shadow-lg">
             <thead>
               <tr className="border-b-2 border-yellow-400">
                 <th className="p-2 text-yellow-400 font-bold">ID</th>
@@ -451,7 +459,7 @@ const TabsPage = () => {
               />
             </div>
           </div>
-          <table className="w-full text-left border-collapse">
+          <table className="w-full text-left shadow-lg">
             <thead>
               <tr className="border-b-2 border-yellow-400">
                 <th className="p-2 text-yellow-400 font-bold">User</th>
