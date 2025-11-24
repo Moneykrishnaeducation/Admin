@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import ModalWrapper from './ModalWrapper';
 
-const WithdrawModal = ({ visible, onClose, accountId, onSubmit }) => {
+const CreditInModal = ({ visible, onClose, accountId, onSubmit }) => {
   const [amount, setAmount] = useState('');
   const [comment, setComment] = useState('');
 
@@ -16,21 +16,21 @@ const WithdrawModal = ({ visible, onClose, accountId, onSubmit }) => {
         onClick={handleSubmit}
         className="bg-yellow-400 text-white px-4 py-2 rounded shadow hover:opacity-95"
       >
-        Withdraw
+        Credit In
       </button>
       <button onClick={onClose} className="bg-gray-200 px-4 py-2 rounded">Close</button>
     </div>
   );
 
   return (
-    <ModalWrapper title={`Withdraw from Account ${accountId || ''}`} visible={visible} onClose={onClose} footer={footer}>
+    <ModalWrapper title={`Credit In to Account ${accountId || ''}`} visible={visible} onClose={onClose} footer={footer}>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-gray-700">Account ID</label>
           <input readOnly value={accountId || ''} className="mt-1 w-full rounded border px-3 py-2 bg-gray-100" />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700">* Withdraw Amount ($)</label>
+          <label className="block text-sm font-medium text-gray-700">* Credit In Amount ($)</label>
           <input
             required
             type="number"
@@ -56,4 +56,4 @@ const WithdrawModal = ({ visible, onClose, accountId, onSubmit }) => {
   );
 };
 
-export default WithdrawModal;
+export default CreditInModal;
