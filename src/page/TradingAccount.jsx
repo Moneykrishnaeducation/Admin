@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import TableStructure from "../commonComponent/TableStructure";
 import Header from "../commonComponent/Header";
+import { DepositModal, WithdrawModal } from "../Modals";
 
 const sampleAccounts = [
 	{
@@ -39,6 +40,11 @@ const TradingAccountPage = () => {
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState(null);
 	const [expandedId, setExpandedId] = useState(null);
+
+	// modal state
+	const [depositVisible, setDepositVisible] = useState(false);
+	const [withdrawVisible, setWithdrawVisible] = useState(false);
+	const [modalAccountId, setModalAccountId] = useState(null);
 
 	// server-side fetch callback for TableStructure
 	const handleFetch = async ({ page, pageSize, query }) => {
@@ -144,6 +150,34 @@ const TradingAccountPage = () => {
 		setExpandedId((prev) => (prev === row.id ? null : row.id));
 	};
 
+	const openDeposit = (accountId) => {
+		setModalAccountId(accountId);
+		setDepositVisible(true);
+	};
+
+	const openWithdraw = (accountId) => {
+		setModalAccountId(accountId);
+		setWithdrawVisible(true);
+	};
+
+	const closeModals = () => {
+		setDepositVisible(false);
+		setWithdrawVisible(false);
+		setModalAccountId(null);
+	};
+
+	const handleDepositSubmit = async ({ accountId, amount, comment }) => {
+		// TODO: replace with real API call
+		console.log('Deposit submit', { accountId, amount, comment });
+		closeModals();
+	};
+
+	const handleWithdrawSubmit = async ({ accountId, amount, comment }) => {
+		// TODO: replace with real API call
+		console.log('Withdraw submit', { accountId, amount, comment });
+		closeModals();
+	};
+
 	const renderRowSubComponent = (row) => {
 		if (expandedId !== row.id) return null;
 
@@ -151,16 +185,16 @@ const TradingAccountPage = () => {
 			<tr>
 				<td colSpan={columns.length} className="bg-gray-200/20">
 					<div className="p-4 flex flex-wrap gap-3">
-						<button className="bg-white text-gray-800 px-4 py-2 rounded shadow">Deposit</button>
-						<button className="bg-white text-gray-800 px-4 py-2 rounded shadow">Withdrawal</button>
-						<button className="bg-white text-gray-800 px-4 py-2 rounded shadow">Bonus</button>
-						<button className="bg-white text-gray-800 px-4 py-2 rounded shadow">Credit In</button>
-						<button className="bg-white text-gray-800 px-4 py-2 rounded shadow">Credit Out</button>
-						<button className="bg-white text-gray-800 px-4 py-2 rounded shadow">Disable</button>
-						<button className="bg-white text-gray-800 px-4 py-2 rounded shadow">Enable Algo</button>
-						<button className="bg-white text-gray-800 px-4 py-2 rounded shadow">Leverage</button>
-						<button className="bg-white text-gray-800 px-4 py-2 rounded shadow">Profile</button>
-						<button className="bg-white text-gray-800 px-4 py-2 rounded shadow">History</button>
+						<button type="button" onClick={() => { console.log('deposit clicked', row); openDeposit(row.accountId); }} className="cursor-pointer bg-white text-gray-800 px-4 py-2 rounded shadow">Deposit</button>
+						<button type="button" onClick={() => { console.log('withdraw clicked', row); openWithdraw(row.accountId); }} className="cursor-pointer bg-white text-gray-800 px-4 py-2 rounded shadow">Withdrawal</button>
+						<button type="button" className="cursor-pointer bg-white text-gray-800 px-4 py-2 rounded shadow">Bonus</button>
+						<button type="button" className="cursor-pointer bg-white text-gray-800 px-4 py-2 rounded shadow">Credit In</button>
+						<button type="button" className="cursor-pointer bg-white text-gray-800 px-4 py-2 rounded shadow">Credit Out</button>
+						<button type="button" className="cursor-pointer bg-white text-gray-800 px-4 py-2 rounded shadow">Disable</button>
+						<button type="button" className="cursor-pointer bg-white text-gray-800 px-4 py-2 rounded shadow">Enable Algo</button>
+						<button type="button" className="cursor-pointer bg-white text-gray-800 px-4 py-2 rounded shadow">Leverage</button>
+						<button type="button" className="cursor-pointer bg-white text-gray-800 px-4 py-2 rounded shadow">Profile</button>
+						<button type="button" className="cursor-pointer bg-white text-gray-800 px-4 py-2 rounded shadow">History</button>
 					</div>
 				</td>
 			</tr>
@@ -196,6 +230,20 @@ const TradingAccountPage = () => {
 				}
 				renderRowSubComponent={renderRowSubComponent}
 				onRowClick={onRowClick}
+			/>
+
+			{/* Modals */}
+			<DepositModal
+				visible={depositVisible}
+				onClose={closeModals}
+				accountId={modalAccountId}
+				onSubmit={handleDepositSubmit}
+			/>
+			<WithdrawModal
+				visible={withdrawVisible}
+				onClose={closeModals}
+				accountId={modalAccountId}
+				onSubmit={handleWithdrawSubmit}
 			/>
 		</div>
 	);
