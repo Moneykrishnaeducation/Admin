@@ -20,7 +20,7 @@ const Navbar = ({ isSidebarOpen, setIsSidebarOpen }) => {
 
   const menuItems = [
     { path: "/dashboard", icon: Home, label: "Dashboard" },
-    { path: "/users", icon: Users, label: "Users" },
+    { path: "/user", icon: Users, label: "User" },
     { path: "/pendingrequest", icon: CreditCard, label: "Pending request" },
     { path: "/tradingaccounts", icon: CreditCard, label: "Trading Accounts" },
     { path: "/demo", icon: CreditCard, label: "Demo Accounts" },
