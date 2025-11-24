@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useTheme } from "../context/ThemeContext";
+import { Search } from "lucide-react";
 
 const TableStructure = ({
   columns = [],
@@ -87,8 +88,8 @@ const TableStructure = ({
   const rowHover = isDarkMode ? "hover:bg-white/5" : "hover:bg-gray-100";
   const borderClass = isDarkMode ? "border-white/20" : "border-gray-200";
   const inputClass = isDarkMode
-    ? "bg-gray-800 text-white placeholder-gray-400 px-3 py-2 rounded-md text-sm"
-    : "bg-gray-100 text-black placeholder-gray-500 px-3 py-2 rounded-md text-sm";
+    ? "pl-10 pr-4 py-2 w-full rounded border border-yellow-400 text-white placeholder-gray-400 px-3 py-2 rounded-md text-sm"
+    : "pl-10 pr-4 py-2 w-full rounded border border-yellow-400 text-black placeholder-gray-500 px-3 py-2 rounded-md text-sm";
   const selectClass = isDarkMode
     ? "bg-gray-800 text-white px-2 py-1 rounded-md"
     : "bg-gray-100 text-black px-2 py-1 rounded-md";
@@ -97,8 +98,9 @@ const TableStructure = ({
   return (
     <div>
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-3">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 ">
           {topActions && <div className="mr-2">{topActions}</div>}
+          <span className="flex items-center relative min-w-100"><Search className="text-yellow-600 absolute left-1" size={18} />
           <input
             value={query}
             onChange={(e) => {
@@ -107,7 +109,7 @@ const TableStructure = ({
             }}
             placeholder="Search..."
             className={inputClass}
-          />
+          /></span>
         </div>
 
         <div className="flex items-center gap-2">&nbsp;</div>
