@@ -16,7 +16,7 @@ import MamAccount from "../page/MamAccount";
 import TradingAccount from "../page/tradingaccount";
 import Pendingrequest from "../page/Pendingrequest";
 import DemoAccount from "../page/DemoAccount";
-
+import Transactions from "../page/Transactions";
 
 const AppRoutes = () => {
   const location = useLocation();
@@ -60,6 +60,7 @@ const AppRoutes = () => {
             <Route path="/mail" element={<Mail />} />
             <Route path="/" element={<Dashboard />} />
             <Route path="*" element={<Dashboard />} />
+            <Route path="transactions" element={<Transactions />} />
           </Routes>
         </Main>
       )}
