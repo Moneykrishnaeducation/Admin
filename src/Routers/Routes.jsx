@@ -12,6 +12,7 @@ import Propfirm from "../page/Propfirm";
 import Tickets from "../page/Tickets";
 import Activities from "../page/Activities";
 import MamAccount from "../page/MamAccount";
+import TradingAccount from "../page/tradingaccount";
 
 
 const AppRoutes = () => {
@@ -43,6 +44,8 @@ const AppRoutes = () => {
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/tradingaccount" element={<TradingAccount />} />
+            <Route path="/tradingaccounts" element={<TradingAccount />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/propfirm" element={<Propfirm />} />
             <Route path="/tickets" element={<Tickets />} />
