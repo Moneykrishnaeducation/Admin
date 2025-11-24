@@ -15,6 +15,7 @@ import Activities from "../page/Activities";
 import MamAccount from "../page/MamAccount";
 import TradingAccount from "../page/tradingaccount";
 import Pendingrequest from "../page/Pendingrequest";
+import DemoAccount from "../page/DemoAccount";
 
 
 const AppRoutes = () => {
@@ -55,6 +56,7 @@ const AppRoutes = () => {
             <Route path="/activities" element={<Activities />} />
             <Route path="/mamaccount" element={<MamAccount />} />
             <Route path="/pendingrequest" element={<Pendingrequest />} />
+            <Route path="/demo" element={<DemoAccount />} />
             <Route path="/mail" element={<Mail />} />
             <Route path="/" element={<Dashboard />} />
             <Route path="*" element={<Dashboard />} />
