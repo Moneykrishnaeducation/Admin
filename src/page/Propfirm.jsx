@@ -325,38 +325,51 @@ const TabsPage = () => {
   </table>
 </div>
 
-          <div className="mt-4 flex justify-between items-center">
-            <div className="flex items-center space-x-2">
-              <label htmlFor="itemsPerPage" className="text-yellow-400">Items per page:</label>
-              <select
-                id="itemsPerPage"
-                value={itemsPerPage}
-                onChange={handleItemsPerPageChange}
-                className="bg-black border border-yellow-400 text-yellow-400 rounded px-2 py-1"
-              >
-                <option value={5}>5</option>
-                <option value={10}>10</option>
-                <option value={20}>20</option>
-              </select>
+          <div className="mt-4 flex items-center justify-between text-sm text-yellow-400">
+            <div>
+              Showing {filteredPackages.length === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1} to{" "}
+              {Math.min(currentPage * itemsPerPage, filteredPackages.length)} of {filteredPackages.length}
             </div>
-            <div className="flex items-center space-x-2">
-              <button
-                onClick={() => handlePageChange(currentPage - 1)}
-                disabled={currentPage === 1}
-                className="px-3 py-1 bg-yellow-500 text-black rounded disabled:bg-gray-600 disabled:text-gray-400"
-              >
-                Previous
-              </button>
-              <span className="text-yellow-400">
-                Page {currentPage} of {totalPages}
-              </span>
-              <button
-                onClick={() => handlePageChange(currentPage + 1)}
-                disabled={currentPage === totalPages}
-                className="px-3 py-1 bg-yellow-500 text-black rounded disabled:bg-gray-600 disabled:text-gray-400"
-              >
-                Next
-              </button>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
+                <label htmlFor="itemsPerPage" className="text-sm text-yellow-400">Rows:</label>
+                <select
+                  id="itemsPerPage"
+                  value={itemsPerPage}
+                  onChange={handleItemsPerPageChange}
+                  className="bg-black border border-yellow-400 text-yellow-400 rounded px-2 py-1"
+                >
+                  <option value={5}>5</option>
+                  <option value={10}>10</option>
+                  <option value={20}>20</option>
+                </select>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className={`px-3 py-1 rounded-md ${currentPage === 1 ? "opacity-50 cursor-not-allowed" : "bg-yellow-400 text-black"}`}
+                >
+                  Prev
+                </button>
+                <div className="px-2">Page</div>
+                <select
+                  value={currentPage}
+                  onChange={(e) => handlePageChange(Number(e.target.value))}
+                  className="bg-black border border-yellow-400 text-yellow-400 rounded px-2 py-1"
+                >
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
+                    <option key={p} value={p}>{p}</option>
+                  ))}
+                </select>
+                <button
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className={`px-3 py-1 rounded-md ${currentPage === totalPages ? "opacity-50 cursor-not-allowed" : "bg-yellow-400 text-black"}`}
+                >
+                  Next
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -408,38 +421,51 @@ const TabsPage = () => {
               ))}
             </tbody>
           </table>
-          <div className="mt-4 flex justify-between items-center">
-            <div className="flex items-center space-x-2">
-              <label htmlFor="propTradersItemsPerPage" className="text-yellow-400">Items per page:</label>
-              <select
-                id="propTradersItemsPerPage"
-                value={propTradersItemsPerPage}
-                onChange={handlePropTradersItemsPerPageChange}
-                className="bg-black border border-yellow-400 text-yellow-400 rounded px-2 py-1"
-              >
-                <option value={5}>5</option>
-                <option value={10}>10</option>
-                <option value={20}>20</option>
-              </select>
+          <div className="mt-4 flex items-center justify-between text-sm text-yellow-400">
+            <div>
+              Showing {filteredPropTraders.length === 0 ? 0 : (propTradersCurrentPage - 1) * propTradersItemsPerPage + 1} to{" "}
+              {Math.min(propTradersCurrentPage * propTradersItemsPerPage, filteredPropTraders.length)} of {filteredPropTraders.length}
             </div>
-            <div className="flex items-center space-x-2">
-              <button
-                onClick={() => handlePropTradersPageChange(propTradersCurrentPage - 1)}
-                disabled={propTradersCurrentPage === 1}
-                className="px-3 py-1 bg-yellow-500 text-black rounded disabled:bg-gray-600 disabled:text-gray-400"
-              >
-                Previous
-              </button>
-              <span className="text-yellow-400">
-                Page {propTradersCurrentPage} of {totalPropTradersPages}
-              </span>
-              <button
-                onClick={() => handlePropTradersPageChange(propTradersCurrentPage + 1)}
-                disabled={propTradersCurrentPage === totalPropTradersPages}
-                className="px-3 py-1 bg-yellow-500 text-black rounded disabled:bg-gray-600 disabled:text-gray-400"
-              >
-                Next
-              </button>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
+                <label htmlFor="propTradersItemsPerPage" className="text-sm text-yellow-400">Rows:</label>
+                <select
+                  id="propTradersItemsPerPage"
+                  value={propTradersItemsPerPage}
+                  onChange={handlePropTradersItemsPerPageChange}
+                  className="bg-black border border-yellow-400 text-yellow-400 rounded px-2 py-1"
+                >
+                  <option value={5}>5</option>
+                  <option value={10}>10</option>
+                  <option value={20}>20</option>
+                </select>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handlePropTradersPageChange(propTradersCurrentPage - 1)}
+                  disabled={propTradersCurrentPage === 1}
+                  className={`px-3 py-1 rounded-md ${propTradersCurrentPage === 1 ? "opacity-50 cursor-not-allowed" : "bg-yellow-400 text-black"}`}
+                >
+                  Prev
+                </button>
+                <div className="px-2">Page</div>
+                <select
+                  value={propTradersCurrentPage}
+                  onChange={(e) => handlePropTradersPageChange(Number(e.target.value))}
+                  className="bg-black border border-yellow-400 text-yellow-400 rounded px-2 py-1"
+                >
+                  {Array.from({ length: totalPropTradersPages }, (_, i) => i + 1).map(p => (
+                    <option key={p} value={p}>{p}</option>
+                  ))}
+                </select>
+                <button
+                  onClick={() => handlePropTradersPageChange(propTradersCurrentPage + 1)}
+                  disabled={propTradersCurrentPage === totalPropTradersPages}
+                  className={`px-3 py-1 rounded-md ${propTradersCurrentPage === totalPropTradersPages ? "opacity-50 cursor-not-allowed" : "bg-yellow-400 text-black"}`}
+                >
+                  Next
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -490,38 +516,51 @@ const TabsPage = () => {
               ))}
             </tbody>
           </table>
-          <div className="mt-4 flex justify-between items-center">
-            <div className="flex items-center space-x-2">
-              <label htmlFor="requestsItemsPerPage" className="text-yellow-400">Items per page:</label>
-              <select
-                id="requestsItemsPerPage"
-                value={requestsItemsPerPage}
-                onChange={handleRequestsItemsPerPageChange}
-                className="bg-black border border-yellow-400 text-yellow-400 rounded px-2 py-1"
-              >
-                <option value={5}>5</option>
-                <option value={10}>10</option>
-                <option value={20}>20</option>
-              </select>
+          <div className="mt-4 flex items-center justify-between text-sm text-yellow-400">
+            <div>
+              Showing {filteredRequests.length === 0 ? 0 : (requestsCurrentPage - 1) * requestsItemsPerPage + 1} to{" "}
+              {Math.min(requestsCurrentPage * requestsItemsPerPage, filteredRequests.length)} of {filteredRequests.length}
             </div>
-            <div className="flex items-center space-x-2">
-              <button
-                onClick={() => handleRequestsPageChange(requestsCurrentPage - 1)}
-                disabled={requestsCurrentPage === 1}
-                className="px-3 py-1 bg-yellow-500 text-black rounded disabled:bg-gray-600 disabled:text-gray-400"
-              >
-                Previous
-              </button>
-              <span className="text-yellow-400">
-                Page {requestsCurrentPage} of {totalRequestsPages}
-              </span>
-              <button
-                onClick={() => handleRequestsPageChange(requestsCurrentPage + 1)}
-                disabled={requestsCurrentPage === totalRequestsPages}
-                className="px-3 py-1 bg-yellow-500 text-black rounded disabled:bg-gray-600 disabled:text-gray-400"
-              >
-                Next
-              </button>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
+                <label htmlFor="requestsItemsPerPage" className="text-sm text-yellow-400">Rows:</label>
+                <select
+                  id="requestsItemsPerPage"
+                  value={requestsItemsPerPage}
+                  onChange={handleRequestsItemsPerPageChange}
+                  className="bg-black border border-yellow-400 text-yellow-400 rounded px-2 py-1"
+                >
+                  <option value={5}>5</option>
+                  <option value={10}>10</option>
+                  <option value={20}>20</option>
+                </select>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handleRequestsPageChange(requestsCurrentPage - 1)}
+                  disabled={requestsCurrentPage === 1}
+                  className={`px-3 py-1 rounded-md ${requestsCurrentPage === 1 ? "opacity-50 cursor-not-allowed" : "bg-yellow-400 text-black"}`}
+                >
+                  Prev
+                </button>
+                <div className="px-2">Page</div>
+                <select
+                  value={requestsCurrentPage}
+                  onChange={(e) => handleRequestsPageChange(Number(e.target.value))}
+                  className="bg-black border border-yellow-400 text-yellow-400 rounded px-2 py-1"
+                >
+                  {Array.from({ length: totalRequestsPages }, (_, i) => i + 1).map(p => (
+                    <option key={p} value={p}>{p}</option>
+                  ))}
+                </select>
+                <button
+                  onClick={() => handleRequestsPageChange(requestsCurrentPage + 1)}
+                  disabled={requestsCurrentPage === totalRequestsPages}
+                  className={`px-3 py-1 rounded-md ${requestsCurrentPage === totalRequestsPages ? "opacity-50 cursor-not-allowed" : "bg-yellow-400 text-black"}`}
+                >
+                  Next
+                </button>
+              </div>
             </div>
           </div>
         </div>

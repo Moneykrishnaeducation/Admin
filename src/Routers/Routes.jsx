@@ -9,6 +9,7 @@ import Dashboard from "../page/Dashboard";
 import Mail from "../page/Mail";
 import Settings from "../page/Settings";
 import Propfirm from "../page/Propfirm";
+import User from "../page/User";
 import Tickets from "../page/Tickets";
 import Activities from "../page/Activities";
 import MamAccount from "../page/MamAccount";
@@ -48,6 +49,7 @@ const AppRoutes = () => {
             <Route path="/tradingaccounts" element={<TradingAccount />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/propfirm" element={<Propfirm />} />
+            <Route path="/user" element={<User />} />
             <Route path="/tickets" element={<Tickets />} />
             <Route path="/activities" element={<Activities />} />
             <Route path="/mamaccount" element={<MamAccount />} />

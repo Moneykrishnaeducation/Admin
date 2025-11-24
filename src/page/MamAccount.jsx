@@ -58,6 +58,21 @@ const MamAccount = () => {
   const [modalAccountId, setModalAccountId] = useState("");
   const [depositAmount, setDepositAmount] = useState("");
   const [comment, setComment] = useState("");
+  
+  // History modal states
+  const [historyModalOpen, setHistoryModalOpen] = useState(false);
+  const [historyAccountId, setHistoryAccountId] = useState("");
+  
+  // Function to open history modal
+  const handleOpenHistoryModal = (row) => {
+    setHistoryAccountId(row.accountId || "");
+    setHistoryModalOpen(true);
+  };
+  
+  // Function to close history modal
+  const handleCloseHistoryModal = () => {
+    setHistoryModalOpen(false);
+  };
 
   const toggleRowExpanded = (row) => {
     setExpandedRows((prev) => {
@@ -80,6 +95,9 @@ const MamAccount = () => {
   const [creditOutModalOpen, setCreditOutModalOpen] = useState(false);
   const [creditOutAmount, setCreditOutAmount] = useState("");
   const [creditOutComment, setCreditOutComment] = useState("");
+  const [disableModalOpen, setDisableModalOpen] = useState(false);
+  const [disableAccountId, setDisableAccountId] = useState("");
+  const [disableAction, setDisableAction] = useState("Enable Account");
 
 
 
@@ -92,6 +110,21 @@ const MamAccount = () => {
 
   const handleCloseModal = () => {
     setModalOpen(false);
+  };
+
+  const handleOpenDisableModal = (row) => {
+    setDisableAccountId(row.accountId || "");
+    setDisableAction("Enable Account");
+    setDisableModalOpen(true);
+  };
+
+  const handleCloseDisableModal = () => {
+    setDisableModalOpen(false);
+  };
+
+  const handleDisableProceed = () => {
+    alert(`${disableAction} for Account ${disableAccountId}`);
+    setDisableModalOpen(false);
   };
 
   const handleDeposit = () => {
@@ -199,30 +232,30 @@ const MamAccount = () => {
 
   const renderRowSubComponent = (row) => {
     const isExpanded = expandedRows.has(row.id);
-    const actionItems = [
-      {
-        icon: "💰",
-        label: "Deposit",
-        onClick: () => handleOpenDepositModal(row),
-      },
-      {
-        icon: "💸",
-        label: "Withdrawal",
-        onClick: () => handleOpenWithdrawModal(row),
-      },
-      {
-        icon: "➕",
-        label: "Credit In",
-        onClick: () => handleOpenCreditInModal(row),
-      },
-      {
-        icon: "➖",
-        label: "Credit Out",
-        onClick: () => handleOpenCreditOutModal(row),
-      },
-      { icon: "🛑", label: "Disable", onClick: () => alert("Disable clicked") },
-      { icon: "🕒", label: "History", onClick: () => alert("History clicked") },
-    ];
+      const actionItems = [
+        {
+          icon: "💰",
+          label: "Deposit",
+          onClick: () => handleOpenDepositModal(row),
+        },
+        {
+          icon: "💸",
+          label: "Withdrawal",
+          onClick: () => handleOpenWithdrawModal(row),
+        },
+        {
+          icon: "➕",
+          label: "Credit In",
+          onClick: () => handleOpenCreditInModal(row),
+        },
+        {
+          icon: "➖",
+          label: "Credit Out",
+          onClick: () => handleOpenCreditOutModal(row),
+        },
+        { icon: "🛑", label: "Disable", onClick: () => handleOpenDisableModal(row) },
+        { icon: "🕒", label: "History", onClick: () => handleOpenHistoryModal(row) },
+      ];
 
     return (
       <tr style={{ height: isExpanded ? "auto" : "0px", overflow: "hidden", padding: 0, margin: 0, border: 0 }}>
@@ -528,6 +561,310 @@ const MamAccount = () => {
           </div>
         </div>
       )}
++
+      {creditOutModalOpen && (
+  <div className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-md bg-black/50">
+
+    <div className="bg-black text-white rounded-lg 
+      shadow-2xl shadow-yellow-400/30 
+      max-w-md w-full p-6 relative border border-yellow-500">
+
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="text-lg font-semibold">
+          Credit Out from Account {modalAccountId}
+        </h3>
+
+        <button
+          className="text-gray-300 hover:text-white text-2xl leading-none"
+          onClick={handleCloseCreditOutModal}
+        >
+          &times;
+        </button>
+      </div>
+
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          handleCreditOut();
+        }}
+      >
+        <div className="mb-4">
+          <label className="block mb-1 font-medium">Account ID</label>
+          <input
+            type="text"
+            disabled
+            value={modalAccountId}
+            className="w-full border border-gray-600 rounded px-3 py-2 bg-gray-900 cursor-not-allowed text-white"
+          />
+        </div>
+
+        <div className="mb-4">
+          <label className="block mb-1 font-medium">
+            Credit Out Amount ($) <span className="text-red-500">*</span>
+          </label>
+          <input
+            type="number"
+            min="0"
+            step="0.01"
+            required
+            placeholder="Enter amount"
+            value={creditOutAmount}
+            onChange={(e) => setCreditOutAmount(e.target.value)}
+            className="w-full border border-gray-600 rounded px-3 py-2 bg-gray-900 text-white"
+          />
+        </div>
+
+        <div className="mb-4">
+          <label className="block mb-1 font-medium">Comment</label>
+          <textarea
+            placeholder="Optional comment"
+            value={creditOutComment}
+            onChange={(e) => setCreditOutComment(e.target.value)}
+            className="w-full border border-gray-600 rounded px-3 py-2 bg-gray-900 text-white"
+          />
+        </div>
+
+        <div className="flex justify-end gap-4">
+          <button
+            type="submit"
+            className="bg-yellow-400 text-black px-4 py-2 rounded hover:bg-yellow-500 transition"
+          >
+            Credit Out
+          </button>
+
+          <button
+            type="button"
+            className="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 transition"
+            onClick={handleCloseCreditOutModal}
+          >
+            Close
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+)}
++
+      {disableModalOpen && (
+  <div className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-md bg-black/50">
+
+    <div className="bg-black text-white rounded-lg shadow-2xl shadow-yellow-400/30 max-w-md w-full p-6 relative border border-yellow-500">
+
+      {/* Header */}
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="text-lg font-semibold">
+          Account {disableAccountId}
+        </h3>
+        <button
+          className="text-gray-300 hover:text-white text-2xl"
+          onClick={handleCloseDisableModal}
+        >
+          &times;
+        </button>
+      </div>
+
+      {/* Toggle Switch */}
+      <div className="flex items-center justify-between mb-6">
+        <span className="text-gray-300">Status:</span>
+
+        <button
+          onClick={() => setDisableAction(disableAction === "Enable" ? "Disable" : "Enable")}
+          className={`relative w-16 h-8 rounded-full transition 
+            ${disableAction === "Enable" ? "bg-green-500" : "bg-red-500"}`}
+        >
+          <div
+            className={`absolute top-1 h-6 w-6 bg-white rounded-full transition 
+              ${disableAction === "Enable" ? "left-1" : "right-1"}`}
+          ></div>
+        </button>
+      </div>
+
+      {/* Confirmation Message */}
+      <p className="mb-6">
+        Are you sure you want to{" "}
+        <span className="text-yellow-400 font-medium">{disableAction}</span> this account?
+      </p>
+
+      {/* Buttons */}
+      <div className="flex justify-end gap-4">
+        <button
+          onClick={handleDisableProceed}
+          className={`px-4 py-2 rounded text-black transition
+            ${disableAction === "Enable"
+              ? "bg-green-400 hover:bg-green-500"
+              : "bg-red-400 hover:bg-red-500"
+            }`}
+        >
+          {disableAction}
+        </button>
+
+        <button
+          onClick={handleCloseDisableModal}
+          className="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 transition"
+        >
+          Cancel
+        </button>
+      </div>
+
+    </div>
+  </div>
+)}
+
+      {historyModalOpen && (
+  <>
+    {/* Background */}
+    <div className="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm z-40"></div>
+
+    {/* Modal */}
+    <div className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-md bg-black/50">
+      <div className="bg-black text-white rounded-lg shadow-2xl shadow-yellow-400/30 max-w-5xl w-full p-6 relative border border-yellow-500">
+
+        {/* Header */}
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-xl font-semibold text-yellow-400">
+            Account Summary (ID: {historyAccountId})
+          </h3>
+          <button
+            className="text-gray-300 hover:text-white text-2xl"
+            onClick={handleCloseHistoryModal}
+          >
+            &times;
+          </button>
+        </div>
+
+        {/* Summary Section */}
+        <div className="grid grid-cols-3 gap-6 bg-gray-900 p-4 rounded-lg border border-yellow-500/30 mb-6">
+          <div>
+            <p className="text-gray-400 text-sm">Balance</p>
+            <p className="text-yellow-400 text-lg font-semibold">$0.00</p>
+          </div>
+
+          <div>
+            <p className="text-gray-400 text-sm">Equity</p>
+            <p className="text-yellow-400 text-lg font-semibold">$0.00</p>
+          </div>
+
+          <div>
+            <p className="text-gray-400 text-sm">Open Positions</p>
+            <p className="text-yellow-400 text-lg font-semibold">0</p>
+          </div>
+        </div>
+
+        {/* Toggle Buttons */}
+        <div className="flex gap-4 mb-4">
+          <button
+            onClick={() => setActiveTab("transactions")}
+            className={`px-4 py-2 rounded transition ${
+              activeTab === "transactions"
+                ? "bg-yellow-400 text-black"
+                : "bg-gray-700 text-white hover:bg-gray-600"
+            }`}
+          >
+            Transactions
+          </button>
+
+          <button
+            onClick={() => setActiveTab("positions")}
+            className={`px-4 py-2 rounded transition ${
+              activeTab === "positions"
+                ? "bg-yellow-400 text-black"
+                : "bg-gray-700 text-white hover:bg-gray-600"
+            }`}
+          >
+            Open Positions
+          </button>
+        </div>
+
+        {/* --- TABLE SECTION --- */}
+        <div className="mt-4">
+
+          {/* Transactions Table */}
+          {activeTab === "transactions" && (
+            <TableStructure
+              columns={[
+                { Header: "Date", accessor: "date" },
+                { Header: "Type", accessor: "type" },
+                { Header: "Amount", accessor: "amount" },
+                { Header: "Status", accessor: "status" },
+                { Header: "Comment", accessor: "comment" },
+              ]}
+              data={[
+                {
+                  date: "2023-06-10",
+                  type: "Deposit",
+                  amount: "$1000",
+                  status: "Completed",
+                  comment: "Initial Deposit",
+                },
+                {
+                  date: "2023-06-15",
+                  type: "Withdrawal",
+                  amount: "$500",
+                  status: "Completed",
+                  comment: "Cashout",
+                },
+                {
+                  date: "2023-07-01",
+                  type: "Credit In",
+                  amount: "$200",
+                  status: "Approved",
+                  comment: "-",
+                },
+                {
+                  date: "2023-07-05",
+                  type: "Credit Out",
+                  amount: "$100",
+                  status: "Approved",
+                  comment: "Requested",
+                },
+              ]}
+            />
+          )}
+
+          {/* Open Positions Table */}
+          {activeTab === "positions" && (
+            <TableStructure
+              columns={[
+                { Header: "ID", accessor: "id" },
+                { Header: "Symbol", accessor: "symbol" },
+                { Header: "Vol", accessor: "volume" },
+                { Header: "Price", accessor: "price" },
+                { Header: "P/L", accessor: "pl" },
+              ]}
+              data={[
+                {
+                  id: 1,
+                  symbol: "XAUUSD",
+                  volume: 0.50,
+                  price: "2350.20",
+                  pl: "+$120.00",
+                },
+                {
+                  id: 2,
+                  symbol: "EURUSD",
+                  volume: 1.00,
+                  price: "1.0820",
+                  pl: "-$30.00",
+                },
+              ]}
+            />
+          )}
+        </div>
+
+        {/* Close Button */}
+        <div className="flex justify-end mt-6">
+          <button
+            className="bg-yellow-400 text-black px-4 py-2 rounded hover:bg-yellow-500 transition"
+            onClick={handleCloseHistoryModal}
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  </>
+)}
+
 
     </div>
   );
