@@ -47,23 +47,54 @@ const Login = () => {
     <StyledWrapper>
       <div className="box">
     <div className="login">      
-      <form className="loginBx" method="POST" action="/api/login/" id="signinForm">
+      <form className="loginBx" method="POST" action="/api/login/" id="signinForm" onSubmit={handleSubmit}>
         <h2>
           <i className="fa-solid fa-right-to-bracket"></i>
           Login
           <i className="fa-solid fa-heart"></i>
         </h2>
         <label htmlFor="username">Email</label>
-        <input type="email" id="username" name="email" placeholder="Email" autoComplete="email" required />
+        <input
+          type="email"
+          id="username"
+          name="email"
+          placeholder="Email"
+          autoComplete="email"
+          required
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
 
         <label htmlFor="signinPassword">Password</label>
         <div className="password-wrapper">
-          <input type="password" id="signinPassword" name="password" placeholder="Password" autoComplete="current-password" required />
-          <i className="fa-regular fa-eye" id="togglePassword"></i>
+          <input
+            type={showPassword ? 'text' : 'password'}
+            id="signinPassword"
+            name="password"
+            placeholder="Password"
+            autoComplete="current-password"
+            required
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+          <i
+            className={showPassword ? 'fa-regular fa-eye-slash' : 'fa-regular fa-eye'}
+            id="togglePassword"
+            onClick={() => setShowPassword((s) => !s)}
+            role="button"
+            aria-label={showPassword ? 'Hide password' : 'Show password'}
+          ></i>
         </div>
 
-        <button type="submit">Sign in <span className="spinner" id="loadingSpinner"></span></button>
-        <div id="error-message" style={{color: 'red', display: 'none'}}></div>
+        <button type="submit" disabled={isLoading}>
+          {isLoading ? '' : 'Sign in'}
+          <span
+            className="spinner"
+            id="loadingSpinner"
+            style={{ display: isLoading ? 'inline-block' : 'none' }}
+          ></span>
+        </button>
+        <div id="error-message" style={{ color: 'red', display: errorMessage ? 'block' : 'none' }}>{errorMessage}</div>
       </form>
     </div>
   </div>
@@ -72,14 +103,26 @@ const Login = () => {
 }
 
 const StyledWrapper = styled.div`
-  body {
+
+
+* {
+  font-family: "Poppins", sans-serif;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+  /* Ensure the wrapper fills the viewport and centers the login box */
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100vh;
+  background: #000;
   color: #fff;
   overflow: hidden;
-}
 
 @property --a {
   syntax: "<angle>";
@@ -93,11 +136,11 @@ const StyledWrapper = styled.div`
   height: 200px;
   background: repeating-conic-gradient(
     from var(--a),
-    var(--#D4AF37) 0%,
-    var(--#D4AF37) 5%,
+    #D4AF37 0%,
+    #D4AF37 5%,
     transparent 5%,
     transparent 40%,
-    var(--#FFD36D) 50%
+    #FFD36D 50%
   );
   filter: drop-shadow(0 15px 50px rgba(0,0,0,0.9));
   border-radius: 20px;
@@ -136,7 +179,7 @@ const StyledWrapper = styled.div`
   content: "";
   position: absolute;
   inset: 4px;
-  background: var(--#0f0f10);
+  background: #0f0f10;
   filter: drop-shadow(0 8px 30px rgba(0,0,0,0.8));
   border-radius: 15px;
 }
@@ -160,6 +203,7 @@ const StyledWrapper = styled.div`
   border-bottom: 2px solid rgba(212,175,55,0.12);
   transition: 0.5s;
   overflow: hidden;
+  padding-top: 40px;
 }
 
 .loginBx {
@@ -168,6 +212,7 @@ const StyledWrapper = styled.div`
   justify-content: center;
   align-items: center;
   flex-direction: column;
+  padding-top: 60px;
   gap: 20px;
   width: 70%;
   transform: translateY(126px);
@@ -177,11 +222,11 @@ const StyledWrapper = styled.div`
 h2 { text-transform: uppercase; font-weight: 600; letter-spacing: 0.2em; text-align: center; }
 
 h2 i {
-  color: var(--#D4AF37);
+  color: #D4AF37;
   text-shadow: 0 0 6px rgba(212,175,55,0.9), 0 0 26px rgba(212,175,55,0.25);
 }
 
-label { align-self: flex-start; color: var(--#FFD36D); font-size: 0.95em; margin-left: 5px; }
+label { align-self: flex-start; color: #FFD36D; font-size: 0.95em; margin-left: 5px; }
 
 input {
   width: 100%;
@@ -199,7 +244,7 @@ input::placeholder { color: #bfb38a; }
 
 button {
   width: 60%;
-  background: linear-gradient(180deg, var(--#D4AF37), var(--#FFD36D));
+  background: linear-gradient(180deg, #D4AF37, #FFD36D);
   border: 1px solid rgba(0,0,0,0.6);
   font-weight: 600;
   color: #080707;
@@ -216,15 +261,15 @@ button:disabled { background: #333; color: #777; cursor: not-allowed; }
 
 .password-wrapper { position: relative; width: 100%; }
 .password-wrapper input { padding-right: 40px; }
-.password-wrapper i { position: absolute; top: 50%; right: 15px; transform: translateY(-50%); color: #cfc09a; cursor: pointer; font-size: 1em; transition: color 0.3s; }
-.password-wrapper i:hover { color: var(--#D4AF37); }
+.password-wrapper i { position: absolute; top: 50%; right: 15px; transform: translateY(-50%); color: #D4AF37; cursor: pointer; font-size: 1em; transition: color 0.3s; }
+.password-wrapper i:hover { color: #FFD36D; }
 
 .spinner {
   display: none;
   width: 20px;
   height: 20px;
   border: 2px solid rgba(255,255,255,0.08);
-  border-top: 2px solid var(--#D4AF37);
+  border-top: 2px solid #D4AF37;
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }

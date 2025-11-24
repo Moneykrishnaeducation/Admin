@@ -4,6 +4,7 @@ import { ThemeProvider } from "../context/ThemeContext";
 
 import Navbar from "../commonComponent/Navbar";
 import Main from "../commonComponent/Mainpage";
+import Login from "../page/Login";
 import Dashboard from "../page/Dashboard";
 import Mail from "../page/Mail";
 import Settings from "../page/Settings";
@@ -11,7 +12,7 @@ import Propfirm from "../page/Propfirm";
 import Tickets from "../page/Tickets";
 import Activities from "../page/Activities";
 import MamAccount from "../page/MamAccount";
-import Login from "../page/Login";
+
 
 const AppRoutes = () => {
   const location = useLocation();
@@ -22,25 +23,37 @@ const AppRoutes = () => {
   }, [location.pathname]);
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const isLoginPage = location.pathname === "/login";
 
   return (
     <div className="w-screen flex">
-      <Navbar isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} />
+      {!isLoginPage && (
+        <Navbar isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} />
+      )}
 
-      <Main isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen}>
+      {isLoginPage ? (
         <Routes>
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/settings" element={<Settings />} />
-          <Route path="/propfirm" element={<Propfirm />} />
-          <Route path="/tickets" element={<Tickets />} />
-          <Route path="/activities" element={<Activities />} />
-          <Route path="/mamaccount" element={<MamAccount />} />
           <Route path="/login" element={<Login />} />
-          <Route path="/" element={<Dashboard />} />
-          <Route path="*" element={<Dashboard />} />
-          <Route path="/mail" element={<Mail />} />
+          {/* If user navigates to root while on login, keep them on login */}
+          <Route path="/" element={<Login />} />
+          <Route path="*" element={<Login />} />
         </Routes>
-      </Main>
+      ) : (
+        <Main isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen}>
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/settings" element={<Settings />} />
+            <Route path="/propfirm" element={<Propfirm />} />
+            <Route path="/tickets" element={<Tickets />} />
+            <Route path="/activities" element={<Activities />} />
+            <Route path="/mamaccount" element={<MamAccount />} />
+            <Route path="/mail" element={<Mail />} />
+            <Route path="/" element={<Dashboard />} />
+            <Route path="*" element={<Dashboard />} />
+          </Routes>
+        </Main>
+      )}
     </div>
   );
 };

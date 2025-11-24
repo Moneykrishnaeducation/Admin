@@ -79,7 +79,7 @@ const Header = ({ isSidebarOpen, setIsSidebarOpen }) => {
       });
 
       // Navigate to login page
-      navigate("/");
+      navigate("/login");
     } finally {
       setLogoutLoading(false);
       setShowLogoutPopup(false);
