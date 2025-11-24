@@ -1,20 +1,11 @@
 import React, { useState } from "react";
-import { Search } from "lucide-react";
+import TableStructure from "../commonComponent/TableStructure";
 
 const TabsPage = () => {
   const [activeTab, setActiveTab] = useState("Packages");
-  const [searchTerm, setSearchTerm] = useState("");
   const [expandedRows, setExpandedRows] = useState(new Set());
   const [toggledStatuses, setToggledStatuses] = useState(new Set());
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(5);
-  const [propTradersSearchTerm, setPropTradersSearchTerm] = useState("");
-  const [propTradersCurrentPage, setPropTradersCurrentPage] = useState(1);
-  const [propTradersItemsPerPage, setPropTradersItemsPerPage] = useState(5);
-  const [requestsSearchTerm, setRequestsSearchTerm] = useState("");
-  const [requestsCurrentPage, setRequestsCurrentPage] = useState(1);
-  const [requestsItemsPerPage, setRequestsItemsPerPage] = useState(5);
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [formData, setFormData] = useState({
@@ -114,73 +105,7 @@ const TabsPage = () => {
 
 
 
-  const filteredPackages = packages.filter(pkg =>
-    pkg.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = filteredPackages.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(filteredPackages.length / itemsPerPage);
-
-  const filteredPropTraders = propTradersData.filter(trader =>
-    trader.username.toLowerCase().includes(propTradersSearchTerm.toLowerCase()) ||
-    trader.email.toLowerCase().includes(propTradersSearchTerm.toLowerCase())
-  );
-
-  const propTradersIndexOfLastItem = propTradersCurrentPage * propTradersItemsPerPage;
-  const propTradersIndexOfFirstItem = propTradersIndexOfLastItem - propTradersItemsPerPage;
-  const currentPropTradersItems = filteredPropTraders.slice(propTradersIndexOfFirstItem, propTradersIndexOfLastItem);
-  const totalPropTradersPages = Math.ceil(filteredPropTraders.length / propTradersItemsPerPage);
-
-  const filteredRequests = requestsData.filter(req =>
-    req.user.toLowerCase().includes(requestsSearchTerm.toLowerCase()) ||
-    req.email.toLowerCase().includes(requestsSearchTerm.toLowerCase())
-  );
-
-  const requestsIndexOfLastItem = requestsCurrentPage * requestsItemsPerPage;
-  const requestsIndexOfFirstItem = requestsIndexOfLastItem - requestsItemsPerPage;
-  const currentRequestsItems = filteredRequests.slice(requestsIndexOfFirstItem, requestsIndexOfLastItem);
-  const totalRequestsPages = Math.ceil(filteredRequests.length / requestsItemsPerPage);
-
-
-
-  const handlePageChange = (pageNumber) => {
-    setCurrentPage(pageNumber);
-  };
-
-  const handleItemsPerPageChange = (e) => {
-    setItemsPerPage(Number(e.target.value));
-    setCurrentPage(1);
-  };
-
-  const handleSearchChange = (e) => {
-    setSearchTerm(e.target.value);
-    setCurrentPage(1);
-  };
-
-  const handlePropTradersPageChange = (pageNumber) => {
-    setPropTradersCurrentPage(pageNumber);
-  };
-
-  const handlePropTradersItemsPerPageChange = (e) => {
-    setPropTradersItemsPerPage(Number(e.target.value));
-    setPropTradersCurrentPage(1);
-  };
-
-  const handleRequestsSearchChange = (e) => {
-    setRequestsSearchTerm(e.target.value);
-    setRequestsCurrentPage(1);
-  };
-
-  const handleRequestsPageChange = (pageNumber) => {
-    setRequestsCurrentPage(pageNumber);
-  };
-
-  const handleRequestsItemsPerPageChange = (e) => {
-    setRequestsItemsPerPage(Number(e.target.value));
-    setRequestsCurrentPage(1);
-  };
+  // Removed all local filtering, pagination, and search input handlers since TableStructure does that internally now
 
   const handleViewRequest = (req) => {
     setSelectedRequest(req);
@@ -238,333 +163,133 @@ const TabsPage = () => {
     handleCloseModal();
   };
 
+    // Define columns for each tab to pass to TableStructure
+    const columnsPackages = [
+      { Header: "Package Name", accessor: "name" },
+      { Header: "Price", accessor: "price" },
+      { Header: "Bonus Fund", accessor: "bonusFund" },
+      { Header: "Tradable Fund", accessor: "tradableFund" },
+      { Header: "Leverage", accessor: "leverage" },
+      {
+        Header: "Status",
+        accessor: "status",
+        Cell: (cellValue) => cellValue ? "Active" : "Inactive",
+      },
+      {
+        Header: "Actions",
+        accessor: "actions",
+        Cell: (cellValue, row) => (
+          <button
+            onClick={() => toggleExpand(row.id)}
+            className="text-yellow-400 hover:text-yellow-300"
+          >
+            {expandedRows.has(row.id) ? "▼" : "▶"}
+          </button>
+        )
+      }
+    ];
+
+  const columnsPropTraders = [
+    { Header: "ID", accessor: "id" },
+    { Header: "Username", accessor: "username" },
+    { Header: "Account ID", accessor: "accountId" },
+    { Header: "Package", accessor: "package" },
+    { Header: "Email", accessor: "email" },
+    { Header: "Approved By", accessor: "approvedBy" },
+    { Header: "Approved On", accessor: "approvedOn" },
+    { Header: "Balance", accessor: "balance" },
+    { Header: "Profit", accessor: "profit" },
+    { Header: "Status", accessor: "status" },
+  ];
+
+  const columnsRequests = [
+    { Header: "User", accessor: "user" },
+    { Header: "Email", accessor: "email" },
+    { Header: "Package", accessor: "package" },
+    { Header: "Status", accessor: "status" },
+    { Header: "Created At", accessor: "createdAt" },
+    {
+      Header: "Actions",
+      accessor: "actions",
+      Cell: (row) => (
+        <button
+          onClick={() => handleViewRequest(row)}
+          className="px-3 py-1 bg-yellow-500 text-black rounded hover:bg-yellow-600"
+        >
+          View
+        </button>
+      )
+    }
+  ];
+
+  // Render TableStructure instead of manual tables and search inputs
   const renderTable = () => {
-    if (activeTab === "Packages") {
-      return (
-        <div>
-          <div className="mb-4 flex justify-between items-center">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-yellow-400" size={20} />
-              <input
-                type="text"
-                placeholder="Search packages..."
-                value={searchTerm}
-                onChange={handleSearchChange}
-                className="pl-10 pr-4 py-2 bg-black border border-yellow-400 text-yellow-400 rounded"
-              />
-            </div>
-            <button
-              onClick={handleCreatePackage}
-              className="px-4 py-2 bg-yellow-500 text-black rounded hover:bg-yellow-600"
-            >
-              + Create Package
-            </button>
-          </div>
-         <div className="overflow-x-auto rounded-lg shadow-lg bg-black">
-  <table className="w-full text-left border-collapse">
-    <thead>
-      <tr className="border-b-2 border-yellow-400">
-        <th className="p-2 text-yellow-400 font-bold">Package Name</th>
-        <th className="p-2 text-yellow-400 font-bold">Price</th>
-        <th className="p-2 text-yellow-400 font-bold">Bonus Fund</th>
-        <th className="p-2 text-yellow-400 font-bold">Tradable Fund</th>
-        <th className="p-2 text-yellow-400 font-bold">Leverage</th>
-        <th className="p-2 text-yellow-400 font-bold">Status</th>
-        <th className="p-2 text-yellow-400 font-bold">Actions</th>
-      </tr>
-    </thead>
-    <tbody>
-      {currentItems.map((pkg) => (
-        <React.Fragment key={pkg.id}>
-          <tr className="border-b border-white/20 hover:bg-yellow-400/5 transition-all">
-            <td className="p-2 text-white">{pkg.name}</td>
-            <td className="p-2 text-white">{pkg.price}</td>
-            <td className="p-2 text-white">{pkg.bonusFund}</td>
-            <td className="p-2 text-white">{pkg.tradableFund}</td>
-            <td className="p-2 text-white">{pkg.leverage}</td>
-            <td className="p-2 text-white">{pkg.status ? "Active" : "Inactive"}</td>
-            <td className="p-2">
+    switch(activeTab) {
+      case "Packages":
+        return (
+          <>
+            <div className="mb-4 flex justify-between items-center">
               <button
-                onClick={() => toggleExpand(pkg.id)}
-                className="text-yellow-400 hover:text-yellow-300"
+                onClick={handleCreatePackage}
+                className="px-4 py-2 bg-yellow-500 text-black rounded hover:bg-yellow-600"
               >
-                {expandedRows.has(pkg.id) ? "▼" : "▶"}
+                + Create Package
               </button>
-            </td>
-          </tr>
-
-          {expandedRows.has(pkg.id) && (
-            <tr className="bg-yellow-400/10 border-b border-white/20">
-              <td colSpan="7" className="p-4">
-                <div className="grid grid-cols-2 gap-4 text-sm text-white">
-                  <div>Maximum Cutoff: {pkg.maxCutoff}</div>
-                  <div>Target: {pkg.target}</div>
-                  <div>Target Time: {pkg.targetTime}</div>
-                  <div>Profit Share: {pkg.profitShare}</div>
-                  <div>Created: {pkg.created}</div>
-                  <div className="col-span-2">
-                    Status Toggle:
-                    <button
-                      onClick={() => toggleStatus(pkg.id)}
-                      className={`ml-2 px-3 py-1 rounded ${
-                        toggledStatuses.has(pkg.id)
-                          ? "bg-green-500 text-white"
-                          : "bg-red-500 text-white"
-                      }`}
-                    >
-                      {toggledStatuses.has(pkg.id) ? "On" : "Off"}
-                    </button>
-                  </div>
-                </div>
-              </td>
-            </tr>
-          )}
-        </React.Fragment>
-      ))}
-    </tbody>
-  </table>
-</div>
-
-          <div className="mt-4 flex items-center justify-between text-sm text-yellow-400">
-            <div>
-              Showing {filteredPackages.length === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1} to{" "}
-              {Math.min(currentPage * itemsPerPage, filteredPackages.length)} of {filteredPackages.length}
             </div>
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2">
-                <label htmlFor="itemsPerPage" className="text-sm text-yellow-400">Rows:</label>
-                <select
-                  id="itemsPerPage"
-                  value={itemsPerPage}
-                  onChange={handleItemsPerPageChange}
-                  className="bg-black border border-yellow-400 text-yellow-400 rounded px-2 py-1"
-                >
-                  <option value={5}>5</option>
-                  <option value={10}>10</option>
-                  <option value={20}>20</option>
-                </select>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => handlePageChange(currentPage - 1)}
-                  disabled={currentPage === 1}
-                  className={`px-3 py-1 rounded-md ${currentPage === 1 ? "opacity-50 cursor-not-allowed" : "bg-yellow-400 text-black"}`}
-                >
-                  Prev
-                </button>
-                <div className="px-2">Page</div>
-                <select
-                  value={currentPage}
-                  onChange={(e) => handlePageChange(Number(e.target.value))}
-                  className="bg-black border border-yellow-400 text-yellow-400 rounded px-2 py-1"
-                >
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
-                    <option key={p} value={p}>{p}</option>
-                  ))}
-                </select>
-                <button
-                  onClick={() => handlePageChange(currentPage + 1)}
-                  disabled={currentPage === totalPages}
-                  className={`px-3 py-1 rounded-md ${currentPage === totalPages ? "opacity-50 cursor-not-allowed" : "bg-yellow-400 text-black"}`}
-                >
-                  Next
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      );
-    } else if (activeTab === "Prop Traders") {
-      return (
-        <div>
-          <div className="mb-4 flex justify-between items-center">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-yellow-400" size={20} />
-              <input
-                type="text"
-                placeholder="Search prop traders..."
-                value={propTradersSearchTerm}
-                onChange={(e) => setPropTradersSearchTerm(e.target.value)}
-                className="pl-10 pr-4 py-2 bg-black border border-yellow-400 text-yellow-400 rounded"
-              />
-            </div>
-          </div>
-          <table className="w-full text-left shadow-lg">
-            <thead>
-              <tr className="border-b-2 border-yellow-400">
-                <th className="p-2 text-yellow-400 font-bold">ID</th>
-                <th className="p-2 text-yellow-400 font-bold">Username</th>
-                <th className="p-2 text-yellow-400 font-bold">Account ID</th>
-                <th className="p-2 text-yellow-400 font-bold">Package</th>
-                <th className="p-2 text-yellow-400 font-bold">Email</th>
-                <th className="p-2 text-yellow-400 font-bold">Approved By</th>
-                <th className="p-2 text-yellow-400 font-bold">Approved On</th>
-                <th className="p-2 text-yellow-400 font-bold">Balance</th>
-                <th className="p-2 text-yellow-400 font-bold">Profit</th>
-                <th className="p-2 text-yellow-400 font-bold">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {currentPropTradersItems.map((trader) => (
-                <tr key={trader.id} className="border-b border-white/20 hover:shadow-lg hover:bg-yellow-400/5 transition-all">
-                  <td className="p-2 text-white">{trader.id}</td>
-                  <td className="p-2 text-white">{trader.username}</td>
-                  <td className="p-2 text-white">{trader.accountId}</td>
-                  <td className="p-2 text-white">{trader.package}</td>
-                  <td className="p-2 text-white">{trader.email}</td>
-                  <td className="p-2 text-white">{trader.approvedBy}</td>
-                  <td className="p-2 text-white">{trader.approvedOn}</td>
-                  <td className="p-2 text-white">{trader.balance}</td>
-                  <td className="p-2 text-white">{trader.profit}</td>
-                  <td className="p-2 text-white">{trader.status}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <div className="mt-4 flex items-center justify-between text-sm text-yellow-400">
-            <div>
-              Showing {filteredPropTraders.length === 0 ? 0 : (propTradersCurrentPage - 1) * propTradersItemsPerPage + 1} to{" "}
-              {Math.min(propTradersCurrentPage * propTradersItemsPerPage, filteredPropTraders.length)} of {filteredPropTraders.length}
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2">
-                <label htmlFor="propTradersItemsPerPage" className="text-sm text-yellow-400">Rows:</label>
-                <select
-                  id="propTradersItemsPerPage"
-                  value={propTradersItemsPerPage}
-                  onChange={handlePropTradersItemsPerPageChange}
-                  className="bg-black border border-yellow-400 text-yellow-400 rounded px-2 py-1"
-                >
-                  <option value={5}>5</option>
-                  <option value={10}>10</option>
-                  <option value={20}>20</option>
-                </select>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => handlePropTradersPageChange(propTradersCurrentPage - 1)}
-                  disabled={propTradersCurrentPage === 1}
-                  className={`px-3 py-1 rounded-md ${propTradersCurrentPage === 1 ? "opacity-50 cursor-not-allowed" : "bg-yellow-400 text-black"}`}
-                >
-                  Prev
-                </button>
-                <div className="px-2">Page</div>
-                <select
-                  value={propTradersCurrentPage}
-                  onChange={(e) => handlePropTradersPageChange(Number(e.target.value))}
-                  className="bg-black border border-yellow-400 text-yellow-400 rounded px-2 py-1"
-                >
-                  {Array.from({ length: totalPropTradersPages }, (_, i) => i + 1).map(p => (
-                    <option key={p} value={p}>{p}</option>
-                  ))}
-                </select>
-                <button
-                  onClick={() => handlePropTradersPageChange(propTradersCurrentPage + 1)}
-                  disabled={propTradersCurrentPage === totalPropTradersPages}
-                  className={`px-3 py-1 rounded-md ${propTradersCurrentPage === totalPropTradersPages ? "opacity-50 cursor-not-allowed" : "bg-yellow-400 text-black"}`}
-                >
-                  Next
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      );
-    } else if (activeTab === "Requests") {
-      return (
-        <div>
-          <div className="mb-4 flex justify-between items-center">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-yellow-400" size={20} />
-              <input
-                type="text"
-                placeholder="Search requests..."
-                value={requestsSearchTerm}
-                onChange={handleRequestsSearchChange}
-                className="pl-10 pr-4 py-2 bg-black border border-yellow-400 text-yellow-400 rounded"
-              />
-            </div>
-          </div>
-          <table className="w-full text-left shadow-lg">
-            <thead>
-              <tr className="border-b-2 border-yellow-400">
-                <th className="p-2 text-yellow-400 font-bold">User</th>
-                <th className="p-2 text-yellow-400 font-bold">Email</th>
-                <th className="p-2 text-yellow-400 font-bold">Package</th>
-                <th className="p-2 text-yellow-400 font-bold">Status</th>
-                <th className="p-2 text-yellow-400 font-bold">Created At</th>
-                <th className="p-2 text-yellow-400 font-bold">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {currentRequestsItems.map((req) => (
-                <tr key={req.id} className="border-b border-white/20 hover:shadow-lg hover:bg-yellow-400/5 transition-all">
-                  <td className="p-2 text-white">{req.user}</td>
-                  <td className="p-2 text-white">{req.email}</td>
-                  <td className="p-2 text-white">{req.package}</td>
-                  <td className="p-2 text-white">{req.status}</td>
-                  <td className="p-2 text-white">{req.createdAt}</td>
-                  <td className="p-2">
-                    <button
-                      onClick={() => handleViewRequest(req)}
-                      className="px-3 py-1 bg-yellow-500 text-black rounded hover:bg-yellow-600"
-                    >
-                      View
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <div className="mt-4 flex items-center justify-between text-sm text-yellow-400">
-            <div>
-              Showing {filteredRequests.length === 0 ? 0 : (requestsCurrentPage - 1) * requestsItemsPerPage + 1} to{" "}
-              {Math.min(requestsCurrentPage * requestsItemsPerPage, filteredRequests.length)} of {filteredRequests.length}
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2">
-                <label htmlFor="requestsItemsPerPage" className="text-sm text-yellow-400">Rows:</label>
-                <select
-                  id="requestsItemsPerPage"
-                  value={requestsItemsPerPage}
-                  onChange={handleRequestsItemsPerPageChange}
-                  className="bg-black border border-yellow-400 text-yellow-400 rounded px-2 py-1"
-                >
-                  <option value={5}>5</option>
-                  <option value={10}>10</option>
-                  <option value={20}>20</option>
-                </select>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => handleRequestsPageChange(requestsCurrentPage - 1)}
-                  disabled={requestsCurrentPage === 1}
-                  className={`px-3 py-1 rounded-md ${requestsCurrentPage === 1 ? "opacity-50 cursor-not-allowed" : "bg-yellow-400 text-black"}`}
-                >
-                  Prev
-                </button>
-                <div className="px-2">Page</div>
-                <select
-                  value={requestsCurrentPage}
-                  onChange={(e) => handleRequestsPageChange(Number(e.target.value))}
-                  className="bg-black border border-yellow-400 text-yellow-400 rounded px-2 py-1"
-                >
-                  {Array.from({ length: totalRequestsPages }, (_, i) => i + 1).map(p => (
-                    <option key={p} value={p}>{p}</option>
-                  ))}
-                </select>
-                <button
-                  onClick={() => handleRequestsPageChange(requestsCurrentPage + 1)}
-                  disabled={requestsCurrentPage === totalRequestsPages}
-                  className={`px-3 py-1 rounded-md ${requestsCurrentPage === totalRequestsPages ? "opacity-50 cursor-not-allowed" : "bg-yellow-400 text-black"}`}
-                >
-                  Next
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      );
+            <TableStructure
+              columns={columnsPackages}
+              data={packages}
+              actionsColumn={null}
+              onRowClick={(row) => toggleExpand(row.id)}
+              renderRowSubComponent={(row) => (
+                expandedRows.has(row.id) ? (
+                  <tr className="bg-yellow-400/10 border-b border-white/20">
+                    <td colSpan={columnsPackages.length} className="p-4">
+                      <div className="grid grid-cols-2 gap-4 text-sm text-white">
+                        <div>Maximum Cutoff: {row.maxCutoff}</div>
+                        <div>Target: {row.target}</div>
+                        <div>Target Time: {row.targetTime}</div>
+                        <div>Profit Share: {row.profitShare}</div>
+                        <div>Created: {row.created}</div>
+                        <div className="col-span-2">
+                          Status Toggle:
+                          <button
+                            onClick={() => toggleStatus(row.id)}
+                            className={`ml-2 px-3 py-1 rounded ${
+                              toggledStatuses.has(row.id)
+                                ? "bg-green-500 text-white"
+                                : "bg-red-500 text-white"
+                            }`}
+                          >
+                            {toggledStatuses.has(row.id) ? "On" : "Off"}
+                          </button>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                ) : null
+              )}
+            />
+          </>
+        );
+      case "Prop Traders":
+        return (
+          <TableStructure
+            columns={columnsPropTraders}
+            data={propTradersData}
+          />
+        );
+      case "Requests":
+        return (
+          <>
+          <TableStructure
+            columns={columnsRequests}
+            data={requestsData}
+          />
+          </>
+        );
+      default:
+        return null;
     }
   };
 

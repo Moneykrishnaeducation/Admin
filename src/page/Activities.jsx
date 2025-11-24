@@ -42,25 +42,12 @@ const sampleStaffLogs = [
 ];
 
 const Activities = () => {
-  const { isDarkMode } = useTheme();
+  // Removed unused isDarkMode
   const [activeLog, setActiveLog] = useState("client"); // "client" or "staff"
-  const [searchText, setSearchText] = useState("");
 
   const data = useMemo(() => {
-    const logs = activeLog === "client" ? sampleClientLogs : sampleStaffLogs;
-    if (!searchText.trim()) {
-      return logs;
-    }
-    const lowerSearch = searchText.toLowerCase();
-    return logs.filter(
-      (log) =>
-        log.user.toLowerCase().includes(lowerSearch) ||
-        log.activity.toLowerCase().includes(lowerSearch) ||
-        log.ipAddress.toLowerCase().includes(lowerSearch) ||
-        log.userAgent.toLowerCase().includes(lowerSearch) ||
-        log.time.toLocaleString().toLowerCase().includes(lowerSearch)
-    );
-  }, [activeLog, searchText]);
+    return activeLog === "client" ? sampleClientLogs : sampleStaffLogs;
+  }, [activeLog]);
 
   const columns = [
     {
@@ -97,27 +84,6 @@ const Activities = () => {
         >
           Staff Logs
         </button>
-      </div>
-
-      <div className={`flex justify-end mb-4`}>
-        <div
-          className={`flex items-center gap-2 border border-yellow-500 rounded-md px-3 py-2 w-full sm:w-72 ${
-            isDarkMode ? "bg-black" : "bg-white"
-          } hover:bg-gray-900 transition`}
-        >
-          <Search size={18} className="text-yellow-400" />
-          <input
-            type="text"
-            placeholder="Search logs..."
-            value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
-            className={`bg-transparent w-full focus:outline-none ${
-              isDarkMode
-                ? "text-yellow-300 placeholder-yellow-400"
-                : "text-black placeholder-gray-500"
-            }`}
-          />
-        </div>
       </div>
 
       <TableStructure columns={columns} data={data} />

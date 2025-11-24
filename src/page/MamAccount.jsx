@@ -1,8 +1,5 @@
 import React, { useState, useMemo } from "react";
 import TableStructure from "../commonComponent/TableStructure";
-import { Search } from "lucide-react";
-import { useTheme } from "../context/ThemeContext";
-
 const sampleMamAccounts = [
   {
     id: 1,
@@ -58,9 +55,7 @@ import DisableModal from "../Modals/DisableModal";
 import HistoryModal from "../Modals/HistoryModal";
 
 const MamAccount = () => {
-  const { isDarkMode } = useTheme();
   const [activeTab, setActiveTab] = useState("mam"); // "mam" or "investor"
-  const [searchText, setSearchText] = useState("");
   const [expandedRows, setExpandedRows] = useState(new Set());
   const [modalAccountId, setModalAccountId] = useState("");
   const [disableAccountId, setDisableAccountId] = useState("");
@@ -204,17 +199,8 @@ const MamAccount = () => {
   ];
 
   const data = useMemo(() => {
-    const sourceData = activeTab === "mam" ? sampleMamAccounts : sampleInvestorAccounts;
-    if (!searchText.trim()) {
-      return sourceData;
-    }
-    const lowerSearch = searchText.toLowerCase();
-    return sourceData.filter((item) =>
-      Object.values(item).some((val) =>
-        val.toString().toLowerCase().includes(lowerSearch)
-      )
-    );
-  }, [activeTab, searchText]);
+    return activeTab === "mam" ? sampleMamAccounts : sampleInvestorAccounts;
+  }, [activeTab]);
 
   const columns = activeTab === "mam" ? columnsMam : columnsInvestor;
 
@@ -294,26 +280,7 @@ const MamAccount = () => {
         </button>
       </div>
 
-      <div className="flex justify-end mb-4 z-50 relative">
-        <div
-          className={`flex items-center gap-2 border border-yellow-500 rounded-md px-3 py-2 w-full sm:w-72 ${
-            isDarkMode ? "bg-black" : "bg-white"
-          } hover:bg-gray-900 transition`}
-        >
-          <Search size={18} className="text-yellow-400" />
-          <input
-            type="text"
-            placeholder={`Search ${activeTab === "mam" ? "MAM" : "Investor"} accounts...`}
-            value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
-            className={`bg-transparent w-full focus:outline-none ${
-              isDarkMode
-                ? "text-yellow-300 placeholder-yellow-400"
-                : "text-black placeholder-gray-500"
-            }`}
-          />
-        </div>
-      </div>
+      
 
       <div
         className={
