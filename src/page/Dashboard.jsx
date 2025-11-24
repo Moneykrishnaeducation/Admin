@@ -1,6 +1,7 @@
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
 import Navbar from "../commonComponent/Navbar";
-import { Users, CreditCard, Repeat } from "lucide-react"; // import icons
+import { Users, Download, Repeat } from "lucide-react"; // import icons
 
 const Dashboard = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -35,15 +36,15 @@ const Dashboard = () => {
         {/* Stats Buttons with icons */}
         <div className="flex flex-col sm:flex-row justify-center gap-4 sm:gap-6 mb-6">
           <button className="flex items-center justify-center gap-2 bg-yellow-500 text-black px-4 sm:px-6 py-2 sm:py-3 rounded-full hover:bg-yellow-600 transition-all text-sm sm:text-base">
-            <Users className="w-5 h-5" />
+            <Download className="w-5 h-5" />
             User Account
           </button>
           <button className="flex items-center justify-center gap-2 bg-yellow-500 text-black px-4 sm:px-6 py-2 sm:py-3 rounded-full hover:bg-yellow-600 transition-all text-sm sm:text-base">
-            <CreditCard className="w-5 h-5" />
+            <Download className="w-5 h-5" />
             Trading Account
           </button>
           <button className="flex items-center justify-center gap-2 bg-yellow-500 text-black px-4 sm:px-6 py-2 sm:py-3 rounded-full hover:bg-yellow-600 transition-all text-sm sm:text-base">
-            <Repeat className="w-5 h-5" />
+            <Download className="w-5 h-5" />
             Transaction
           </button>
         </div>
@@ -65,12 +66,21 @@ const Dashboard = () => {
         <div className="mt-6 sm:mt-10">
           <h2 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4">Recent Activities</h2>
           <div className="space-y-2">
-            {recentActivity.map((activity, index) => (
+            {recentActivity.slice(0, 5).map((activity, index) => (
               <div key={index} className="flex flex-col border-b border-yellow-400/40 pb-2 sm:pb-3">
                 <p className="text-sm sm:text-base text-white">{activity.description}</p>
-
               </div>
             ))}
+            {recentActivity.length > 5 && (
+              <div className="mt-3">
+                <Link
+                  to="/activities"
+                  className="text-yellow-400 text-sm hover:underline cursor-pointer"
+                >
+                  View more activities
+                </Link>
+              </div>
+            )}
           </div>
         </div>
       </div>
