@@ -71,9 +71,16 @@ const AppRoutes = () => {
 };
 
 const Routers = () => {
+  // Determine a sensible basename so the SPA works when served from a sub-path
+  // Examples: '/static/admin', '/admin', or root '/'
+  const pathname = typeof window !== 'undefined' ? window.location.pathname : '/';
+  let basename = '/';
+  if (pathname.startsWith('/static/admin')) basename = '/static/admin';
+  else if (pathname.startsWith('/admin')) basename = '/admin';
+
   return (
     <ThemeProvider>
-      <Router>
+      <Router basename={basename}>
         <AppRoutes />
       </Router>
     </ThemeProvider>
