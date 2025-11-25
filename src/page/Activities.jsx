@@ -1,53 +1,61 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import TableStructure from "../commonComponent/TableStructure";
+import { get } from "../utils/api-config"; // import your API GET
 import { Search } from "lucide-react";
-import { useTheme } from "../context/ThemeContext";
-
-const sampleClientLogs = [
-  {
-    id: 1,
-    time: new Date("2024-06-01T10:15:00"),
-    user: "ClientUser1",
-    activity: "Logged in",
-    ipAddress: "192.168.1.1",
-    userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
-  },
-  {
-    id: 2,
-    time: new Date("2024-06-01T11:20:00"),
-    user: "ClientUser2",
-    activity: "Viewed report",
-    ipAddress: "192.168.1.2",
-    userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)",
-  },
-];
-
-const sampleStaffLogs = [
-  {
-    id: 1,
-    time: new Date("2024-06-01T09:05:00"),
-    user: "StaffUser1",
-    activity: "Updated ticket status",
-    ipAddress: "10.0.0.1",
-    userAgent: "Mozilla/5.0 (X11; Ubuntu; Linux x86_64)",
-  },
-  {
-    id: 2,
-    time: new Date("2024-06-01T12:45:00"),
-    user: "StaffUser2",
-    activity: "Closed ticket",
-    ipAddress: "10.0.0.2",
-    userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
-  },
-];
 
 const Activities = () => {
-  // Removed unused isDarkMode
   const [activeLog, setActiveLog] = useState("client"); // "client" or "staff"
 
+  const [clientLogs, setClientLogs] = useState([]);
+  const [staffLogs, setStaffLogs] = useState([]);
+
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Fetch logs from backend
+  useEffect(() => {
+    const loadLogs = async () => {
+      try {
+        const clientRes = await get("activity/client-logs/");
+        const staffRes = await get("activity/staff/");
+
+        // Ensure consistent structure
+        setClientLogs(
+          clientRes?.map((item) => ({
+            id: item.id,
+            time: item.timestamp,
+            user: item.user,
+            activity: item.activity,
+            ipAddress: item.ip_address,
+            userAgent: item.user_agent,
+          })) || []
+        );
+
+        setStaffLogs(
+          staffRes?.map((item) => ({
+            id: item.id,
+            time: new Date(item.timestamp),
+            user: item.user,
+            activity: item.activity,
+            ipAddress: item.ip_address,
+            userAgent: item.user_agent,
+          })) || []
+        );
+      } catch (err) {
+        console.error(err);
+        setError("Failed to load activity logs");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadLogs();
+  }, []);
+
+  // Decide which table data to show
   const data = useMemo(() => {
-    return activeLog === "client" ? sampleClientLogs : sampleStaffLogs;
-  }, [activeLog]);
+    return activeLog === "client" ? clientLogs : staffLogs;
+  }, [activeLog, clientLogs, staffLogs]);
 
   const columns = [
     {
@@ -74,6 +82,7 @@ const Activities = () => {
         >
           Client Logs
         </button>
+
         <button
           className={`px-4 py-2 rounded-md font-semibold ${
             activeLog === "staff"
@@ -86,7 +95,13 @@ const Activities = () => {
         </button>
       </div>
 
-      <TableStructure columns={columns} data={data} />
+      {loading ? (
+        <p className="text-yellow-400 text-center mt-10">Loading logs...</p>
+      ) : error ? (
+        <p className="text-red-500 text-center mt-10">{error}</p>
+      ) : (
+        <TableStructure columns={columns} data={data} />
+      )}
     </div>
   );
 };

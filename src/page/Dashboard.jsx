@@ -1,51 +1,108 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import Navbar from "../commonComponent/Navbar";
-import { Users, Download, Repeat } from "lucide-react"; // import icons
+import { Download } from "lucide-react";
+import { get } from "../utils/api-config";
 
 const Dashboard = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [statsData, setStatsData] = useState(null);
+  const [recentActivity, setRecentActivity] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const stats = [
-    { label: "Users", value: 1200 },
-    { label: "Trading Accounts", value: 450 },
-    { label: "Transactions", value: 3200 },
-    { label: "Tickets", value: 28 },
-    { label: "Users", value: 1200 },
-    { label: "Trading Accounts", value: 450 },
-    { label: "Transactions", value: 3200 },
-    { label: "Tickets", value: 28 },
-    { label: "Users", value: 1200 },
-  ];
+  // Format numbers with 2 decimal places ONLY if decimal exists
+  const formatValue = (value) => {
+    if (typeof value === "number" && !Number.isInteger(value)) {
+      return value.toFixed(2);
+    }
+    return value;
+  };
 
-  const recentActivity = new Array(9).fill(null).map((_, index) => ({
-    title: `Activity #${index + 1}`,
-    description: "Details about this activity will appear here.",
-  }));
+  // Fetch dashboard data + activities
+useEffect(() => {
+  const loadDashboardData = async () => {
+    try {
+      // Fetch dashboard stats
+      const statsResponse = await get("dashboard/data/");
+
+      if (statsResponse.status === "success") {
+        setStatsData(statsResponse.data);
+      } else {
+        setError("Failed to fetch dashboard stats");
+      }
+
+      // Fetch dashboard activities
+      const activityResponse = await get("dashboard/activity/");
+
+      if (activityResponse.activities) {
+        setRecentActivity(activityResponse.activities);
+      } else {
+        setError("Failed to fetch activities");
+      }
+
+    } catch (err) {
+      console.error(err);
+      setError("Failed to load dashboard");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  loadDashboardData();
+}, []);
+
+
+  // Map API data to cards + static pending prop requests
+  const stats = statsData
+    ? [
+        { label: "Total Trading Accounts", value: formatValue(statsData.total_trading_accounts) },
+        { label: "Total Demo Accounts", value: formatValue(statsData.demo_accounts) },
+        { label: "Total Users", value: formatValue(statsData.total_users) },
+        { label: "Total Manager", value: formatValue(statsData.total_managers) },
+        { label: "Total IBs", value: formatValue(statsData.total_ibs) },
+        { label: "Active MAM Accounts", value: formatValue(statsData.active_mam_accounts) },
+        { label: "MAM Investor Account", value: formatValue(statsData.mam_investor_accounts) },
+        { label: "Total Prop Accounts", value: formatValue(statsData.total_prop_accounts) },
+        { label: "Pending Transactions", value: formatValue(statsData.pending_transactions) },
+        { label: "Pending Tickets", value: formatValue(statsData.pending_tickets) },
+        { label: "Pending Requests", value: formatValue(statsData.pending_requests) },
+        { label: "Pending Prop Requests", value: 0 }, // static
+      ]
+    : [];
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen text-yellow-400">
+        Loading dashboard...
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex justify-center items-center min-h-screen text-red-500">
+        {error}
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col md:flex-row">
-      {/* Sidebar */}
       <Navbar isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} />
 
-      {/* Main Content */}
       <div className="flex-1 min-h-screen bg-black text-yellow-400 p-4 sm:p-8 transition-all duration-300">
-        {/* Header */}
-        <div className="flex justify-between items-center mb-2"></div>
 
-        {/* Stats Buttons with icons */}
+        {/* Stats Buttons */}
         <div className="flex flex-col sm:flex-row justify-center gap-4 sm:gap-6 mb-6">
           <button className="flex items-center justify-center gap-2 bg-yellow-500 text-black px-4 sm:px-6 py-2 sm:py-3 rounded-full hover:bg-yellow-600 transition-all text-sm sm:text-base">
-            <Download className="w-5 h-5" />
-            User Account
+            <Download className="w-5 h-5" /> User Account
           </button>
           <button className="flex items-center justify-center gap-2 bg-yellow-500 text-black px-4 sm:px-6 py-2 sm:py-3 rounded-full hover:bg-yellow-600 transition-all text-sm sm:text-base">
-            <Download className="w-5 h-5" />
-            Trading Account
+            <Download className="w-5 h-5" /> Trading Account
           </button>
           <button className="flex items-center justify-center gap-2 bg-yellow-500 text-black px-4 sm:px-6 py-2 sm:py-3 rounded-full hover:bg-yellow-600 transition-all text-sm sm:text-base">
-            <Download className="w-5 h-5" />
-            Transaction
+            <Download className="w-5 h-5" /> Transaction
           </button>
         </div>
 
@@ -63,26 +120,37 @@ const Dashboard = () => {
         </div>
 
         {/* Recent Activity */}
-        <div className="mt-6 sm:mt-10">
-          <h2 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4">Recent Activities</h2>
-          <div className="space-y-2">
-            {recentActivity.slice(0, 5).map((activity, index) => (
-              <div key={index} className="flex flex-col border-b border-yellow-400/40 pb-2 sm:pb-3">
-                <p className="text-sm sm:text-base text-white">{activity.description}</p>
-              </div>
-            ))}
-            {recentActivity.length > 5 && (
-              <div className="mt-3">
-                <Link
-                  to="/activities"
-                  className="text-yellow-400 text-sm hover:underline cursor-pointer"
-                >
-                  View more activities
-                </Link>
-              </div>
-            )}
-          </div>
-        </div>
+<div className="mt-6 sm:mt-10">
+  <h2 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4">Recent Activities</h2>
+
+  <div className="space-y-3">
+    {recentActivity.slice(0, 5).map((activity, index) => (
+      <div
+        key={index}
+        className="border-b border-yellow-400/40 pb-2 sm:pb-3"
+      >
+        <p className="text-white text-sm sm:text-base">
+          {activity.message}
+        </p>
+        <p className="text-yellow-400 text-xs mt-1">
+          {activity.user} • {new Date(activity.timestamp).toLocaleString()}
+        </p>
+      </div>
+    ))}
+
+    {recentActivity.length > 5 && (
+      <div className="mt-3">
+        <Link
+          to="/activities"
+          className="text-yellow-400 text-sm hover:underline cursor-pointer"
+        >
+          View more activities
+        </Link>
+      </div>
+    )}
+  </div>
+</div>
+
       </div>
     </div>
   );

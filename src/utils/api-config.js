@@ -9,7 +9,7 @@ function getApiBase() {
     const hostname = window.location.hostname;
     const protocol = window.location.protocol;
     const port = window.location.port;
-    
+
     // For authentication endpoints, use /api/
     // For data endpoints like users, they're at root level
     return '/api';
@@ -64,16 +64,26 @@ async function fetchWithAuth(url, options = {}) {
     return response;
 }
 
+// Named export for the 'get' function
+export async function get(endpoint) {
+    const url = `${API_BASE}/${endpoint}`;
+
+    try {
+        const response = await fetchWithAuth(url, { method: 'GET' });
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error('API call failed:', error);
+        throw error;
+    }
+}
+
 // Create the API object that dashboard.js expects
 window.API = {
     // Get dashboard statistics overview
     async getStatsOverview() {
         try {
-            // Admin endpoints are available directly without /api prefix
-            const endpoint = USE_TEST_ENDPOINTS ? 
-                `/api/test/dashboard/stats/` : 
-                `/api/dashboard/stats/`;
-            
+            const endpoint = USE_TEST_ENDPOINTS ? '/api/test/dashboard/stats/' : '/api/dashboard/stats/';
             const response = await fetchWithAuth(endpoint);
             const data = await response.json();
             console.log('📊 Dashboard stats loaded:', data);
@@ -87,11 +97,7 @@ window.API = {
     // Get recent transactions for activity feed
     async getRecentTransactions() {
         try {
-            // Admin endpoints are available directly without /api prefix
-            const endpoint = USE_TEST_ENDPOINTS ? 
-                `/api/test/recent-transactions/` : 
-                `/api/recent-transactions/`;
-                
+            const endpoint = USE_TEST_ENDPOINTS ? '/api/test/recent-transactions/' : '/api/recent-transactions/';
             const response = await fetchWithAuth(endpoint);
             const data = await response.json();
             console.log('📋 Recent transactions loaded:', data);
@@ -103,7 +109,6 @@ window.API = {
     }
 };
 
-// Make API_BASE available globally
 window.API_BASE = API_BASE;
 
 console.log('✅ Admin API object initialized:', window.API);
