@@ -339,7 +339,7 @@ const Partnership = () => {
           }`}
           onClick={() => setActiveTab("withdrawalPending")}
         >
-          Withdrawal Pending
+          Withdrawal History
         </button>
       </div>
 
