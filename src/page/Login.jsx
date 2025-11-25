@@ -1,6 +1,8 @@
+// react-router-dom import added to support navigate
 import React, { useState } from 'react';
 import axios from 'axios'; // Import axios
 import styled from 'styled-components';
+import { useNavigate } from 'react-router-dom';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -9,6 +11,9 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [verificationRequired, setVerificationRequired] = useState(false);
+
+  // useNavigate hook initialized
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -32,8 +37,8 @@ const Login = () => {
         localStorage.setItem('access_token', response.data.access); // Store the JWT token
         localStorage.setItem('refresh_token', response.data.refresh); // Store the refresh token
 
-        // Redirect or navigate to the appropriate page after successful login
-        window.location.href = response.data.redirect_url;
+        // Redirect or navigate to the dashboard page after successful login
+        navigate('/dashboard');
       }
     } catch (error) {
       // Handle errors (e.g., wrong credentials)
@@ -115,7 +120,6 @@ const Login = () => {
 };
 
 const StyledWrapper = styled.div`
-
 
 * {
   font-family: "Poppins", sans-serif;
@@ -294,6 +298,6 @@ button:disabled { background: #333; color: #777; cursor: not-allowed; }
   .box { width: 90vw; }
   .box:hover { width: 95vw; height: 500px; }
   .loginBx { width: 90%; }
-}`;
+}`
 
 export default Login;

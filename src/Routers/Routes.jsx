@@ -29,7 +29,7 @@ const AppRoutes = () => {
   }, [location.pathname]);
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const isLoginPage = location.pathname === "/login";
+  const isLoginPage = location.pathname === "/";
 
   return (
     <div className="w-screen flex">
@@ -47,7 +47,6 @@ const AppRoutes = () => {
       ) : (
         <Main isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen}>
           <Routes>
-            <Route path="/login" element={<Login />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/tradingaccount" element={<TradingAccount />} />
             <Route path="/tradingaccounts" element={<TradingAccount />} />
@@ -60,8 +59,6 @@ const AppRoutes = () => {
             <Route path="/pendingrequest" element={<Pendingrequest />} />
             <Route path="/demo" element={<DemoAccount />} />
             <Route path="/mail" element={<Mail />} />
-            <Route path="/" element={<Dashboard />} />
-            <Route path="*" element={<Dashboard />} />
             <Route path="transactions" element={<Transactions />} />
             <Route path="partnership" element={<Partnership />} />
             <Route path="admin" element={<AdminManagerList />} />
