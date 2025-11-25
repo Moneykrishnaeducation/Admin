@@ -127,19 +127,19 @@ const Dashboard = () => {
         {/* Stats Buttons */}
         <div className="flex flex-col sm:flex-row justify-center gap-4 sm:gap-6 mb-6">
           <button
-            className="flex items-center justify-center gap-2 bg-yellow-500 text-black px-4 sm:px-6 py-2 sm:py-3 rounded-full hover:bg-yellow-600 transition-all text-sm sm:text-base"
+            className="flex items-center justify-center gap-2 bg-yellow-500 text-black px-4 sm:px-6 py-2 sm:py-3 rounded-md hover:bg-yellow-600 transition-all text-sm sm:text-base"
             onClick={() => downloadCSV("/api/export/users/csv/", "users.csv")}
           >
             <Download className="w-5 h-5" /> User Account
           </button>
           <button
-            className="flex items-center justify-center gap-2 bg-yellow-500 text-black px-4 sm:px-6 py-2 sm:py-3 rounded-full hover:bg-yellow-600 transition-all text-sm sm:text-base"
+            className="flex items-center justify-center gap-2 bg-yellow-500 text-black px-4 sm:px-6 py-2 sm:py-3 rounded-md hover:bg-yellow-600 transition-all text-sm sm:text-base"
             onClick={() => downloadCSV("/api/export/trading-accounts/csv/", "trading_accounts.csv")}
           >
             <Download className="w-5 h-5" /> Trading Account
           </button>
           <button
-            className="flex items-center justify-center gap-2 bg-yellow-500 text-black px-4 sm:px-6 py-2 sm:py-3 rounded-full hover:bg-yellow-600 transition-all text-sm sm:text-base"
+            className="flex items-center justify-center gap-2 bg-yellow-500 text-black px-4 sm:px-6 py-2 sm:py-3 rounded-md hover:bg-yellow-600 transition-all text-sm sm:text-base"
             onClick={() => downloadCSV("/api/export/transactions/csv/", "transactions.csv")}
           >
             <Download className="w-5 h-5" /> Transaction

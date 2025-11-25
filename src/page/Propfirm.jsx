@@ -303,7 +303,7 @@ const TabsPage = () => {
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`px-6 py-3 rounded-full transition-all ${
+              className={`px-6 py-3 rounded-md transition-all ${
                 activeTab === tab
                   ? "bg-yellow-500 text-black shadow-lg"
                   : "bg-black border border-yellow-400 hover:bg-yellow-500 hover:text-black"

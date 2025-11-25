@@ -318,7 +318,7 @@ const Partnership = () => {
     <div className="p-4">
       <div className="flex gap-4 mb-4">
         <button
-          className={`px-4 py-2 rounded-full font-semibold ${
+          className={`px-4 py-2 rounded-md font-semibold ${
             activeTab === "partnerList" ? "bg-yellow-400 text-black" : "bg-gray-200"
           }`}
           onClick={() => setActiveTab("partnerList")}
@@ -326,7 +326,7 @@ const Partnership = () => {
           Partner List
         </button>
         <button
-          className={`px-4 py-2 rounded-full font-semibold ${
+          className={`px-4 py-2 rounded-md font-semibold ${
             activeTab === "withdrawalRequest" ? "bg-yellow-400 text-black" : "bg-gray-200"
           }`}
           onClick={() => setActiveTab("withdrawalRequest")}
@@ -334,7 +334,7 @@ const Partnership = () => {
           Withdrawal Request
         </button>
         <button
-          className={`px-4 py-2 rounded-full font-semibold ${
+          className={`px-4 py-2 rounded-md font-semibold ${
             activeTab === "withdrawalPending" ? "bg-yellow-400 text-black" : "bg-gray-200"
           }`}
           onClick={() => setActiveTab("withdrawalPending")}

@@ -182,11 +182,11 @@ const MailForm = () => {
         {/* Active users count will be retrieved automatically when broadcasting */}
 
         <div className="flex flex-col sm:flex-row justify-between gap-3">
-          <button type="submit" disabled={loading} className="flex-1 bg-yellow-500 text-black py-3 rounded-full hover:bg-yellow-600 transition-all text-sm sm:text-base">
+          <button type="submit" disabled={loading} className="flex-1 bg-yellow-500 text-black py-3 rounded-md hover:bg-yellow-600 transition-all text-sm sm:text-base">
             {loading ? 'Sending...' : 'Send Email'}
           </button>
 
-          <button type="button" onClick={sendBroadcast} disabled={loading} className="flex-1 bg-yellow-500 text-black py-3 rounded-full hover:bg-yellow-600 transition-all text-sm sm:text-base">
+          <button type="button" onClick={sendBroadcast} disabled={loading} className="flex-1 bg-yellow-500 text-black py-3 rounded-md hover:bg-yellow-600 transition-all text-sm sm:text-base">
             {loading ? 'Sending...' : `Send to All Users (${activeUsersCount ?? '--'})`}
           </button>
         </div>

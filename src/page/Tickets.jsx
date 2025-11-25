@@ -61,7 +61,7 @@ const Tickets = () => {
             key={tab}
             onClick={() => setActiveTab(tab)}
             className={`
-              px-5 py-2 rounded-full font-semibold transition
+              px-5 py-2 rounded-md font-semibold transition
               ${activeTab === tab ? "bg-yellow-400 text-black" : "bg-gray-700 text-yellow-300"}
             `}
           >
