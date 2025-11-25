@@ -4,3 +4,7 @@ export { default as WithdrawModal } from './WithdrawModal';
 export { default as EditProfileModal } from './EditProfileModal';
 export { default as BankCryptoModal } from './BankCryptoModal';
 export { default as ChangeStatusModal } from './ChangeStatusModal';
+export { default as ChangeUserProfileModal } from './ChangeUserProfileModal';
+export { default as HistoryModal } from './HistoryModal';
+export { default as TicketsModal } from './TicketsModal';
+export { default as AddTradingAccountModal } from './AddTradingAccountModal';

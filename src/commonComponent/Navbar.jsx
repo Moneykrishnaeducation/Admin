@@ -17,6 +17,23 @@ import {
 const Navbar = ({ isSidebarOpen, setIsSidebarOpen }) => {
   const { isDarkMode } = useTheme();
   const location = useLocation();
+  const [isMobileView, setIsMobileView] = React.useState(false);
+
+  React.useEffect(() => {
+    // Function to check window size
+    const handleResize = () => {
+      setIsMobileView(window.innerWidth < 768); // Tailwind mobile breakpoint md is 768px
+    };
+
+    // Initial check
+    handleResize();
+
+    // Add resize listener
+    window.addEventListener("resize", handleResize);
+
+    // Cleanup listener on unmount
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   const menuItems = [
     { path: "/dashboard", icon: Home, label: "Dashboard" },
@@ -64,11 +81,13 @@ const Navbar = ({ isSidebarOpen, setIsSidebarOpen }) => {
             <Link
               key={item.path}
               to={item.path}
-              onClick={() => setIsSidebarOpen(true)}
+              onClick={isMobileView ? () => setIsSidebarOpen(false) : undefined}
               className={`flex items-center gap-2.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-300 relative border
-                ${isActive 
-                  ? "bg-yellow-600 text-black shadow-[0_0_8px_#FFD700]" 
-                  : "border-transparent hover:bg-yellow-500 hover:text-black hover:border-white"} `}
+                ${
+                  isActive
+                    ? "bg-yellow-600 text-black shadow-[0_0_8px_#FFD700]"
+                    : "border-transparent hover:bg-yellow-500 hover:text-black hover:border-white"
+                } `}
             >
               <Icon
                 className={`text-lg relative z-10 ${
