@@ -61,8 +61,8 @@ const Header = ({ isSidebarOpen, setIsSidebarOpen }) => {
     try {
       // Clear stored tokens and user data (skipped API call)
       const keysToRemove = [
-        'jwt_token', 'accessToken', 'refresh_token', 'refreshToken',
-        'user_role', 'userRole', 'user_email', 'userEmail', 'user_name', 'userName',
+        'jwt_token', 'access_token', 'refresh_token', 'refreshToken',
+        'user',
         'current_page'
       ];
       keysToRemove.forEach(key => {
@@ -74,7 +74,7 @@ const Header = ({ isSidebarOpen, setIsSidebarOpen }) => {
       localStorage.removeItem('login_verification_pending');
 
       // Trigger cross-tab logout
-      import('../utils/api').then(({ triggerCrossTabLogout }) => {
+      import('../utils/api-config').then(({ triggerCrossTabLogout }) => {
         triggerCrossTabLogout();
       });
 
