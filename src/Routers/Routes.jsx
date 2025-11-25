@@ -18,6 +18,7 @@ import Pendingrequest from "../page/Pendingrequest";
 import DemoAccount from "../page/DemoAccount";
 import Transactions from "../page/Transactions";
 import Partnership from "../page/Partnership";
+import AdminManagerList from "../page/Admin";
 
 const AppRoutes = () => {
   const location = useLocation();
@@ -63,6 +64,8 @@ const AppRoutes = () => {
             <Route path="*" element={<Dashboard />} />
             <Route path="transactions" element={<Transactions />} />
             <Route path="partnership" element={<Partnership />} />
+            <Route path="admin" element={<AdminManagerList />} />
+            
           </Routes>
         </Main>
       )}
