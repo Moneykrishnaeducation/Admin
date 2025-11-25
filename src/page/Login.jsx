@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import axios from 'axios'; // Import axios
 import styled from 'styled-components';
 
 const Login = () => {
@@ -7,100 +8,111 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [verificationRequired, setVerificationRequired] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     setErrorMessage('');
+    setVerificationRequired(false);
 
-    // Replace this with your actual login API call
+    // Make API request to the Django backend
     try {
-      // Mocking API request here
-      const response = await fakeApiCall({ email, password });
+      const response = await axios.post('http://admin.localhost:8000/api/login/', {
+        email,
+        password,
+      });
 
-      if (response.success) {
-        // Handle successful login (redirect, show dashboard, etc.)
+      // Check if the response includes 'verification_required'
+      if (response.data.verification_required) {
+        setVerificationRequired(true);
+        setErrorMessage(response.data.message);
       } else {
-        setErrorMessage(response.message);
+        // Handle successful login
+        localStorage.setItem('access_token', response.data.access); // Store the JWT token
+        localStorage.setItem('refresh_token', response.data.refresh); // Store the refresh token
+
+        // Redirect or navigate to the appropriate page after successful login
+        window.location.href = response.data.redirect_url;
       }
     } catch (error) {
-      setErrorMessage('Something went wrong. Please try again later.');
+      // Handle errors (e.g., wrong credentials)
+      if (error.response) {
+        setErrorMessage(error.response.data.error || 'Something went wrong. Please try again later.');
+      } else {
+        setErrorMessage('Something went wrong. Please try again later.');
+      }
     } finally {
       setIsLoading(false);
     }
   };
 
-  const fakeApiCall = async ({ email, password }) => {
-    // Simulate an API call with a delay
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        if (email === 'test@example.com' && password === 'password') {
-          resolve({ success: true });
-        } else {
-          resolve({ success: false, message: 'Invalid email or password' });
-        }
-      }, 2000);
-    });
-  };
-
   return (
     <StyledWrapper>
       <div className="box">
-    <div className="login">      
-      <form className="loginBx" method="POST" action="/api/login/" id="signinForm" onSubmit={handleSubmit}>
-        <h2>
-          <i className="fa-solid fa-right-to-bracket"></i>
-          Login
-          <i className="fa-solid fa-heart"></i>
-        </h2>
-        <label htmlFor="username">Email</label>
-        <input
-          type="email"
-          id="username"
-          name="email"
-          placeholder="Email"
-          autoComplete="email"
-          required
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
+        <div className="login">
+          <form className="loginBx" method="POST" action="" id="signinForm" onSubmit={handleSubmit}>
+            <h2>
+              <i className="fa-solid fa-right-to-bracket"></i>
+              Login
+              <i className="fa-solid fa-heart"></i>
+            </h2>
+            <label htmlFor="username">Email</label>
+            <input
+              type="email"
+              id="username"
+              name="email"
+              placeholder="Email"
+              autoComplete="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
 
-        <label htmlFor="signinPassword">Password</label>
-        <div className="password-wrapper">
-          <input
-            type={showPassword ? 'text' : 'password'}
-            id="signinPassword"
-            name="password"
-            placeholder="Password"
-            autoComplete="current-password"
-            required
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-          <i
-            className={showPassword ? 'fa-regular fa-eye-slash' : 'fa-regular fa-eye'}
-            id="togglePassword"
-            onClick={() => setShowPassword((s) => !s)}
-            role="button"
-            aria-label={showPassword ? 'Hide password' : 'Show password'}
-          ></i>
+            <label htmlFor="signinPassword">Password</label>
+            <div className="password-wrapper">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                id="signinPassword"
+                name="password"
+                placeholder="Password"
+                autoComplete="current-password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+              <i
+                className={showPassword ? 'fa-regular fa-eye-slash' : 'fa-regular fa-eye'}
+                id="togglePassword"
+                onClick={() => setShowPassword((s) => !s)}
+                role="button"
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+              ></i>
+            </div>
+
+            <button type="submit" disabled={isLoading}>
+              {isLoading ? '' : 'Sign in'}
+              <span
+                className="spinner"
+                id="loadingSpinner"
+                style={{ display: isLoading ? 'inline-block' : 'none' }}
+              ></span>
+            </button>
+            <div id="error-message" style={{ color: 'red', display: errorMessage ? 'block' : 'none' }}>
+              {errorMessage}
+            </div>
+
+            {verificationRequired && (
+              <div id="verification-message" style={{ color: '#FFD36D', marginTop: '10px' }}>
+                Please check your email for the OTP to verify your login.
+              </div>
+            )}
+          </form>
         </div>
-
-        <button type="submit" disabled={isLoading}>
-          {isLoading ? '' : 'Sign in'}
-          <span
-            className="spinner"
-            id="loadingSpinner"
-            style={{ display: isLoading ? 'inline-block' : 'none' }}
-          ></span>
-        </button>
-        <div id="error-message" style={{ color: 'red', display: errorMessage ? 'block' : 'none' }}>{errorMessage}</div>
-      </form>
-    </div>
-  </div>
+      </div>
     </StyledWrapper>
   );
-}
+};
 
 const StyledWrapper = styled.div`
 
