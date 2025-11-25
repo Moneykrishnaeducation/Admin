@@ -2,7 +2,8 @@ import React from "react";
 import { useEffect, useState } from "react";
 import TableStructure from "../commonComponent/TableStructure";
 import { jsPDF } from "jspdf";
-import { useTheme } from "../context/ThemeContext";
+import { Download, FileText } from "lucide-react";
+
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -50,7 +51,7 @@ function convertToCSV(data, columns) {
 
 
 export default function Transactions() {
-  const { isDarkMode } = useTheme();
+  // Removed unused isDarkMode variable as it is no longer used for styling
   const [transactions, setTransactions] = useState([]);
   const [statusFilter, setStatusFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("Deposit");
@@ -192,7 +193,9 @@ export default function Transactions() {
           { Header: "Description", accessor: "description" },
         ];
 
+  // Export filtered transactions data as CSV file
   const handleExportCSV = () => {
+    console.log("Exporting transactions data as CSV");
     const csvContent = convertToCSV(filtered, columns);
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
@@ -205,7 +208,9 @@ export default function Transactions() {
     URL.revokeObjectURL(url);
   };
   
+  // Export filtered transactions data as PDF file
   const handleExportPDF = () => {
+    console.log("Exporting transactions data as PDF");
     const doc = new jsPDF();
     const headers = columns.map(col => col.Header);
     const rows = filtered.map(row =>
@@ -237,17 +242,17 @@ export default function Transactions() {
 
 
   return (
-    <div className="w-full p-6 bg-gray-50 dark:bg-gray-900 min-h-screen border border-gray-300 rounded-lg bg-white shadow-md">
+    <div className="w-full p-6 bg-black text-yellow-400 min-h-screen  rounded-lg shadow-md">
       {/* Page Title */}
-      <div className="text-2xl font-bold mb-4 text-gray-900 dark:text-gray-100">Transactions</div>
+      <div className="text-2xl font-bold mb-4 text-yellow-400">Transactions</div>
 
-      <div className="grid grid-cols-12 gap-4 mb-6 items-end border border-gray-300 rounded-lg p-4 bg-gray-50 dark:bg-gray-800 shadow-inner">
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-4 mb-6 items-end rounded-lg p-4 bg-black shadow-inner">
         {/* Removed the search bar as per user request */}
 
-        <div className="flex flex-col col-span-3">
-          <label className="text-xs text-gray-700 dark:text-gray-300 mb-1 font-semibold">Type</label>
+        <div className="flex flex-col col-span-1 md:col-span-3">
+          <label className="text-xs text-yellow-400 mb-1 font-semibold">Type</label>
           <select
-            className="px-4 py-2 rounded border border-gray-300 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 w-full"
+            className="px-4 py-2 rounded border border-yellow-400 bg-black text-yellow-400 w-full hover:border-yellow-300 focus:border-yellow-300"
             onChange={(e) => setTypeFilter(e.target.value)}
             value={typeFilter}
           >
@@ -257,10 +262,10 @@ export default function Transactions() {
           </select>
         </div>
 
-        <div className="flex flex-col col-span-3">
-          <label className="text-xs text-gray-700 dark:text-gray-300 mb-1 font-semibold">Status</label>
+        <div className="flex flex-col col-span-1 md:col-span-3">
+          <label className="text-xs text-yellow-400 mb-1 font-semibold">Status</label>
           <select
-            className="px-4 py-2 rounded border border-gray-300 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 w-full"
+            className="px-4 py-2 rounded border border-yellow-400 bg-black text-yellow-400 w-full hover:border-yellow-300 focus:border-yellow-300"
             onChange={(e) => setStatusFilter(e.target.value)}
             value={statusFilter}
           >
@@ -271,55 +276,61 @@ export default function Transactions() {
           </select>
         </div>
 
-        
-
-        <div className="flex flex-col col-span-2">
-          <label htmlFor="from-date" className="text-xs text-gray-700 dark:text-gray-300 mb-1 font-semibold">
+        <div className="flex flex-col col-span-1 md:col-span-2">
+          <label htmlFor="from-date" className="text-xs text-yellow-400 mb-1 font-semibold">
             From Date
           </label>
           <input
             id="from-date"
             type="date"
-            className="px-4 py-2 rounded border border-gray-300 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 w-full"
+            className="px-4 py-2 rounded border border-yellow-400 bg-black text-yellow-400 w-full hover:border-yellow-300 focus:border-yellow-300"
             value={fromDate}
             onChange={(e) => setFromDate(e.target.value)}
           />
         </div>
-        <div className="flex flex-col col-span-2">
-          <label htmlFor="to-date" className="text-xs text-gray-700 dark:text-gray-300 mb-1 font-semibold">
+        <div className="flex flex-col col-span-1 md:col-span-2">
+          <label htmlFor="to-date" className="text-xs text-yellow-400 mb-1 font-semibold">
             To Date
           </label>
           <input
             id="to-date"
             type="date"
-            className="px-4 py-2 rounded border border-gray-300 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 w-full"
+            className="px-4 py-2 rounded border border-yellow-400 bg-black text-yellow-400 w-full hover:border-yellow-300 focus:border-yellow-300"
             value={toDate}
             onChange={(e) => setToDate(e.target.value)}
           />
         </div>
 
-        {/* Export buttons container right aligned horizontally */}
-        <div className="flex justify-end col-span-2 space-x-2">
+        {/* Export buttons container stacked on small, inline on medium and up */}
+        <div className="flex flex-col md:flex-row md:justify-end col-span-1 md:col-span-2 space-y-2 md:space-y-0 md:space-x-2 w-full md:w-auto">
           <button
             onClick={handleExportCSV}
-            className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${isDarkMode ? "bg-yellow-400 text-black hover:bg-yellow-500" : "bg-yellow-400 text-black hover:bg-yellow-500"}`}
+            className="px-4 py-2 rounded-lg text-sm font-semibold bg-yellow-500 text-black hover:bg-yellow-600 transition flex items-center justify-center w-full md:w-auto"
             type="button"
+            aria-label="Export CSV"
+            title="Export CSV"
           >
-            Export CSV
+            <Download size={18} />
+             CSV
           </button>
           <button
             onClick={handleExportPDF}
-            className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${isDarkMode ? "bg-primary-500 text-white hover:bg-primary-600" : "bg-primary-600 text-white hover:bg-primary-700"}`}
+            className="px-4 py-2 rounded-lg text-sm font-semibold bg-yellow-500 text-black hover:bg-yellow-600 transition flex items-center justify-center w-full md:w-auto"
             type="button"
+            aria-label="Export PDF"
+            title="Export PDF"
           >
-            Export PDF
+          <FileText size={18} />
+          PDF
           </button>
         </div>
       </div>
 
       {/* Render the filtered transactions table */}
       <ErrorBoundary>
-        <TableStructure columns={columns} data={filtered} />
+        <div className="overflow-x-auto">
+          <TableStructure columns={columns} data={filtered} />
+        </div>
       </ErrorBoundary>
     </div>
   );
