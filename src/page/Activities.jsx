@@ -1,67 +1,66 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import TableStructure from "../commonComponent/TableStructure";
-import { get } from "../utils/api-config"; // import your API GET
-import { Search } from "lucide-react";
 
 const Activities = () => {
   const [activeLog, setActiveLog] = useState("client"); // "client" or "staff"
-
-  const [clientLogs, setClientLogs] = useState([]);
-  const [staffLogs, setStaffLogs] = useState([]);
-
-  const [loading, setLoading] = useState(true);
+  const [logs, setLogs] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Fetch logs from backend
-  useEffect(() => {
-    const loadLogs = async () => {
-      try {
-        const clientRes = await get("activity/client-logs/");
-        const staffRes = await get("activity/staff/");
+  // Server-side fetch handler for TableStructure
+  const handleFetch = async ({ page, pageSize, query }) => {
+    setError(null);
+    const endpoint = activeLog === "client" ? "/api/activity/client-logs/" : "/api/activity/staff/";
 
-        // Ensure consistent structure
-        setClientLogs(
-          clientRes?.map((item) => ({
-            id: item.id,
-            time: item.timestamp,
-            user: item.user,
-            activity: item.activity,
-            ipAddress: item.ip_address,
-            userAgent: item.user_agent,
-          })) || []
-        );
+    try {
+      const client = window && window.adminApiClient ? window.adminApiClient : null;
+      const params = new URLSearchParams();
+      params.set('page', String(page || 1));
+      params.set('page_size', String(pageSize || 10));
+      if (query) params.set('query', String(query));
 
-        setStaffLogs(
-          staffRes?.map((item) => ({
-            id: item.id,
-            time: new Date(item.timestamp),
-            user: item.user,
-            activity: item.activity,
-            ipAddress: item.ip_address,
-            userAgent: item.user_agent,
-          })) || []
-        );
-      } catch (err) {
-        console.error(err);
-        setError("Failed to load activity logs");
-      } finally {
-        setLoading(false);
+      let resJson;
+      if (client && typeof client.get === 'function') {
+        resJson = await client.get(`${endpoint}?${params.toString()}`);
+      } else {
+        const token = localStorage.getItem('jwt_token') || localStorage.getItem('access_token');
+        const headers = {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+        };
+        const res = await fetch(`${endpoint}?${params.toString()}`, { credentials: 'include', headers });
+        if (!res.ok) throw new Error(`Failed to fetch ${endpoint}: ${res.status}`);
+        resJson = await res.json();
       }
-    };
 
-    loadLogs();
-  }, []);
+      // Expect backend to return { data: [...], total: N }
+      const items = Array.isArray(resJson.data) ? resJson.data : [];
+      const total = typeof resJson.total === 'number' ? resJson.total : (Array.isArray(resJson) ? resJson.length : 0);
 
-  // Decide which table data to show
-  const data = useMemo(() => {
-    return activeLog === "client" ? clientLogs : staffLogs;
-  }, [activeLog, clientLogs, staffLogs]);
+      const mapped = items.map((item, idx) => ({
+        id: item.id ?? item.pk ?? idx,
+        time: item.time ?? item.created_at ?? item.timestamp ?? item.date ?? null,
+        user: item.user ?? item.username ?? item.email ?? item.name ?? "Unknown",
+        activity: item.activity ?? item.action ?? item.event ?? "",
+        ipAddress: item.ip_address ?? item.ip ?? item.ipAddress ?? "",
+        userAgent: item.user_agent ?? item.userAgent ?? "",
+      }));
+
+      return { data: mapped, total };
+    } catch (err) {
+      setError(err.message || String(err));
+      return { data: [], total: 0 };
+    }
+  };
+
+  const data = useMemo(() => logs, [logs]);
 
   const columns = [
     {
       Header: "Time",
       accessor: "time",
-      Cell: (value) => value.toLocaleString(),
+      // TableStructure calls Cell as Cell(cellValue, row)
+      Cell: (value) => (value ? new Date(value).toLocaleString() : "-"),
     },
     { Header: "User", accessor: "user" },
     { Header: "Activity", accessor: "activity" },
@@ -82,7 +81,6 @@ const Activities = () => {
         >
           Client Logs
         </button>
-
         <button
           className={`px-4 py-2 rounded-md font-semibold ${
             activeLog === "staff"
@@ -95,13 +93,16 @@ const Activities = () => {
         </button>
       </div>
 
-      {loading ? (
-        <p className="text-yellow-400 text-center mt-10">Loading logs...</p>
-      ) : error ? (
-        <p className="text-red-500 text-center mt-10">{error}</p>
-      ) : (
-        <TableStructure columns={columns} data={data} />
-      )}
+      {loading && <div className="mb-4">Loading {activeLog} logs...</div>}
+      {error && <div className="mb-4 text-red-600">Error: {error}</div>}
+
+      <TableStructure
+        key={activeLog} // reset paging when switching logs
+        columns={columns}
+        data={[]}
+        serverSide={true}
+        onFetch={handleFetch}
+      />
     </div>
   );
 };
