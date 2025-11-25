@@ -36,6 +36,7 @@ const Login = () => {
         // Handle successful login
         localStorage.setItem('access_token', response.data.access); // Store the JWT token
         localStorage.setItem('refresh_token', response.data.refresh); // Store the refresh token
+        localStorage.setItem('user', JSON.stringify(response.data.user)); // Store user information
 
         // Redirect or navigate to the dashboard page after successful login
         navigate('/dashboard');
