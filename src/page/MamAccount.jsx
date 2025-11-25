@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import TableStructure from "../commonComponent/TableStructure";
 const sampleMamAccounts = [
   {
@@ -180,6 +180,7 @@ const MamAccount = () => {
   };
 
   const columnsMam = [
+    { Header: "User ID", accessor: "userId" },
     { Header: "Name", accessor: "name" },
     { Header: "Manager Email", accessor: "managerEmail" },
     { Header: "MAM Account ID", accessor: "mamAccountId" },
@@ -191,8 +192,10 @@ const MamAccount = () => {
   ];
 
   const columnsInvestor = [
+    { Header: "User ID", accessor: "userId" },
+    { Header: "Investor Name", accessor: "investorName" },
     { Header: "Investor Email", accessor: "investorEmail" },
-    { Header: "MAM Account Name", accessor: "mamAccountName" },
+    { Header: "Manager Name", accessor: "managerName" },
     { Header: "Trading Account ID", accessor: "tradingAccountId" },
     { Header: "Amount Invested", accessor: "amountInvested" },
     { Header: "Profit", accessor: "profit" },
@@ -250,6 +253,83 @@ const MamAccount = () => {
     );
   };
 
+  // Server-side fetch handler for MAM tables
+  // Wrapped in useCallback so its identity is stable and TableStructure's
+  // effect doesn't re-run on every render.
+  const handleFetch = useCallback(async ({ page, pageSize, query }) => {
+    const endpoint = activeTab === 'mam' ? '/api/mam-managers/' : '/api/mam-investors/';
+    const params = new URLSearchParams();
+    params.set('page', String(page || 1));
+    params.set('page_size', String(pageSize || 10));
+    if (query) params.set('query', String(query));
+
+    try {
+      const client = window && window.adminApiClient ? window.adminApiClient : null;
+      let resJson;
+      if (client && typeof client.get === 'function') {
+        resJson = await client.get(`${endpoint}?${params.toString()}`);
+      } else {
+        const token = localStorage.getItem('jwt_token') || localStorage.getItem('access_token');
+        const headers = { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) };
+        const res = await fetch(`${endpoint}?${params.toString()}`, { credentials: 'include', headers });
+        if (!res.ok) throw new Error(`Failed to fetch ${endpoint}: ${res.status}`);
+        resJson = await res.json();
+      }
+
+      // Expect { data: [...], total: N } or fallback to array
+      const items = Array.isArray(resJson.data) ? resJson.data : (Array.isArray(resJson) ? resJson : (resJson.results || []));
+      const total = typeof resJson.total === 'number' ? resJson.total : (typeof resJson.count === 'number' ? resJson.count : items.length);
+
+      const mapped = items.map((item, idx) => {
+        if (activeTab === 'mam') {
+          return {
+            id: item.id ?? item.pk ?? idx,
+            userId: item.user_id ?? item.user ?? item.userId ?? '',
+            // Prefer username, fall back to account_name or existing name
+            name: (item.username ?? item.account_name ?? item.name) || `${(item.first_name || '')} ${(item.last_name || '')}`.trim() || 'Unknown',
+            // Email field from API is `email`
+            managerEmail: item.email ?? item.managerEmail ?? item.manager_email ?? '',
+            // account id fields
+            mamAccountId: item.account_id ?? item.accountId ?? item.mamAccountId ?? '',
+            // balance can be under `balance` or `equity` (string) — normalize to number when possible
+            accountBalance: item.balance ?? item.accountBalance ?? (item.equity ? Number(item.equity) : 0) ?? 0,
+            // profit comes from `profit`
+            totalProfit: item.profit ?? item.totalProfit ?? item.total_profit ?? 0,
+            // profit sharing percentage from backend
+            profitShare: item.profit_sharing_percentage ?? item.profitShare ?? item.profit_share ?? 0,
+            riskLevel: item.risk_level ?? item.riskLevel ?? '',
+            payoutFrequency: item.payout_frequency ?? item.payoutFrequency ?? '',
+            accountId: item.account_id ?? item.accountId ?? '',
+          };
+        }
+
+        // investor mapping
+        return {
+          id: item.id ?? item.pk ?? idx,
+          // user id for first column
+          userId: item.user_id ?? item.user ?? item.userId ?? '',
+          // investor's displayed name
+          investorName: item.username ?? item.investorName ?? `${item.first_name ?? ''} ${item.last_name ?? ''}`.trim() ?? '',
+          investorEmail: item.investorEmail ?? item.email ?? item.investor_email ?? '',
+          // manager/master name for this investor's MAM account
+          managerName: item.mam_master_account_name ?? item.mam_master_account?.user?.username ?? item.managerName ?? '',
+          tradingAccountId: item.tradingAccountId ?? item.trading_account_id ?? item.accountId ?? item.account_id ?? '',
+          // amountInvested: prefer explicit invested fields, otherwise fall back to balance/equity
+          amountInvested: (
+            Number(item.amountInvested ?? item.amount_invested ?? item.invested_amount ?? null) ||
+            Number(item.balance ?? item.equity ?? 0)
+          ),
+          profit: item.profit ?? item.total_profit ?? 0,
+        };
+      });
+
+      return { data: mapped, total };
+    } catch (err) {
+      console.error('MAM fetch error', err);
+      return { data: [], total: 0 };
+    }
+  }, [activeTab]);
+
   return (
     <div className="p-6 max-w-7xl mx-auto relative">
       {/* Background blur for table when modal is open */}
@@ -290,8 +370,11 @@ const MamAccount = () => {
         }
       >
         <TableStructure
+          key={activeTab}
           columns={columns}
-          data={data}
+          data={[]}
+          serverSide={true}
+          onFetch={handleFetch}
           onRowClick={toggleRowExpanded}
           renderRowSubComponent={renderRowSubComponent}
         />
