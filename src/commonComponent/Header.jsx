@@ -189,7 +189,7 @@ const Header = ({ isSidebarOpen, setIsSidebarOpen }) => {
 
       {/* CENTER PROFILE SECTION (REPLACES LOGO) */}
 <div className="flex-1 flex justify-center">
-  <Link to="/profile" className="flex flex-col items-center">
+  <div  className="flex flex-col items-center">
     {/* <FaUserCircle
       className={`text-3xl md:text-4xl ${
         isDarkMode ? "text-white" : "text-black"
@@ -202,7 +202,7 @@ const Header = ({ isSidebarOpen, setIsSidebarOpen }) => {
     >
       {userName}
     </span>
-  </Link>
+  </div>
 </div>
 
 

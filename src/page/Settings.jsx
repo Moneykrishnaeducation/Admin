@@ -232,7 +232,7 @@ const Settings = () => {
               <button
                 type="button"
                 onClick={handleEditToggle}
-                className="flex-1 sm:flex-none bg-yellow-500 text-black py-2 px-4 rounded-full hover:bg-yellow-600 transition-all"
+                className="flex-1 sm:flex-none bg-yellow-500 text-black py-2 px-4 rounded-md hover:bg-yellow-600 transition-all"
               >
                 {isEditing ? "Cancel" : "✏️ Edit Settings"}
               </button>
