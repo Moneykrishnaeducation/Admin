@@ -50,7 +50,7 @@ async function fetchWithAuth(url, options = {}) {
     const defaultOptions = {
         headers: {
             'Content-Type': 'application/json',
-            ...(token && { 'Authorization': `Bearer ${token}` }),
+            ...(token && { 'Authorization': `Bearer ${token}` }), // Attach token if available
             ...options.headers
         }
     };
@@ -74,6 +74,23 @@ export async function get(endpoint) {
         return data;
     } catch (error) {
         console.error('API call failed:', error);
+        throw error;
+    }
+}
+
+// Named export for the 'post' function
+export async function post(endpoint, data) {
+    const url = `${API_BASE}/${endpoint}`;
+
+    try {
+        const response = await fetchWithAuth(url, {
+            method: 'POST',
+            body: JSON.stringify(data)
+        });
+        const responseData = await response.json();
+        return responseData;
+    } catch (error) {
+        console.error('API POST request failed:', error);
         throw error;
     }
 }
@@ -106,9 +123,22 @@ window.API = {
             console.error('❌ Failed to load recent transactions:', error);
             throw error;
         }
+    },
+
+    // Example function for making POST requests with authentication
+    async postData(endpoint, data) {
+        try {
+            const result = await post(endpoint, data);
+            console.log('POST request successful:', result);
+            return result;
+        } catch (error) {
+            console.error('POST request failed:', error);
+            throw error;
+        }
     }
 };
 
 window.API_BASE = API_BASE;
 
 console.log('✅ Admin API object initialized:', window.API);
+

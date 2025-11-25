@@ -1,9 +1,10 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import TableStructure from "../commonComponent/TableStructure";
+import { get, post } from "../utils/api-config"; // Ensure post is available in api-config
 
 const Modal = ({ open, onClose, title, children, actions, width = "w-80" }) => {
   if (!open) return null;
-  
+
   return (
     <div
       className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50"
@@ -21,32 +22,22 @@ const Modal = ({ open, onClose, title, children, actions, width = "w-80" }) => {
   );
 };
 
-
 const DemoAccount = () => {
   const [selectedRow, setSelectedRow] = useState(null);
-
   const [leverageModal, setLeverageModal] = useState(false);
-  const [leverage, setLeverage] = useState("500x");
-
+  const [leverage, setLeverage] = useState("1:500"); // Starting leverage
   const [balanceModal, setBalanceModal] = useState(false);
   const [newBalance, setNewBalance] = useState("10000.00");
-
   const [viewModal, setViewModal] = useState(false);
   const [viewTab, setViewTab] = useState("history");
 
-  const leverageOptions = [
-    "1x",
-    "2x",
-    "5x",
-    "10x",
-    "20x",
-    "50x",
-    "100x",
-    "500x",
-    "10000x",
-  ];
+  const [demoAccounts, setDemoAccounts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const accountSummary = { balance: 0, equity: 0, openPositions: 0 };
+  const leverageOptions = [
+    "1:1", "1:2", "1:5", "1:10", "1:20", "1:50", "1:100", "1:200", "1:500", "1:1000",
+  ];
 
   const historyColumns = [
     { Header: "Date", accessor: "date" },
@@ -54,8 +45,6 @@ const DemoAccount = () => {
     { Header: "Amount", accessor: "amount" },
     { Header: "Description", accessor: "description" },
   ];
-
-  const historyData = [];
 
   const positionsColumns = [
     { Header: "Ticket", accessor: "ticket" },
@@ -66,57 +55,37 @@ const DemoAccount = () => {
     { Header: "Profit", accessor: "profit" },
   ];
 
-  const positionsData = [];
-
   const columns = useMemo(
     () => [
       { Header: "ID", accessor: "id" },
       { Header: "Name", accessor: "name" },
       { Header: "Email", accessor: "email" },
       { Header: "Phone", accessor: "phone" },
-      { Header: "Account ID", accessor: "accountId" },
-      { Header: "Registered Date", accessor: "registeredDate" },
+      { Header: "Account ID", accessor: "account_id" },
+      { Header: "Registered Date", accessor: "registered_date" },
       { Header: "Country", accessor: "country" },
     ],
     []
   );
 
-  const data = useMemo(
-    () => [
-      {
-        id: 1,
-        name: "Alice Johnson",
-        email: "alice.johnson@example.com",
-        phone: "+1-202-555-0123",
-        accountId: "AC10001",
-        registeredDate: "2023-01-15",
-        country: "USA",
-      },
-      {
-        id: 2,
-        name: "Bob Smith",
-        email: "bob.smith@example.com",
-        phone: "+44-20-7946-0958",
-        accountId: "AC10002",
-        registeredDate: "2023-02-20",
-        country: "UK",
-      },
-      {
-        id: 3,
-        name: "Carlos Morales",
-        email: "carlos.morales@example.com",
-        phone: "+52-55-1234-5678",
-        accountId: "AC10003",
-        registeredDate: "2023-03-05",
-        country: "Mexico",
-      },
-    ],
-    []
-  );
+  useEffect(() => {
+    const loadDemoAccounts = async () => {
+      try {
+        const response = await get("demo_accounts/");
+        setDemoAccounts(response);
+      } catch (err) {
+        setError("Failed to load demo accounts.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadDemoAccounts();
+  }, []);
 
   const openLeverageModal = (row) => {
     setSelectedRow(row);
-    setLeverage("500x");
+    setLeverage("1:500"); // Default leverage
     setLeverageModal(true);
   };
 
@@ -132,16 +101,65 @@ const DemoAccount = () => {
     setViewModal(true);
   };
 
-  const handleLeverageSubmit = () => {
-    alert(`Leverage reset to ${leverage} for ID ${selectedRow?.id}`);
-    setLeverageModal(false);
-    setSelectedRow(null);
+  const handleLeverageSubmit = async () => {
+    try {
+      if (!selectedRow || !selectedRow.account_id) {
+        alert("Account ID is missing!");
+        return;
+      }
+
+      // Convert leverage from "1:500" to 500 for backend
+      const leverageInt = parseInt(leverage.split(":")[1]);
+
+      // Ensure the leverage value is from the predefined options
+      if (!leverageOptions.includes(leverage)) {
+        alert("Invalid leverage value selected.");
+        return;
+      }
+
+      await post(
+        `demo_accounts/${selectedRow.account_id}/reset_leverage/`,
+        { leverage: leverageInt } // Send the leverage as an integer
+      );
+
+      alert(`Leverage reset to ${leverageInt} for ID ${selectedRow?.id}`);
+      setLeverageModal(false);
+      setSelectedRow(null);
+
+      // Reload demo accounts after updating
+      const demoAccountsResponse = await get("demo_accounts/");
+      setDemoAccounts(demoAccountsResponse);
+
+    } catch (err) {
+      console.error("Error resetting leverage:", err);
+      alert("Failed to reset leverage.");
+    }
   };
 
-  const handleBalanceSubmit = () => {
-    alert(`Balance reset to $${newBalance} for ID ${selectedRow?.id}`);
-    setBalanceModal(false);
-    setSelectedRow(null);
+  const handleBalanceSubmit = async () => {
+    try {
+      if (!selectedRow || !selectedRow.account_id) {
+        alert("Account ID is missing!");
+        return;
+      }
+
+      await post(
+        `demo_accounts/${selectedRow.account_id}/reset_balance/`,
+        { balance: newBalance }
+      );
+
+      alert(`Balance reset to $${newBalance} for ID ${selectedRow?.id}`);
+      setBalanceModal(false);
+      setSelectedRow(null);
+
+      // Reload demo accounts after updating
+      const demoAccountsResponse = await get("demo_accounts/");
+      setDemoAccounts(demoAccountsResponse);
+
+    } catch (err) {
+      console.error("Error resetting balance:", err);
+      alert("Failed to reset balance.");
+    }
   };
 
   const actionsColumn = (row) => (
@@ -185,22 +203,19 @@ const DemoAccount = () => {
     </div>
   );
 
-  // Track expanded row for subrow rendering
   const [expandedRow, setExpandedRow] = useState(null);
 
   const handleRowClick = (row) => {
-    setExpandedRow(expandedRow === row.id ? null : row.id); // Toggle subrow visibility
+    setExpandedRow(expandedRow === row.id ? null : row.id);
   };
 
   const renderRowSubComponent = (row) => {
-    if (expandedRow !== row.id) return null; // Only render subrow for expanded row
+    if (expandedRow !== row.id) return null;
 
     return (
       <tr>
         <td colSpan={columns.length} className="p-3">
-          <div className="flex gap-4">
-            {actionsColumn(row)}
-          </div>
+          <div className="flex gap-4">{actionsColumn(row)}</div>
         </td>
       </tr>
     );
@@ -208,12 +223,18 @@ const DemoAccount = () => {
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
-      <TableStructure
-        columns={columns}
-        data={data}
-        renderRowSubComponent={renderRowSubComponent}
-        onRowClick={handleRowClick} // Add row click handler to toggle subrow
-      />
+      {loading ? (
+        <p className="text-yellow-400">Loading demo accounts...</p>
+      ) : error ? (
+        <p className="text-red-500">{error}</p>
+      ) : (
+        <TableStructure
+          columns={columns}
+          data={demoAccounts}
+          renderRowSubComponent={renderRowSubComponent}
+          onRowClick={handleRowClick}
+        />
+      )}
 
       {/* Reset Leverage Modal */}
       <Modal
@@ -237,7 +258,7 @@ const DemoAccount = () => {
           </button>,
         ]}
       >
-        <p className="mb-2 text-white">Current Leverage: 500x</p>
+        <p className="mb-2 text-white">Current Leverage: {leverage}</p>
         <label htmlFor="leverageInput" className="block mb-1 text-white">
           Select or enter the leverage
         </label>
@@ -296,60 +317,66 @@ const DemoAccount = () => {
 
       {/* View Modal */}
       <Modal
-  open={viewModal}
-  onClose={() => setViewModal(false)}
-  title="Account History & Live Positions"
-  width="w-128"  // Adjust width here
-  actions={[
-    <button
-      key="close"
-      className="bg-gray-300 px-4 py-2 rounded hover:bg-gray-400"
-      onClick={() => setViewModal(false)}
-    >
-      Close
-    </button>,
-  ]}
->
+        open={viewModal}
+        onClose={() => setViewModal(false)}
+        title="View Account Details"
+        width="w-150"
+        actions={[
+          <button
+            key="close"
+            className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600 text-white"
+            onClick={() => setViewModal(false)}
+          >
+            Close
+          </button>,
+        ]}
+      >
+        {/* Account Summary */}
+        <div className="flex justify-between text-white mb-4">
+          <div className="flex space-x-6">
+            <h3 className="text-lg font-semibold">Balance: ${selectedRow?.balance}</h3>
+            <h3 className="text-lg font-semibold">Equity: ${selectedRow?.equity}</h3>
+            <h3 className="text-lg font-semibold">Open Positions: {selectedRow?.open_positions?.length || 0}</h3>
+          </div>
+        </div>
 
-  {/* Second Line - Balance, Equity, Open Positions */}
-  <div className="mb-4 text-white">
-    <div>
-      <span className="font-semibold">Balance: </span>${accountSummary.balance.toFixed(2)}{" "}
-      <span className="font-semibold ml-4">Equity: </span>${accountSummary.equity.toFixed(2)}{" "}
-      <span className="font-semibold ml-4">Open Positions: </span>{accountSummary.openPositions}
-    </div>
-  </div>
+        {/* Tab Buttons for History and Positions */}
+        <div className="flex gap-4 mb-4">
+          <button
+            className={`px-4 py-2 rounded ${viewTab === 'history' ? 'bg-yellow-600 text-black' : 'bg-gray-700 text-white'}`}
+            onClick={() => setViewTab('history')}
+          >
+            History
+          </button>
+          <button
+            className={`px-4 py-2 rounded ${viewTab === 'positions' ? 'bg-yellow-600 text-black' : 'bg-gray-700 text-white'}`}
+            onClick={() => setViewTab('positions')}
+          >
+            Positions
+          </button>
+        </div>
 
-  {/* Third Line - Buttons (History & Positions) */}
-  <div className="flex gap-2 mb-4">
-    <button
-      className={`px-4 py-2 rounded ${
-        viewTab === "history" ? "bg-yellow-500 text-black" : "bg-gray-300 hover:bg-gray-400"
-      }`}
-      onClick={() => setViewTab("history")}
-    >
-      History
-    </button>
-    <button
-      className={`px-4 py-2 rounded ${
-        viewTab === "positions" ? "bg-yellow-500 text-black" : "bg-gray-300 hover:bg-gray-400"
-      }`}
-      onClick={() => setViewTab("positions")}
-    >
-      Positions
-    </button>
-  </div>
+        {/* Conditionally Render Tables based on Selected Tab */}
+        {viewTab === 'history' && (
+          <div>
+            <h3 className="text-lg font-semibold text-white mb-2">Account History</h3>
+            <TableStructure
+              columns={historyColumns}
+              data={selectedRow?.history || []}
+            />
+          </div>
+        )}
 
-
-
-  {/* Table */}
-  {viewTab === "history" ? (
-    <TableStructure columns={historyColumns} data={historyData} />
-  ) : (
-    <TableStructure columns={positionsColumns} data={positionsData} />
-  )}
-</Modal>
-
+        {viewTab === 'positions' && (
+          <div>
+            <h3 className="text-lg font-semibold text-white mb-2">Open Positions</h3>
+            <TableStructure
+              columns={positionsColumns}
+              data={selectedRow?.open_positions || []}
+            />
+          </div>
+        )}
+      </Modal>
     </div>
   );
 };
