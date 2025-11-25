@@ -1,9 +1,9 @@
 // Shared utility functions for client-side JavaScript
-const tradingUtils = {};
-const sharedUtils = {};
+window.tradingUtils = window.tradingUtils || {};
+window.sharedUtils = window.sharedUtils || {};
 
 // Initialize authentication state
-tradingUtils.authState = {
+window.tradingUtils.authState = {
     initialized: false,
     checking: false,
     authenticated: false,
@@ -11,7 +11,7 @@ tradingUtils.authState = {
 };
 
 // Define core authentication methods that other modules depend on
-tradingUtils.checkAuth = async function() {
+window.tradingUtils.checkAuth = async function() {
     // Prevent multiple simultaneous checks
     if (this.authState.checking) {
         return this.authState.authenticated;
@@ -20,7 +20,7 @@ tradingUtils.checkAuth = async function() {
     try {
         this.authState.checking = true;
         const token = localStorage.getItem('jwt_token');
-
+        
         if (!token) {
             this.authState.authenticated = false;
             return false;
@@ -49,7 +49,7 @@ tradingUtils.checkAuth = async function() {
 };
 
 // Extend tradingUtils with additional authentication and UI methods
-Object.assign(tradingUtils, {
+Object.assign(window.tradingUtils, {
     /**
      * Get all authentication tokens
      * @returns {Object} Object containing all tokens
@@ -80,11 +80,11 @@ Object.assign(tradingUtils, {
     createNotification(message, type) {
         const notif = document.createElement('div');
         notif.className = `${type}-message animate-in`;
-
+        
         const msgSpan = document.createElement('span');
         msgSpan.textContent = message;
         notif.appendChild(msgSpan);
-
+        
         const closeBtn = document.createElement('button');
         closeBtn.textContent = '✕';
         closeBtn.className = 'notification-close';
@@ -93,7 +93,7 @@ Object.assign(tradingUtils, {
             notif.addEventListener('animationend', () => notif.remove());
         };
         notif.appendChild(closeBtn);
-
+        
         return notif;
     },
 
@@ -104,7 +104,7 @@ Object.assign(tradingUtils, {
     async showError(message) {
         // Remove any existing error messages
         document.querySelectorAll('.error-message').forEach(el => el.remove());
-
+        
         // Add new error message
         const errorDiv = this.createNotification(message, 'error');
         document.body.appendChild(errorDiv);
@@ -117,7 +117,7 @@ Object.assign(tradingUtils, {
     showSuccess: function(message) {
         // Remove any existing success messages
         document.querySelectorAll('.success-message').forEach(el => el.remove());
-
+        
         // Add new success message
         const successDiv = this.createNotification(message, 'success');
         document.body.appendChild(successDiv);
@@ -128,7 +128,7 @@ Object.assign(tradingUtils, {
     showLoginDialog: function(message = 'Your session has expired. Please log in again to continue.') {
         // Clean up any existing dialogs first
         document.querySelectorAll('.login-dialog').forEach(el => el.remove());
-
+        
         const loginDiv = document.createElement('div');
         loginDiv.className = 'login-dialog';
         loginDiv.innerHTML = `
@@ -142,12 +142,12 @@ Object.assign(tradingUtils, {
                 </div>
             </div>
         `;
-
+        
         // Add event listeners
-        loginDiv.querySelector('.btn-primary').onclick = () => tradingUtils.handleLogin();
-        loginDiv.querySelector('.btn-secondary').onclick = () => tradingUtils.handleRefresh();
+        loginDiv.querySelector('.btn-primary').onclick = () => window.tradingUtils.handleLogin();
+        loginDiv.querySelector('.btn-secondary').onclick = () => window.tradingUtils.handleRefresh();
         loginDiv.querySelector('.btn-tertiary').onclick = () => loginDiv.remove();
-
+        
         document.body.appendChild(loginDiv);
         loginDiv.querySelector('.btn-primary')?.focus();
     },
@@ -186,6 +186,10 @@ Object.assign(tradingUtils, {
             if (!refreshToken) {
                 throw new Error('No refresh token available');
             }
+
+            // Since there's no refresh endpoint, just throw an error
+            // This will trigger a re-login
+            console.log('🔄 Token refresh not available - user needs to re-authenticate');
             throw new Error('Token refresh not available');
 
             if (!response.ok) {
@@ -246,7 +250,7 @@ Object.assign(tradingUtils, {
 });
 
 // Original sharedUtils methods
-Object.assign(sharedUtils, {
+Object.assign(window.sharedUtils, {
     /**
      * Format a number as currency
      * @param {number} amount - The amount to format
@@ -284,14 +288,14 @@ Object.assign(sharedUtils, {
         const toast = document.createElement('div');
         toast.className = `toast toast-${type}`;
         toast.textContent = message;
-
+        
         const container = document.getElementById('toast-container') || (() => {
             const div = document.createElement('div');
             div.id = 'toast-container';
             document.body.appendChild(div);
             return div;
         })();
-
+        
         container.appendChild(toast);
         setTimeout(() => toast.remove(), 3000);
     },
@@ -395,7 +399,7 @@ Object.assign(sharedUtils, {
                     </div>
                 </div>
             `;
-
+            
             document.body.appendChild(loginOptions);
         });
     },
@@ -408,7 +412,7 @@ Object.assign(sharedUtils, {
         localStorage.removeItem('jwt_token');
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
-
+        
         // Show login dialog
         this.showLoginDialog();
     },
@@ -421,6 +425,9 @@ Object.assign(sharedUtils, {
         if (!refreshToken) {
             throw new Error('No refresh token available');
         }        try {
+            // Since there's no refresh endpoint, just throw an error
+            // This will trigger a re-login
+            console.log('🔄 Token refresh not available - user needs to re-authenticate');
             throw new Error('Token refresh not available');
 
             if (!response.ok) {
@@ -438,6 +445,3 @@ Object.assign(sharedUtils, {
         }
     }
 });
-
-// Export for use in React
-export { tradingUtils, sharedUtils };

@@ -1,8 +1,7 @@
 /**
- * Production-Ready API Configuration
+ * Admin Panel API Configuration
  * 
- * This script automatically detects localhost vs production domain
- * and configures API endpoints accordingly.
+ * This script provides the API object and configuration for the admin dashboard.
  */
 
 // Function to determine the correct API base URL
@@ -11,124 +10,100 @@ function getApiBase() {
     const protocol = window.location.protocol;
     const port = window.location.port;
     
-    
-    // Production domain detection
-    const isProduction = hostname.includes('vtindex.com') || 
-                        (!hostname.includes('localhost') && !hostname.includes('127.0.0.1'));
-    
-    const isClientSubdomain = hostname.startsWith('client.');
-    
-    if (isProduction) {
-        // On production, all API calls go to /client/ regardless of subdomain
-        return '/client';
-    } else {
-        // Development: use backend URL
-        return 'http://client.localhost:8000';
-    }
+    // For authentication endpoints, use /api/
+    // For data endpoints like users, they're at root level
+    return '/api';
 }
 
-// Initialize API configuration only if it hasn't been initialized yet
-if (!window.API_CONFIG) {
-    const hostname = window.location.hostname;
-    const protocol = window.location.protocol;
-    const port = window.location.port;
-    const fullOrigin = `${protocol}//${hostname}${port ? ':' + port : ''}`;
+// Get the base URL for user data endpoints (different from auth endpoints)
+function getUsersApiBase() {
+    // Users endpoint is directly at root level
+    return '';
+}
+
+// Determine if we should use test endpoints (no authentication)
+function shouldUseTestEndpoints() {
+    // Use test endpoints if accessing dashboard directly or no auth token available
+    const hasAuthToken = localStorage.getItem('access_token') || localStorage.getItem('jwt_token');
+    const isDirectDashboardAccess = window.location.pathname.includes('/Components/dashboard.html');
     
-    // Initialize API configuration
-    window.API_CONFIG = {
-        hostname,
-        isSubdomain: hostname.startsWith('client.'),
-        isProduction: hostname.includes('vtindex.com') || 
-                     (!hostname.includes('localhost') && !hostname.includes('127.0.0.1')),
-        apiBase: getApiBase(),
-        fullOrigin,
-        
-        getEndpoint(path) {
-            const cleanPath = path.replace(/^\/+/, '');
-            return `${this.apiBase}/${cleanPath}`;
-        },
-
-        getHeaders(includeContentType = true) {
-            const token = localStorage.getItem('jwt_token');
-            const headers = {
-                'Authorization': token ? `Bearer ${token}` : '',
-                'Accept': 'application/json'
-            };
-
-            if (includeContentType) {
-                headers['Content-Type'] = 'application/json';
-            }
-
-            // Add CSRF token for POST, PUT, PATCH, DELETE requests
-            const csrfToken = this.getCsrfToken();
-            if (csrfToken) {
-                headers['X-CSRFToken'] = csrfToken;
-            }
-
-            return headers;
-        },
-
-        getCsrfToken() {
-            // First try to get from cookie
-            const name = 'csrftoken=';
-            const decodedCookie = decodeURIComponent(document.cookie);
-            const cookieParts = decodedCookie.split(';');
-            for (let part of cookieParts) {
-                part = part.trim();
-                if (part.indexOf(name) === 0) {
-                    return part.substring(name.length, part.length);
-                }
-            }
-            
-            // Then try to get from meta tag
-            const csrfElement = document.querySelector('meta[name="csrf-token"]');
-            if (csrfElement) {
-                return csrfElement.getAttribute('content');
-            }
-
-            return null;
-        }
-    };
-
-    // Global API_BASE for legacy compatibility
-    window.API_BASE = window.API_CONFIG.apiBase;
-
+    return !hasAuthToken || isDirectDashboardAccess;
 }
 
 // Set the global API_BASE variable
-const API_BASE = window.API_CONFIG.apiBase;
+const API_BASE = getApiBase();
+const USE_TEST_ENDPOINTS = shouldUseTestEndpoints();
 
 // Debug logging
+console.log('🔧 Admin API Configuration:', {
+    hostname: window.location.hostname,
+    isSubdomain: window.location.hostname.includes('admin.'),
+    apiBase: API_BASE,
+    useTestEndpoints: USE_TEST_ENDPOINTS,
+    fullOrigin: window.location.origin
+});
 
-
-// Make API_BASE and utility functions available globally
-// Force API_BASE to empty string for client panel endpoints at root
-window.API_BASE = '';
-window.getApiHeaders = window.API_CONFIG.getHeaders.bind(window.API_CONFIG);
-window.getCsrfToken = window.API_CONFIG.getCsrfToken.bind(window.API_CONFIG);
-
-// Global unauthorized access handler
-window.handleUnauthorized = function() {
-    try {
-        // Immediate cleanup
-        localStorage.clear();
-        sessionStorage.clear();
-
-        // Trigger cross-tab logout if available
-        if (typeof triggerCrossTabLogout === 'function') {
-            triggerCrossTabLogout();
+// Helper function for authenticated API requests
+async function fetchWithAuth(url, options = {}) {
+    const token = localStorage.getItem('access_token') || localStorage.getItem('jwt_token');
+    
+    const defaultOptions = {
+        headers: {
+            'Content-Type': 'application/json',
+            ...(token && { 'Authorization': `Bearer ${token}` }),
+            ...options.headers
         }
+    };
+    
+    const response = await fetch(url, { ...defaultOptions, ...options });
+    
+    if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    return response;
+}
 
-        // Call app-defined logout if available
-        if (typeof performLogout === 'function') {
-            performLogout(); // Should handle redirect internally
-        } else {
-            // Force redirect immediately
-            window.location.replace('/');
+// Create the API object that dashboard.js expects
+window.API = {
+    // Get dashboard statistics overview
+    async getStatsOverview() {
+        try {
+            // Admin endpoints are available directly without /api prefix
+            const endpoint = USE_TEST_ENDPOINTS ? 
+                `/api/test/dashboard/stats/` : 
+                `/api/dashboard/stats/`;
+            
+            const response = await fetchWithAuth(endpoint);
+            const data = await response.json();
+            console.log('📊 Dashboard stats loaded:', data);
+            return data;
+        } catch (error) {
+            console.error('❌ Failed to load dashboard stats:', error);
+            throw error;
         }
-    } catch (error) {
-        console.error('Immediate logout failed:', error);
-        // Always redirect as last resort
-        window.location.replace('/');
+    },
+
+    // Get recent transactions for activity feed
+    async getRecentTransactions() {
+        try {
+            // Admin endpoints are available directly without /api prefix
+            const endpoint = USE_TEST_ENDPOINTS ? 
+                `/api/test/recent-transactions/` : 
+                `/api/recent-transactions/`;
+                
+            const response = await fetchWithAuth(endpoint);
+            const data = await response.json();
+            console.log('📋 Recent transactions loaded:', data);
+            return data;
+        } catch (error) {
+            console.error('❌ Failed to load recent transactions:', error);
+            throw error;
+        }
     }
 };
+
+// Make API_BASE available globally
+window.API_BASE = API_BASE;
+
+console.log('✅ Admin API object initialized:', window.API);
