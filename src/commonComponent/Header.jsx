@@ -16,7 +16,7 @@ const Header = ({ isSidebarOpen, setIsSidebarOpen }) => {
 
   const [notifications, setNotifications] = useState([]);
   const [loadingNotifications] = useState(false);
-  const [userName] = useState("Admin User");
+  const [userName, setUserName] = useState("Admin User");
 
   const [showLogoutPopup, setShowLogoutPopup] = useState(false);
   const [logoutLoading, setLogoutLoading] = useState(false);
@@ -54,6 +54,42 @@ const Header = ({ isSidebarOpen, setIsSidebarOpen }) => {
     return () =>
       document.removeEventListener("mousedown", handleClickOutside);
   }, [showNotifications]);
+
+  // Load logged-in user's name from storage and listen for updates (cross-tab)
+  useEffect(() => {
+    const loadUserName = () => {
+      try {
+        const raw = localStorage.getItem('user') || sessionStorage.getItem('user');
+        if (raw) {
+          const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+          // Try common name fields
+          const name = parsed?.first_name || parsed?.name || parsed?.full_name || parsed?.username || parsed?.email;
+          if (name) {
+            setUserName(name);
+            return;
+          }
+        }
+
+        // Fallback to simple name keys if present
+        const fallback = localStorage.getItem('user_name') || sessionStorage.getItem('user_name') || localStorage.getItem('username') || sessionStorage.getItem('username');
+        if (fallback) setUserName(fallback);
+      } catch (err) {
+        // ignore malformed JSON
+      }
+    };
+
+    loadUserName();
+
+    const onStorage = (e) => {
+      if (!e) return;
+      if (e.key === 'user' || e.key === 'user_name' || e.key === 'username') {
+        loadUserName();
+      }
+    };
+
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, []);
 
   // 🔹 Handle logout (skipped API call)
   const handleLogout = async () => {
