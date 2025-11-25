@@ -17,6 +17,7 @@ import TradingAccount from "../page/tradingaccount";
 import Pendingrequest from "../page/Pendingrequest";
 import DemoAccount from "../page/DemoAccount";
 import Transactions from "../page/Transactions";
+import Partnership from "../page/Partnership";
 
 const AppRoutes = () => {
   const location = useLocation();
@@ -61,6 +62,7 @@ const AppRoutes = () => {
             <Route path="/" element={<Dashboard />} />
             <Route path="*" element={<Dashboard />} />
             <Route path="transactions" element={<Transactions />} />
+            <Route path="partnership" element={<Partnership />} />
           </Routes>
         </Main>
       )}

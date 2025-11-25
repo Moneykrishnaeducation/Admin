@@ -1,15 +1,16 @@
 import React, { useMemo, useState } from "react";
 import TableStructure from "../commonComponent/TableStructure";
 
-const Modal = ({ open, onClose, title, children, actions }) => {
+const Modal = ({ open, onClose, title, children, actions, width = "w-80" }) => {
   if (!open) return null;
+  
   return (
     <div
       className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50"
       onClick={onClose}
     >
       <div
-        className="bg-black p-6 rounded shadow-lg w-80 max-h-[90vh] overflow-y-auto text-white"
+        className={`bg-black p-6 rounded shadow-lg max-h-[90vh] overflow-y-auto text-white ${width}`}
         onClick={(e) => e.stopPropagation()}
       >
         <h2 className="text-xl font-semibold mb-4 text-white">{title}</h2>
@@ -19,6 +20,7 @@ const Modal = ({ open, onClose, title, children, actions }) => {
     </div>
   );
 };
+
 
 const DemoAccount = () => {
   const [selectedRow, setSelectedRow] = useState(null);
@@ -145,7 +147,7 @@ const DemoAccount = () => {
   const actionsColumn = (row) => (
     <div className="flex gap-2">
       <button
-        className="bg-red-600 text-white px-2 py-1 rounded hover:bg-red-700"
+        className="bg-yellow-600 text-white px-2 py-1 rounded hover:bg-yellow-700"
         onClick={(e) => {
           e.stopPropagation();
           alert(`Disable clicked for ID ${row.id}`);
@@ -154,7 +156,7 @@ const DemoAccount = () => {
         Disable
       </button>
       <button
-        className="bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700"
+        className="bg-yellow-600 text-white px-2 py-1 rounded hover:bg-yellow-700"
         onClick={(e) => {
           e.stopPropagation();
           openView(row);
@@ -163,7 +165,7 @@ const DemoAccount = () => {
         View
       </button>
       <button
-        className="bg-green-600 text-white px-2 py-1 rounded hover:bg-green-700"
+        className="bg-yellow-600 text-white px-2 py-1 rounded hover:bg-yellow-700"
         onClick={(e) => {
           e.stopPropagation();
           openBalanceModal(row);
@@ -172,7 +174,7 @@ const DemoAccount = () => {
         Reset Balance
       </button>
       <button
-        className="bg-yellow-600 text-black px-2 py-1 rounded hover:bg-yellow-700"
+        className="bg-yellow-600 text-white px-2 py-1 rounded hover:bg-yellow-700"
         onClick={(e) => {
           e.stopPropagation();
           openLeverageModal(row);
@@ -183,9 +185,35 @@ const DemoAccount = () => {
     </div>
   );
 
+  // Track expanded row for subrow rendering
+  const [expandedRow, setExpandedRow] = useState(null);
+
+  const handleRowClick = (row) => {
+    setExpandedRow(expandedRow === row.id ? null : row.id); // Toggle subrow visibility
+  };
+
+  const renderRowSubComponent = (row) => {
+    if (expandedRow !== row.id) return null; // Only render subrow for expanded row
+
+    return (
+      <tr>
+        <td colSpan={columns.length} className="p-3">
+          <div className="flex gap-4">
+            {actionsColumn(row)}
+          </div>
+        </td>
+      </tr>
+    );
+  };
+
   return (
     <div className="p-6 max-w-7xl mx-auto">
-      <TableStructure columns={columns} data={data} actionsColumn={actionsColumn} />
+      <TableStructure
+        columns={columns}
+        data={data}
+        renderRowSubComponent={renderRowSubComponent}
+        onRowClick={handleRowClick} // Add row click handler to toggle subrow
+      />
 
       {/* Reset Leverage Modal */}
       <Modal
@@ -268,54 +296,60 @@ const DemoAccount = () => {
 
       {/* View Modal */}
       <Modal
-        open={viewModal}
-        onClose={() => setViewModal(false)}
-        title="Account History & Live Positions"
-        actions={[
-          <button
-            key="close"
-            className="bg-gray-300 px-4 py-2 rounded hover:bg-gray-400"
-            onClick={() => setViewModal(false)}
-          >
-            Close
-          </button>,
-        ]}
-      >
-        <div className="mb-4 flex flex-col md:flex-row md:items-center md:justify-between gap-2 text-white">
-          <div>
-            <span className="font-semibold">Balance: </span>${accountSummary.balance.toFixed(2)}{" "}
-            <span className="font-semibold ml-4">Equity: </span>${accountSummary.equity.toFixed(2)}{" "}
-            <span className="font-semibold ml-4">Open Positions: </span>{accountSummary.openPositions}
-          </div>
-          <div className="flex gap-2">
-            <button
-              className={`px-4 py-2 rounded ${
-                viewTab === "history"
-                  ? "bg-yellow-500 text-black"
-                  : "bg-gray-300 hover:bg-gray-400"
-              }`}
-              onClick={() => setViewTab("history")}
-            >
-              History
-            </button>
-            <button
-              className={`px-4 py-2 rounded ${
-                viewTab === "positions"
-                  ? "bg-yellow-500 text-black"
-                  : "bg-gray-300 hover:bg-gray-400"
-              }`}
-              onClick={() => setViewTab("positions")}
-            >
-              Positions
-            </button>
-          </div>
-        </div>
-        {viewTab === "history" ? (
-          <TableStructure columns={historyColumns} data={historyData} />
-        ) : (
-          <TableStructure columns={positionsColumns} data={positionsData} />
-        )}
-      </Modal>
+  open={viewModal}
+  onClose={() => setViewModal(false)}
+  title="Account History & Live Positions"
+  width="w-128"  // Adjust width here
+  actions={[
+    <button
+      key="close"
+      className="bg-gray-300 px-4 py-2 rounded hover:bg-gray-400"
+      onClick={() => setViewModal(false)}
+    >
+      Close
+    </button>,
+  ]}
+>
+
+  {/* Second Line - Balance, Equity, Open Positions */}
+  <div className="mb-4 text-white">
+    <div>
+      <span className="font-semibold">Balance: </span>${accountSummary.balance.toFixed(2)}{" "}
+      <span className="font-semibold ml-4">Equity: </span>${accountSummary.equity.toFixed(2)}{" "}
+      <span className="font-semibold ml-4">Open Positions: </span>{accountSummary.openPositions}
+    </div>
+  </div>
+
+  {/* Third Line - Buttons (History & Positions) */}
+  <div className="flex gap-2 mb-4">
+    <button
+      className={`px-4 py-2 rounded ${
+        viewTab === "history" ? "bg-yellow-500 text-black" : "bg-gray-300 hover:bg-gray-400"
+      }`}
+      onClick={() => setViewTab("history")}
+    >
+      History
+    </button>
+    <button
+      className={`px-4 py-2 rounded ${
+        viewTab === "positions" ? "bg-yellow-500 text-black" : "bg-gray-300 hover:bg-gray-400"
+      }`}
+      onClick={() => setViewTab("positions")}
+    >
+      Positions
+    </button>
+  </div>
+
+
+
+  {/* Table */}
+  {viewTab === "history" ? (
+    <TableStructure columns={historyColumns} data={historyData} />
+  ) : (
+    <TableStructure columns={positionsColumns} data={positionsData} />
+  )}
+</Modal>
+
     </div>
   );
 };
