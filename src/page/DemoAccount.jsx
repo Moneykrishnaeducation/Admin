@@ -1,5 +1,6 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import TableStructure from "../commonComponent/TableStructure";
+import SubRowButtons from "../commonComponent/SubRowButtons";
 import { get, post } from "../utils/api-config"; // Ensure post is available
 
 const Modal = ({ open, onClose, title, children, actions, width = "w-80" }) => {
@@ -23,9 +24,8 @@ const Modal = ({ open, onClose, title, children, actions, width = "w-80" }) => {
 };
 
 const DemoAccount = () => {
-  const [demoAccounts, setDemoAccounts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
 
   const [selectedRow, setSelectedRow] = useState(null);
 
@@ -52,7 +52,7 @@ const DemoAccount = () => {
 
   // Table columns
   const columns = useMemo(() => [
-    { Header: "ID", accessor: "id" },
+    { Header: "User ID", accessor: "user_id" },
     { Header: "Name", accessor: "name" },
     { Header: "Email", accessor: "email" },
     { Header: "Phone", accessor: "phone" },
@@ -77,28 +77,60 @@ const DemoAccount = () => {
     { Header: "Profit", accessor: "profit" },
   ];
 
-  // Load demo accounts
-  useEffect(() => {
-    const loadDemoAccounts = async () => {
-      try {
-        const response = await get("demo_accounts/");
-        setDemoAccounts(response);
-
-        // Initialize account status map
-        const statusMap = {};
-        response.forEach(acc => {
-          statusMap[acc.account_id] = acc.is_enabled; // assuming `is_enabled` field
-        });
-        setAccountStatusMap(statusMap);
-      } catch (err) {
-        setError("Failed to load demo accounts.");
-      } finally {
-        setLoading(false);
+  // Server-side fetch handler for TableStructure
+  const handleFetch = useCallback(async ({ page, pageSize, query }) => {
+    try {
+      const qParam = query ? `&query=${encodeURIComponent(query)}` : "";
+      const res = await get(`demo_accounts/?page=${page}&page_size=${pageSize}${qParam}`);
+      // normalize response: backend may return { data, total } or an array
+      let raw = [];
+      if (res) {
+        if (Array.isArray(res)) raw = res;
+        else if (Array.isArray(res.data)) raw = res.data;
+        else raw = Array.isArray(res.results) ? res.results : [];
       }
-    };
 
-    loadDemoAccounts();
-  }, []);
+      // If backend returned full list (not paged), apply client-side filtering and slicing
+      const q = query ? String(query).toLowerCase() : "";
+      let filtered = raw;
+      if (q) {
+        filtered = raw.filter((item) => {
+          if (!item) return false;
+          const fields = [item.name, item.email, item.account_id, item.phone];
+          return fields.some((f) => f && String(f).toLowerCase().includes(q));
+        });
+      }
+
+      const total = filtered.length;
+      const start = Math.max(0, (Number(page || 1) - 1) * Number(pageSize || 10));
+      const end = start + Number(pageSize || 10);
+      const pageData = filtered.slice(start, end);
+
+      // update account status map for visible rows
+      if (Array.isArray(pageData) && pageData.length > 0) {
+        setAccountStatusMap((prev) => {
+          const next = { ...prev };
+          pageData.forEach((acc) => {
+            if (acc && acc.account_id !== undefined) next[acc.account_id] = !!acc.is_enabled;
+          });
+          return next;
+        });
+      }
+
+      // first successful fetch -> clear initial loading indicator
+      if (isInitialLoading) setIsInitialLoading(false);
+
+      return { data: pageData, total };
+    } catch (err) {
+      console.error("Failed to fetch demo accounts page:", err);
+      return { data: [], total: 0 };
+    }
+  }, [refreshKey]);
+
+  // when refresh is triggered, show initial loading indicator again
+  React.useEffect(() => {
+    setIsInitialLoading(true);
+  }, [refreshKey]);
 
   // Modals
   const openLeverageModal = (row) => {
@@ -137,9 +169,8 @@ const DemoAccount = () => {
       setLeverageModal(false);
       setSelectedRow(null);
 
-      // reload accounts
-      const demoAccountsResponse = await get("demo_accounts/");
-      setDemoAccounts(demoAccountsResponse);
+      // trigger table refresh
+      setRefreshKey((k) => k + 1);
     } catch (err) {
       console.error(err);
       alert("Failed to reset leverage.");
@@ -156,9 +187,8 @@ const DemoAccount = () => {
       setBalanceModal(false);
       setSelectedRow(null);
 
-      // reload accounts
-      const demoAccountsResponse = await get("demo_accounts/");
-      setDemoAccounts(demoAccountsResponse);
+      // trigger table refresh
+      setRefreshKey((k) => k + 1);
     } catch (err) {
       console.error(err);
       alert("Failed to reset balance.");
@@ -228,11 +258,31 @@ const DemoAccount = () => {
   const handleRowClick = (row) => setExpandedRow(expandedRow === row.id ? null : row.id);
 
   const renderRowSubComponent = (row) => {
-    if (expandedRow !== row.id) return null;
+    const isExpanded = expandedRow === row.id;
+    const hasActionsColumn = typeof actionsColumn === 'function';
+    const colSpan = columns.length + (hasActionsColumn ? 1 : 0);
+
+    const actionItems = [
+      { icon: "🔍", label: "View", onClick: () => openViewModal(row) },
+      { icon: "💰", label: "Reset Balance", onClick: () => openBalanceModal(row) },
+      { icon: "⚖️", label: "Reset Leverage", onClick: () => openLeverageModal(row) },
+      { icon: row && row.account_id && accountStatusMap[row.account_id] ? "🛑" : "✅", label: row && row.account_id && accountStatusMap[row.account_id] ? "Disable" : "Enable", onClick: () => toggleAccountStatus(row.account_id) },
+    ];
+
     return (
-      <tr>
-        <td colSpan={columns.length} className="p-3">
-          <div className="flex gap-4">{actionsColumn(row)}</div>
+      <tr style={{ height: isExpanded ? 'auto' : '0px', overflow: 'hidden', padding: 0, margin: 0, border: 0 }}>
+        <td colSpan={colSpan} className="p-0 m-0 border-0">
+          <div
+            style={{
+              maxHeight: isExpanded ? 120 : 0,
+              overflow: 'hidden',
+              transition: 'max-height 0.25s ease, opacity 0.25s ease',
+              opacity: isExpanded ? 1 : 0,
+            }}
+            className="bg-gray-800 text-yellow-400 rounded p-2 flex gap-4 flex-wrap"
+          >
+            <SubRowButtons actionItems={actionItems} />
+          </div>
         </td>
       </tr>
     );
@@ -240,18 +290,15 @@ const DemoAccount = () => {
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
-      {loading ? (
-        <p className="text-yellow-400">Loading demo accounts...</p>
-      ) : error ? (
-        <p className="text-red-500">{error}</p>
-      ) : (
-        <TableStructure
-          columns={columns}
-          data={demoAccounts}
-          renderRowSubComponent={renderRowSubComponent}
-          onRowClick={handleRowClick}
-        />
-      )}
+      <TableStructure
+        key={refreshKey} /* force remount when refreshKey changes */
+        columns={columns}
+        serverSide={true}
+        onFetch={handleFetch}
+        initialPageSize={10}
+        renderRowSubComponent={renderRowSubComponent}
+        onRowClick={handleRowClick}
+      />
 
       {/* Reset Leverage Modal */}
       <Modal
