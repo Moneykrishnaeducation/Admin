@@ -22,7 +22,7 @@ const Navbar = ({ isSidebarOpen, setIsSidebarOpen }) => {
   React.useEffect(() => {
     // Function to check window size
     const handleResize = () => {
-      setIsMobileView(window.innerWidth < 768); // Tailwind mobile breakpoint md is 768px
+      setIsMobileView(window.innerWidth < 900); // Tailwind mobile breakpoint md is 768px
     };
 
     // Initial check

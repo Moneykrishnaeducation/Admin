@@ -134,7 +134,7 @@ const Header = ({ isSidebarOpen, setIsSidebarOpen }) => {
       <>
         <button
           onClick={toggleSidebar}
-          className="lg:hidden relative w-6 h-6 flex flex-col justify-between items-center mr-3 md:mr-4"
+          className="lg:flex relative w-6 h-6 flex flex-col justify-between items-center mr-3 md:mr-4"
         >
           <span
             className={`block h-0.5 w-6 ${
@@ -155,33 +155,6 @@ const Header = ({ isSidebarOpen, setIsSidebarOpen }) => {
               isDarkMode ? "bg-white" : "bg-black"
             } rounded transform transition duration-300 ease-in-out ${
               isSidebarOpen ? "-rotate-45 -translate-y-2" : ""
-            }`}
-          />
-        </button>
-
-        <button
-          onClick={toggleSidebar}
-          className="hidden lg:flex relative w-6 h-6 flex flex-col justify-between items-center mr-3 md:mr-4"
-        >
-          <span
-            className={`block h-0.5 w-6 ${
-              isDarkMode ? "bg-white" : "bg-black"
-            } rounded transform transition duration-300 ease-in-out ${
-              !isSidebarOpen ? "rotate-45 translate-y-2" : ""
-            }`}
-          />
-          <span
-            className={`block h-0.5 w-6 ${
-              isDarkMode ? "bg-white" : "bg-black"
-            } rounded transition duration-300 ease-in-out ${
-              !isSidebarOpen ? "opacity-0" : ""
-            }`}
-          />
-          <span
-            className={`block h-0.5 w-6 ${
-              isDarkMode ? "bg-white" : "bg-black"
-            } rounded transform transition duration-300 ease-in-out ${
-              !isSidebarOpen ? "-rotate-45 -translate-y-2" : ""
             }`}
           />
         </button>
