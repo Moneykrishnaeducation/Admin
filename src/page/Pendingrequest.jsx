@@ -4,11 +4,15 @@ import ErrorBoundary from "../commonComponent/ErrorBoundary";
 import PendingDepositModal from "../Modals/PendingDepositModal";
 import PendingWithdrawalModal from "../Modals/PendingWithdrawalModal";
 import PendingCommissionModal from "../Modals/PendingCommissionModal";
-import { get } from "../utils/api-config"; // backend GET
+import { get } from "../utils/api-config"; // backend GET utility
 import { useTheme } from "../context/ThemeContext";
 
+// ⚠️ IMPORTANT: YOU MUST REPLACE THIS WITH YOUR ACTUAL BACKEND API BASE URL
+// Example: const API_BASE = "https://api.yourdomain.com/api";
+// const API_BASE = "https://api.example.com/api"; // Replace with actual API base URL
+
 const PendingRequest = () => {
-  let {isDarkMode} = useTheme();
+  let { isDarkMode } = useTheme();
   const buttons = [
     "IB Requests",
     "Bank Details",
@@ -20,19 +24,31 @@ const PendingRequest = () => {
     "Commission Withdrawals",
   ];
 
-  // Mapping of tab to API endpoint for loading data
+  // Mapping of tab to API endpoint for loading data (list GET endpoints)
   const apiEndpoints = {
-    "IB Requests": "api/admin/ib-requests/?page=1&pageSize=5",
-    "Bank Details": "api/admin/bank-detail-requests/?page=1&pageSize=5",
-    "Profile Changes": "api/admin/profile-change-requests/?page=1&pageSize=5",
-    "Document Requests": "api/admin/document-requests/?page=1&pageSize=5",
-    "Crypto Details": "api/admin/crypto-details/?page=1&pageSize=5",
-    "Pending Deposits": "api/admin/pending-deposits/",
-    "Pending Withdrawals": "api/admin/pending-withdrawals/",
-    "Commission Withdrawals": "api/admin/pending-withdrawal-requests/",
+    "IB Requests": "admin/ib-requests/?page=1&pageSize=5",
+    "Bank Details": "admin/bank-detail-requests/?page=1&pageSize=5",
+    "Profile Changes": "admin/profile-change-requests/?page=1&pageSize=5",
+    "Document Requests": "admin/document-requests/?page=1&pageSize=5",
+    "Crypto Details": "admin/crypto-details/?page=1&pageSize=5",
+    "Pending Deposits": "admin/pending-deposits/",
+    "Pending Withdrawals": "admin/pending-withdrawals/",
+    "Commission Withdrawals": "admin/pending-withdrawal-requests/",
   };
 
-  const [activeTab, setActiveTab] = useState(""); // start with no tab selected
+  // Mapping of tab to approve/reject endpoint base path (action POST endpoints)
+  const approveRejectEndpoints = {
+    "IB Requests": "admin/ib-request", 
+    "Bank Details": "admin/bank-detail-request", 
+    "Profile Changes": "admin/profile-change-request", 
+    "Document Requests": "admin/document-request", 
+    "Crypto Details": "admin/crypto-detail", 
+    "Pending Deposits": "admin/transaction", // Transactions (Deposits/Withdrawals) use this base
+    "Pending Withdrawals": "admin/transaction",
+    "Commission Withdrawals": "admin/transaction",
+  };
+
+  const [activeTab, setActiveTab] = useState("");
   const [tableData, setTableData] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -50,7 +66,8 @@ const PendingRequest = () => {
   // Fetch commissioning profiles
   const fetchCommissionProfiles = async () => {
     try {
-      const response = await get("commissioning-profiles/");
+      // Assuming 'get' utility prepends API_BASE
+      const response = await get("commissioning-profiles/"); 
       if (Array.isArray(response)) {
         setCommissionProfiles(response);
       } else {
@@ -65,9 +82,68 @@ const PendingRequest = () => {
   useEffect(() => {
     fetchCommissionProfiles();
   }, []);
-  const handleAction = (id, action) => {
-    alert(`User ${id} has been ${action}`);
+
+  // -------------------- Handle actions --------------------
+  const handleAction = async (id, action, tab) => {
+    if (!tab) {
+      alert("Please select a tab first");
+      return;
+    }
+    try {
+      let endpointBase = `${approveRejectEndpoints[tab]}`;
+      let fullEndpoint = '';
+      let bodyData = undefined;
+      let method = 'POST';
+
+      // Special case for 'IB Requests' which uses the ID directly (path('api/admin/ib-request/<int:id>/'))
+      // and sends the status in the body via PATCH method.
+      if (tab === "IB Requests") {
+        fullEndpoint = `${endpointBase}/${id}/`;
+        // 'approve' or 'reject' should be passed as the status in the body
+        bodyData = JSON.stringify({ status: action });
+        method = 'PATCH'; // Use PATCH for IB Requests as per backend
+      }
+      // All other requests use the explicit URL patterns like:
+      // path('api/admin/bank-detail-request/<int:id>/approve/')
+      else {
+        // Concatenates the base path, ID, and action (e.g., admin/bank-detail-request/123/approve/)
+        fullEndpoint = `${endpointBase}/${id}/${action}/`;
+      }
+
+      const fullUrl = `${API_BASE}/${fullEndpoint}`;
+      const accessToken = localStorage.getItem('access_token');
+
+      console.log(`[handleAction] POSTing to: ${fullUrl}`); // Log the exact URL being called
+
+      if (!accessToken) {
+        alert("No access token found");
+        return;
+      }
+
+      const response = await fetch(fullUrl, {
+        method: method,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: bodyData,
+      });
+
+      if (response.ok) {
+        const actionPast = action === "approve" ? "approved" : "rejected";
+        alert(`Request ${id} in ${tab} has been ${actionPast}`);
+        loadTabData(tab); // Reload list data after action success
+      } else {
+        const errorText = await response.text();
+        console.error(`Failed to ${action} request ${id}. Status: ${response.status}`, errorText);
+        alert(`Failed to ${action} request ${id}. Check console for backend error details.`);
+      }
+    } catch (error) {
+      console.error("Error in handleAction:", error);
+      alert(`Error: Failed to ${action} request ${id}`);
+    }
   };
+
 
   const defaultColumns = [
     { Header: "User Id", accessor: "id" },
@@ -81,8 +157,8 @@ const PendingRequest = () => {
         const rowId = _row?.id;
         return (
           <select
-            className={`border px-2 py-1 rounded  ${
-              isDarkMode ? "bg-gray-900  " : "bg-white text-black"
+            className={`border px-2 py-1 rounded ${
+              isDarkMode ? "bg-gray-900" : "bg-white text-black"
             }`}
             value={cellValue || ""}
             onChange={(e) =>
@@ -112,13 +188,13 @@ const PendingRequest = () => {
         <div className="flex gap-2">
           <button
             className="bg-green-500 text-white px-2 py-1 rounded"
-            onClick={() => handleAction(row.id, "approved")}
+            onClick={() => handleAction(row.id, "approve", activeTab)}
           >
             Approve
           </button>
           <button
             className="bg-red-500 text-white px-2 py-1 rounded"
-            onClick={() => handleAction(row.id, "rejected")}
+            onClick={() => handleAction(row.id, "reject", activeTab)}
           >
             Reject
           </button>
@@ -141,13 +217,13 @@ const PendingRequest = () => {
         <div className="flex gap-2">
           <button
             className="bg-green-500 text-white px-2 py-1 rounded"
-            onClick={() => handleAction(row.id, "approved")}
+            onClick={() => handleAction(row.id, "approve", activeTab)}
           >
             Approve
           </button>
           <button
             className="bg-red-500 text-white px-2 py-1 rounded"
-            onClick={() => handleAction(row.id, "rejected")}
+            onClick={() => handleAction(row.id, "reject", activeTab)}
           >
             Reject
           </button>
@@ -168,15 +244,17 @@ const PendingRequest = () => {
       Header: "Actions",
       accessor: "actions",
       Cell: (cellValue, row) => (
-        <button
-          className="bg-blue-600 text-white px-3 py-1 rounded"
-          onClick={() => {
-            setSelectedDeposit(row);
-            setModalVisible(true);
-          }}
-        >
-          View
-        </button>
+        <div className="flex gap-2">
+          <button
+            className="bg-blue-600 text-white px-3 py-1 rounded"
+            onClick={() => {
+              setSelectedDeposit(row);
+              setModalVisible(true);
+            }}
+          >
+            View
+          </button>
+        </div>
       ),
     },
   ];
@@ -193,15 +271,18 @@ const PendingRequest = () => {
       Header: "Actions",
       accessor: "actions",
       Cell: (cellValue, row) => (
-        <button
-          className="bg-blue-600 text-white px-3 py-1 rounded"
-          onClick={() => {
-            setSelectedWithdrawal(row);
-            setWithdrawalModalVisible(true);
-          }}
-        >
-          View
-        </button>
+        <div className="flex gap-2">
+          <button
+            className="bg-blue-600 text-white px-3 py-1 rounded"
+            onClick={() => {
+              setSelectedWithdrawal(row);
+              setWithdrawalModalVisible(true);
+            }}
+          >
+            View
+          </button>
+          
+        </div>
       ),
     },
   ];
@@ -236,13 +317,13 @@ const PendingRequest = () => {
         <div className="flex gap-2">
           <button
             className="bg-green-500 text-white px-2 py-1 rounded"
-            onClick={() => handleAction(row.id, "approved")}
+            onClick={() => handleAction(row.id, "approve", activeTab)}
           >
             Approve
           </button>
           <button
             className="bg-red-500 text-white px-2 py-1 rounded"
-            onClick={() => handleAction(row.id, "rejected")}
+            onClick={() => handleAction(row.id, "reject", activeTab)}
           >
             Reject
           </button>
@@ -265,15 +346,17 @@ const PendingRequest = () => {
       Header: "Actions",
       accessor: "actions",
       Cell: (cellValue, row) => (
-        <button
-          className="bg-blue-600 text-white px-3 py-1 rounded"
-          onClick={() => {
-            setSelectedCommissionWithdrawal(row);
-            setCommissionWithdrawalModalVisible(true);
-          }}
-        >
-          View
-        </button>
+        <div className="flex gap-2">
+          <button
+            className="bg-blue-600 text-white px-3 py-1 rounded"
+            onClick={() => {
+              setSelectedCommissionWithdrawal(row);
+              setCommissionWithdrawalModalVisible(true);
+            }}
+          >
+            View
+          </button>
+        </div>
       ),
     },
   ];
@@ -294,13 +377,13 @@ const PendingRequest = () => {
         <div className="flex gap-2">
           <button
             className="bg-green-500 text-white px-2 py-1 rounded"
-            onClick={() => handleAction(row.id, "approved")}
+            onClick={() => handleAction(row.id, "approve", activeTab)}
           >
             Approve
           </button>
           <button
             className="bg-red-500 text-white px-2 py-1 rounded"
-            onClick={() => handleAction(row.id, "rejected")}
+            onClick={() => handleAction(row.id, "reject", activeTab)}
           >
             Reject
           </button>
@@ -356,13 +439,13 @@ const PendingRequest = () => {
         <div className="flex gap-2">
           <button
             className="bg-green-500 text-white px-2 py-1 rounded"
-            onClick={() => handleAction(row.id, "approved")}
+            onClick={() => handleAction(row.id, "approve", activeTab)}
           >
             Approve
           </button>
           <button
             className="bg-red-500 text-white px-2 py-1 rounded"
-            onClick={() => handleAction(row.id, "rejected")}
+            onClick={() => handleAction(row.id, "reject", activeTab)}
           >
             Reject
           </button>
@@ -371,20 +454,9 @@ const PendingRequest = () => {
     },
   ];
 
-  // -------------------- Handle actions --------------------
- 
 
-  const handleApprove = (id) => {
-    alert(`User ${id} has been approved`);
-    setModalVisible(false);
-  };
 
-  const handleReject = (id) => {
-    alert(`User ${id} has been rejected`);
-    setModalVisible(false);
-  };
-
-  // -------------------- Simulated data loader --------------------
+  // -------------------- Data loader --------------------
   const loadTabData = async (tab) => {
     setLoading(true);
     try {
@@ -394,35 +466,23 @@ const PendingRequest = () => {
         setLoading(false);
         return;
       }
-      const accessToken = localStorage.getItem('access_token');
-      if (!accessToken) {
-        console.error("No access token found in localStorage");
-        setTableData([]);
-        setLoading(false);
-        return;
-      }
-      const response = await fetch(endpoint, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
-      if (!response.ok) {
-        throw new Error(`Failed to fetch data for ${tab}`);
-      }
-      const respData = await response.json();
-      console.log(`[PendingRequest] Data received for tab "${tab}":`, respData);
-      // Ensure data is an array before setting state for TableStructure
+      // Assuming 'get' utility correctly prepends API_BASE and handles headers
+      const response = await get(endpoint); 
+      
+      console.log(`[PendingRequest] Data received for tab "${tab}":`, response);
+      
+      let respData = response;
       let dataArray = [];
+
+      // Logic to extract the array from common API response shapes
       if (Array.isArray(respData)) {
         dataArray = respData;
       } else if (respData && typeof respData === "object") {
-        // Look for likely data array in response object
         if (Array.isArray(respData.results)) {
           dataArray = respData.results;
         } else if (Array.isArray(respData.data)) {
           dataArray = respData.data;
         } else {
-          // fallback: try to get values array from object
           const values = Object.values(respData).find(val => Array.isArray(val));
           if (values) {
             dataArray = values;
@@ -499,20 +559,27 @@ const PendingRequest = () => {
         visible={modalVisible}
         onClose={() => setModalVisible(false)}
         depositData={selectedDeposit}
-        onApprove={handleApprove}
-        onReject={handleReject}
+        onApprove={(id) => {
+          handleAction(id, "approve", activeTab);
+          setModalVisible(false);
+        }}
+        onReject={(id) => {
+          handleAction(id, "reject", activeTab);
+          setModalVisible(false);
+        }}
       />
+      
 
       <PendingWithdrawalModal
         visible={withdrawalModalVisible}
         onClose={() => setWithdrawalModalVisible(false)}
         withdrawalData={selectedWithdrawal}
-        onApprove={(id) => {
-          alert(`User ${id} withdrawal has been approved`);
+       onApprove={(id) => {
+          handleAction(id, "approve", activeTab);
           setWithdrawalModalVisible(false);
         }}
         onReject={(id) => {
-          alert(`User ${id} withdrawal has been rejected`);
+          handleAction(id, "reject", activeTab);
           setWithdrawalModalVisible(false);
         }}
       />
@@ -522,11 +589,11 @@ const PendingRequest = () => {
         onClose={() => setCommissionWithdrawalModalVisible(false)}
         commissiondata={selectedCommissionWithdrawal}
         onApprove={(id) => {
-          alert(`User ${id} commission withdrawal has been approved`);
+          handleAction(id, "approve", activeTab);
           setCommissionWithdrawalModalVisible(false);
         }}
         onReject={(id) => {
-          alert(`User ${id} commission withdrawal has been rejected`);
+          handleAction(id, "reject", activeTab);
           setCommissionWithdrawalModalVisible(false);
         }}
       />
