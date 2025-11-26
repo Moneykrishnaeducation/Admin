@@ -2,8 +2,11 @@ import React, { useState, useEffect } from "react";
 import TableStructure from "../commonComponent/TableStructure";
 import ErrorBoundary from "../commonComponent/ErrorBoundary";
 import PendingDepositModal from "../Modals/PendingDepositModal";
+import { get } from "../utils/api-config"; // backend GET
+import { useTheme } from "../context/ThemeContext";
 
 const PendingRequest = () => {
+  let {isDarkMode} = useTheme();
   const buttons = [
     "IB Requests",
     "Bank Details",
@@ -15,9 +18,11 @@ const PendingRequest = () => {
     "Commission Withdrawals",
   ];
 
-  const [activeTab, setActiveTab] = useState(buttons[0]);
+  const [activeTab, setActiveTab] = useState(""); // start with no tab selected
   const [tableData, setTableData] = useState([]);
   const [loading, setLoading] = useState(false);
+
+  const [commissionProfiles, setCommissionProfiles] = useState([]);
 
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedDeposit, setSelectedDeposit] = useState(null);
@@ -28,7 +33,28 @@ const PendingRequest = () => {
   const [commissionWithdrawalModalVisible, setCommissionWithdrawalModalVisible] = useState(false);
   const [selectedCommissionWithdrawal, setSelectedCommissionWithdrawal] = useState(null);
 
-  // Existing columns for tabs other than Bank Details
+  // Fetch commissioning profiles
+  const fetchCommissionProfiles = async () => {
+    try {
+      const response = await get("commissioning-profiles/");
+      if (Array.isArray(response)) {
+        setCommissionProfiles(response);
+      } else {
+        console.error("Unexpected profiles response:", response);
+      }
+    } catch (error) {
+      console.error("Failed to fetch profiles:", error);
+    }
+  };
+
+  // Run once on page load
+  useEffect(() => {
+    fetchCommissionProfiles();
+  }, []);
+  const handleAction = (id, action) => {
+    alert(`User ${id} has been ${action}`);
+  };
+
   const defaultColumns = [
     { Header: "User Id", accessor: "id" },
     { Header: "User Name", accessor: "name" },
@@ -39,8 +65,10 @@ const PendingRequest = () => {
       accessor: "commissionProfile",
       Cell: (cellValue, row) => (
         <select
-          className="border px-2 py-1 rounded"
-          value={row.commissionProfile || ""}
+          className={`border px-2 py-1 rounded  ${
+          isDarkMode ? "bg-gray-900  " : "bg-white text-black"
+          }`}
+          value={cellValue || ""}
           onChange={(e) =>
             setTableData((prev) =>
               prev.map((item) =>
@@ -52,9 +80,11 @@ const PendingRequest = () => {
           }
         >
           <option value="">Select the profile</option>
-          <option value="Profile A">Profile A</option>
-          <option value="Profile B">Profile B</option>
-          <option value="Profile C">Profile C</option>
+          {commissionProfiles.map((p) => (
+            <option key={p.profileId} value={p.profileName}>
+              {p.profileId} - {p.profileName}
+            </option>
+          ))}
         </select>
       ),
     },
@@ -79,9 +109,7 @@ const PendingRequest = () => {
       ),
     },
   ];
-
-
-  // Columns specifically for Crypto Details tab
+  // -------------------- Crypto Details Columns --------------------
   const cryptoDetailsColumns = [
     { Header: "User Id", accessor: "id" },
     { Header: "User Name", accessor: "name" },
@@ -111,7 +139,7 @@ const PendingRequest = () => {
     },
   ];
 
-  // Columns specifically for Pending Deposits tab
+  // -------------------- Pending Deposit Columns --------------------
   const pendingDepositsColumns = [
     { Header: "Date/Time", accessor: "dateTime" },
     { Header: "User Name", accessor: "name" },
@@ -136,7 +164,7 @@ const PendingRequest = () => {
     },
   ];
 
-  // Columns specifically for Pending Withdrawals tab
+  // -------------------- Pending Withdrawals Columns --------------------
   const pendingWithdrawalsColumns = [
     { Header: "Date/Time", accessor: "dateTime" },
     { Header: "User Name", accessor: "name" },
@@ -161,7 +189,7 @@ const PendingRequest = () => {
     },
   ];
 
-  // Columns specifically for Profile Changes tab
+  // -------------------- Profile Changes Columns --------------------
   const profileChangesColumns = [
     { Header: "User Id", accessor: "id" },
     { Header: "User Name", accessor: "name" },
@@ -189,7 +217,7 @@ const PendingRequest = () => {
     },
   ];
 
-  // Columns specifically for Commission Withdrawals tab
+  // -------------------- Commission Withdrawals Columns --------------------
   const commissionWithdrawalsColumns = [
     { Header: "Transaction ID", accessor: "transactionId" },
     { Header: "User Name", accessor: "name" },
@@ -216,7 +244,7 @@ const PendingRequest = () => {
     },
   ];
 
-  // Columns specifically for Bank Details tab
+  // -------------------- Bank Details Columns --------------------
   const bankDetailsColumns = [
     { Header: "User Id", accessor: "id" },
     { Header: "User Name", accessor: "name" },
@@ -247,18 +275,18 @@ const PendingRequest = () => {
     },
   ];
 
-  // Columns specifically for Document Requests tab
+  // -------------------- Document Requests Columns --------------------
   const documentRequestsColumns = [
     { Header: "User Id", accessor: "id" },
     { Header: "User Name", accessor: "name" },
     { Header: "Email", accessor: "email" },
     { Header: "Document Type", accessor: "documentType" },
-{
+    {
       Header: "ID Proof",
       accessor: "idProof",
       Cell: (cellValue, row) => (
         <a
-          href={row.idProof}
+          href={cellValue}
           target="_blank"
           rel="noopener noreferrer"
           className="text-blue-600 underline"
@@ -291,33 +319,28 @@ const PendingRequest = () => {
     },
   ];
 
-
-  const handleAction = (id, action) => {
-    alert(`User ${id} has been ${action}`);
-    // Here you can call API to approve/reject
-  };
+  // -------------------- Handle actions --------------------
+ 
 
   const handleApprove = (id) => {
     alert(`User ${id} has been approved`);
     setModalVisible(false);
-    // Update corresponding table data or refresh
   };
 
   const handleReject = (id) => {
     alert(`User ${id} has been rejected`);
     setModalVisible(false);
-    // Update corresponding table data or refresh
   };
 
-  // Simulate fetching data per activeTab
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      await new Promise((res) => setTimeout(res, 500));
+  // -------------------- Simulated data loader --------------------
+  const loadTabData = async (tab) => {
+    setLoading(true);
+    await new Promise((res) => setTimeout(res, 500)); // simulate API delay
 
-      // Mock data for Bank Details tab
-      if (activeTab === "Bank Details") {
-        const mockBankData = Array.from({ length: 10 }, (_, i) => ({
+    let mock = [];
+    switch (tab) {
+      case "Bank Details":
+        mock = Array.from({ length: 10 }, (_, i) => ({
           id: i + 1,
           name: `Bank User ${i + 1}`,
           email: `bankuser${i + 1}@example.com`,
@@ -326,14 +349,9 @@ const PendingRequest = () => {
           branch: "Main Branch",
           ifscCode: `IFSC000${i + 1}`,
         }));
-
-        setTableData(mockBankData);
-        setLoading(false);
-        return;
-      }
-
-      if (activeTab === "Pending Deposits") {
-        const mockPendingDepositsData = Array.from({ length: 10 }, (_, i) => ({
+        break;
+      case "Pending Deposits":
+        mock = Array.from({ length: 10 }, (_, i) => ({
           id: i + 1,
           dateTime: new Date(Date.now() - i * 86400000).toLocaleString(),
           name: `Pending User ${i + 1}`,
@@ -342,14 +360,9 @@ const PendingRequest = () => {
           amount: (Math.random() * 1000 + 100).toFixed(2),
           paymentMethod: i % 2 === 0 ? "Credit Card" : "Bank Transfer",
         }));
-  
-        setTableData(mockPendingDepositsData);
-        setLoading(false);
-        return;
-      }
-  
-      if (activeTab === "Pending Withdrawals") {
-        const mockPendingWithdrawalsData = Array.from({ length: 10 }, (_, i) => ({
+        break;
+      case "Pending Withdrawals":
+        mock = Array.from({ length: 10 }, (_, i) => ({
           id: i + 1,
           dateTime: new Date(Date.now() - i * 86400000).toLocaleString(),
           name: `Withdrawal User ${i + 1}`,
@@ -358,27 +371,17 @@ const PendingRequest = () => {
           amount: (Math.random() * 2000 + 200).toFixed(2),
           paymentMethod: i % 2 === 0 ? "Bank Transfer" : "Credit Card",
         }));
-  
-        setTableData(mockPendingWithdrawalsData);
-        setLoading(false);
-        return;
-      }
-
-      if (activeTab === "Profile Changes") {
-        const mockProfileChangesData = Array.from({ length: 10 }, (_, i) => ({
+        break;
+      case "Profile Changes":
+        mock = Array.from({ length: 10 }, (_, i) => ({
           id: i + 1,
           name: `Profile User ${i + 1}`,
           email: `profileuser${i + 1}@example.com`,
           requestedChanges: `Change request ${i + 1}`,
         }));
-
-        setTableData(mockProfileChangesData);
-        setLoading(false);
-        return;
-      }
-
-      if (activeTab === "Document Requests") {
-        const mockDocumentRequestsData = Array.from({ length: 10 }, (_, i) => ({
+        break;
+      case "Document Requests":
+        mock = Array.from({ length: 10 }, (_, i) => ({
           id: i + 1,
           name: `Doc User ${i + 1}`,
           email: `docuser${i + 1}@example.com`,
@@ -387,14 +390,9 @@ const PendingRequest = () => {
           addressProof: `Address Proof ${i + 1}`,
           uploadedAt: new Date().toLocaleDateString(),
         }));
-
-        setTableData(mockDocumentRequestsData);
-        setLoading(false);
-        return;
-      }
-
-      if (activeTab === "Crypto Details") {
-        const mockCryptoData = Array.from({ length: 10 }, (_, i) => ({
+        break;
+      case "Crypto Details":
+        mock = Array.from({ length: 10 }, (_, i) => ({
           id: i + 1,
           name: `Crypto User ${i + 1}`,
           email: `cryptouser${i + 1}@example.com`,
@@ -402,14 +400,9 @@ const PendingRequest = () => {
           exchange: i % 2 === 0 ? "Binance" : "Coinbase",
           createdAt: new Date().toLocaleDateString(),
         }));
-
-        setTableData(mockCryptoData);
-        setLoading(false);
-        return;
-      }
-
-      if (activeTab === "Commission Withdrawals") {
-        const mockCommissionWithdrawalsData = Array.from({ length: 10 }, (_, i) => ({
+        break;
+      case "Commission Withdrawals":
+        mock = Array.from({ length: 10 }, (_, i) => ({
           id: i + 1,
           transactionId: `TXN${1000 + i + 1}`,
           name: `Commission User ${i + 1}`,
@@ -417,32 +410,31 @@ const PendingRequest = () => {
           tradingAccountId: `TRADE${1000 + i + 1}`,
           type: i % 2 === 0 ? "Debit" : "Credit",
           amount: (Math.random() * 1500 + 300).toFixed(2),
-          status: i % 3 === 0 ? "Pending" : i % 3 === 1 ? "Approved" : "Rejected",
+          status:
+            i % 3 === 0 ? "Pending" : i % 3 === 1 ? "Approved" : "Rejected",
           createdAt: new Date(Date.now() - i * 86400000).toLocaleString(),
         }));
+        break;
+      default:
+        mock = Array.from({ length: 10 }, (_, i) => ({
+          id: i + 1,
+          name: `${tab} User ${i + 1}`,
+          email: `user${i + 1}@example.com`,
+          createdAt: new Date().toLocaleDateString(),
+          commissionProfile: "",
+        }));
+    }
 
-        setTableData(mockCommissionWithdrawalsData);
-        setLoading(false);
-        return;
-      }
+    setTableData(mock);
+    setLoading(false);
+  };
 
-      // Mock data for other tabs
-      const mockData = Array.from({ length: 10 }, (_, i) => ({
-        id: i + 1,
-        name: `${activeTab} User ${i + 1}`,
-        email: `user${i + 1}@example.com`,
-        createdAt: new Date().toLocaleDateString(),
-        commissionProfile: "", // default empty
-      }));
+  const handleTabClick = (tab) => {
+    setActiveTab(tab);
+    loadTabData(tab);
+  };
 
-      setTableData(mockData);
-      setLoading(false);
-    };
-
-    fetchData();
-  }, [activeTab]);
-
-  // Conditional columns based on activeTab
+  // Pick correct columns for selected tab
   const columns =
     activeTab === "Bank Details"
       ? bankDetailsColumns
@@ -460,15 +452,14 @@ const PendingRequest = () => {
       ? cryptoDetailsColumns
       : defaultColumns;
 
-
   return (
     <div className="p-4">
-      {/* Buttons */}
+      {/* Navigation Tabs */}
       <div className="flex flex-wrap gap-2 mb-4">
         {buttons.map((btn) => (
           <button
             key={btn}
-            onClick={() => setActiveTab(btn)}
+            onClick={() => handleTabClick(btn)}
             className={`px-4 py-2 rounded-md font-semibold ${
               activeTab === btn
                 ? "bg-yellow-400 text-black"
@@ -492,6 +483,7 @@ const PendingRequest = () => {
         />
       </ErrorBoundary>
 
+      {/* Modals */}
       <PendingDepositModal
         visible={modalVisible}
         onClose={() => setModalVisible(false)}

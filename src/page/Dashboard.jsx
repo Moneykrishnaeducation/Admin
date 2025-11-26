@@ -122,7 +122,7 @@ const Dashboard = () => {
     <div className="flex flex-col md:flex-row">
       <Navbar isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} />
 
-      <div className="flex-1 min-h-screen bg-black text-yellow-400 p-4 sm:p-8 transition-all duration-300">
+      <div className="flex-1 min-h-screen  text-yellow-400 p-4 sm:p-8 transition-all duration-300">
 
         {/* Stats Buttons */}
         <div className="flex flex-col sm:flex-row justify-center gap-4 sm:gap-6 mb-6">
@@ -151,7 +151,7 @@ const Dashboard = () => {
           {stats.map((stat, index) => (
             <div
               key={index}
-              className="bg-black p-4 sm:p-6 rounded-xl text-center border border-yellow-300/20 shadow-[0px_0px_6px_rgba(255,255,255,0.2),0px_0px_10px_rgba(255,255,0,0.15)] hover:shadow-[0px_0px_10px_rgba(255,255,255,0.35),0px_0px_15px_rgba(255,255,0,0.25)] transition-all duration-300"
+              className=" p-4 sm:p-6 rounded-xl text-center border border-yellow-300/20 shadow-[0px_0px_6px_rgba(255,255,255,0.2),0px_0px_10px_rgba(255,255,0,0.15)] hover:shadow-[0px_0px_10px_rgba(255,255,255,0.35),0px_0px_15px_rgba(255,255,0,0.25)] transition-all duration-300"
             >
               <p className="text-sm sm:text-lg text-yellow-300">{stat.label}</p>
               <h2 className="text-xl sm:text-2xl font-bold mt-1">{stat.value}</h2>

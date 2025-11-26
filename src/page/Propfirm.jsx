@@ -245,7 +245,7 @@ const TabsPage = () => {
                 expandedRows.has(row.id) ? (
                   <tr className="bg-yellow-400/10 border-b border-white/20">
                     <td colSpan={columnsPackages.length} className="p-4">
-                      <div className="grid grid-cols-2 gap-4 text-sm text-white">
+                      <div className="grid grid-cols-2 gap-4 text-sm ">
                         <div>Maximum Cutoff: {row.maxCutoff}</div>
                         <div>Target: {row.target}</div>
                         <div>Target Time: {row.targetTime}</div>
@@ -294,7 +294,7 @@ const TabsPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-black text-yellow-400 p-4 sm:p-8">
+    <div className="min-h-screen   p-4 sm:p-8">
       <div className={(isModalOpen || isRequestModalOpen) ? 'filter blur-sm' : ''}>
 
         {/* Buttons / Tabs */}
@@ -306,7 +306,7 @@ const TabsPage = () => {
               className={`px-6 py-3 rounded-md transition-all ${
                 activeTab === tab
                   ? "bg-yellow-500 text-black shadow-lg"
-                  : "bg-black border border-yellow-400 hover:bg-yellow-500 hover:text-black"
+                  : "bg-black border text-white border-yellow-400 hover:bg-yellow-500 hover:text-black"
               }`}
             >
               {tab}
@@ -321,7 +321,7 @@ const TabsPage = () => {
       {/* Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center z-50">
-          <div className="bg-black rounded-lg p-6 w-full max-w-md shadow-[0_25px_50px_-12px_rgba(255,255,255,0.25)]">
+          <div className=" rounded-lg p-6 w-full max-w-md shadow-[0_25px_50px_-12px_rgba(255,255,255,0.25)]">
             <h3 className="text-xl font-bold text-yellow-400 mb-4">Create New Package</h3>
             <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-4">
               <input
@@ -330,7 +330,7 @@ const TabsPage = () => {
                 value={formData.name}
                 onChange={handleInputChange}
                 placeholder="Package Name"
-                className="w-full p-2 bg-black border border-yellow-400 text-yellow-400 rounded hover:border-yellow-300 focus:border-yellow-300 placeholder-white"
+                className="w-full p-2  border border-yellow-400 text-yellow-400 rounded hover:border-yellow-300 focus:border-yellow-300 placeholder-white"
                 required
               />
               <input
@@ -339,7 +339,7 @@ const TabsPage = () => {
                 value={formData.price}
                 onChange={handleInputChange}
                 placeholder="Price"
-                className="w-full p-2 bg-black border border-yellow-400 text-yellow-400 rounded hover:border-yellow-300 focus:border-yellow-300 placeholder-white"
+                className="w-full p-2  border border-yellow-400 text-yellow-400 rounded hover:border-yellow-300 focus:border-yellow-300 placeholder-white"
                 required
               />
               <input
@@ -348,7 +348,7 @@ const TabsPage = () => {
                 value={formData.bonusFund}
                 onChange={handleInputChange}
                 placeholder="Bonus Fund"
-                className="w-full p-2 bg-black border border-yellow-400 text-yellow-400 rounded hover:border-yellow-300 focus:border-yellow-300 placeholder-white"
+                className="w-full p-2  border border-yellow-400 text-yellow-400 rounded hover:border-yellow-300 focus:border-yellow-300 placeholder-white"
                 required
               />
               <input
@@ -357,7 +357,7 @@ const TabsPage = () => {
                 value={formData.tradableFund}
                 onChange={handleInputChange}
                 placeholder="Tradable Fund"
-                className="w-full p-2 bg-black border border-yellow-400 text-yellow-400 rounded hover:border-yellow-300 focus:border-yellow-300 placeholder-white"
+                className="w-full p-2  border border-yellow-400 text-yellow-400 rounded hover:border-yellow-300 focus:border-yellow-300 placeholder-white"
                 required
               />
               <input
@@ -366,7 +366,7 @@ const TabsPage = () => {
                 value={formData.leverage}
                 onChange={handleInputChange}
                 placeholder="Leverage"
-                className="w-full p-2 bg-black border border-yellow-400 text-yellow-400 rounded hover:border-yellow-300 focus:border-yellow-300 placeholder-white"
+                className="w-full p-2  border border-yellow-400 text-yellow-400 rounded hover:border-yellow-300 focus:border-yellow-300 placeholder-white"
                 required
               />
               <input
@@ -375,7 +375,7 @@ const TabsPage = () => {
                 value={formData.target}
                 onChange={handleInputChange}
                 placeholder="Target"
-                className="w-full p-2 bg-black border border-yellow-400 text-yellow-400 rounded hover:border-yellow-300 focus:border-yellow-300 placeholder-white"
+                className="w-full p-2  border border-yellow-400 text-yellow-400 rounded hover:border-yellow-300 focus:border-yellow-300 placeholder-white"
                 required
               />
               <input
@@ -384,7 +384,7 @@ const TabsPage = () => {
                 value={formData.profitShare}
                 onChange={handleInputChange}
                 placeholder="Profit Share"
-                className="w-full p-2 bg-black border border-yellow-400 text-yellow-400 rounded hover:border-yellow-300 focus:border-yellow-300 placeholder-white"
+                className="w-full p-2  border border-yellow-400 text-yellow-400 rounded hover:border-yellow-300 focus:border-yellow-300 placeholder-white"
                 required
               />
               <input
@@ -393,7 +393,7 @@ const TabsPage = () => {
                 value={formData.maxCutoff}
                 onChange={handleInputChange}
                 placeholder="Maximum Cutoff"
-                className="w-full p-2 bg-black border border-yellow-400 text-yellow-400 rounded hover:border-yellow-300 focus:border-yellow-300 placeholder-white"
+                className="w-full p-2  border border-yellow-400 text-yellow-400 rounded hover:border-yellow-300 focus:border-yellow-300 placeholder-white"
                 required
               />
               <input
@@ -402,14 +402,14 @@ const TabsPage = () => {
                 value={formData.targetTime}
                 onChange={handleInputChange}
                 placeholder="Target Time"
-                className="w-full p-2 bg-black border border-yellow-400 text-yellow-400 rounded hover:border-yellow-300 focus:border-yellow-300 placeholder-white"
+                className="w-full p-2  border border-yellow-400 text-yellow-400 rounded hover:border-yellow-300 focus:border-yellow-300 placeholder-white"
                 required
               />
               <select
                 name="status"
                 value={formData.status ? "true" : "false"}
                 onChange={handleStatusChange}
-                className="w-full p-2 bg-black border border-yellow-400 text-yellow-400 rounded hover:border-yellow-300 focus:border-yellow-300 placeholder-white"
+                className="w-full p-2  border border-yellow-400 text-yellow-400 rounded hover:border-yellow-300 focus:border-yellow-300 placeholder-white"
               >
                 <option value="" disabled>Select Status</option>
                 <option value="true">Active</option>
@@ -438,7 +438,7 @@ const TabsPage = () => {
       {/* Request Modal */}
       {isRequestModalOpen && selectedRequest && (
         <div className="fixed inset-0 flex items-center justify-center z-50">
-          <div className="bg-black rounded-lg p-6 w-full max-w-md shadow-[0_25px_50px_-12px_rgba(255,255,255,0.25)] relative">
+          <div className=" rounded-lg p-6 w-full max-w-md shadow-[0_25px_50px_-12px_rgba(255,255,255,0.25)] relative">
             <button
               onClick={handleCloseRequestModal}
               className="absolute top-2 right-2 text-yellow-400 hover:text-yellow-300 text-xl"
@@ -446,7 +446,7 @@ const TabsPage = () => {
               ×
             </button>
             <h3 className="text-xl font-bold text-yellow-400 mb-4">Request Details</h3>
-            <div className="text-white space-y-2">
+            <div className=" space-y-2">
               <p><strong>User:</strong> {selectedRequest.user}</p>
               <p><strong>Email:</strong> {selectedRequest.email}</p>
               <p><strong>Package:</strong> {selectedRequest.package}</p>
@@ -459,7 +459,7 @@ const TabsPage = () => {
                   // Handle Approved
                   handleCloseRequestModal();
                 }}
-                className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                className="px-4 py-2 bg-green-600  rounded hover:bg-green-700"
               >
                 Approved
               </button>
@@ -468,13 +468,13 @@ const TabsPage = () => {
                   // Handle Rejected
                   handleCloseRequestModal();
                 }}
-                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+                className="px-4 py-2 bg-red-600  rounded hover:bg-red-700"
               >
                 Rejected
               </button>
               <button
                 onClick={handleCloseRequestModal}
-                className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
+                className="px-4 py-2 bg-gray-600  rounded hover:bg-gray-700"
               >
                 Close
               </button>
