@@ -1,11 +1,25 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import ModalWrapper from './ModalWrapper';
 
-const ChangeStatusModal = ({ visible, onClose, userName = '', currentStatus = '', onUpdate }) => {
-  const [status, setStatus] = useState(currentStatus || 'client');
+const ChangeStatusModal = ({ visible, isOpen, onClose, userName = '', currentStatus = '', onUpdate, userRow, isDarkMode, modalBg, btnGhost }) => {
+  // Support both 'visible' and 'isOpen' prop names
+  const isVisible = visible ?? isOpen;
+  const displayName = userName || userRow?.name || '';
+  const displayStatus = currentStatus || userRow?.status || 'client';
+  
+  const [status, setStatus] = useState(displayStatus);
+
+  // Keep local state in sync when modal opens or when currentStatus changes
+  useEffect(() => {
+    if (isVisible) {
+      setStatus(displayStatus);
+    }
+  }, [isVisible, displayStatus]);
 
   const handleUpdate = () => {
     if (onUpdate) onUpdate(status);
+    // close modal after update if provided
+    if (onClose) onClose();
   };
 
   const footer = (
@@ -15,10 +29,10 @@ const ChangeStatusModal = ({ visible, onClose, userName = '', currentStatus = ''
   );
 
   return (
-    <ModalWrapper title={`Change Status for ${userName}`} visible={visible} onClose={onClose} footer={footer}>
+    <ModalWrapper title={`Change Status for ${displayName}`} visible={isVisible} onClose={onClose} footer={footer}>
       <div className="space-y-3">
-        <p className="text-sm text-gray-600">Current Status: <strong>{currentStatus}</strong></p>
-        <p className="text-sm">Select a new status for <strong>{userName}</strong></p>
+        <p className="text-sm text-gray-600">Current Status: <strong>{displayStatus}</strong></p>
+        <p className="text-sm">Select a new status for <strong>{displayName}</strong></p>
 
         <div className="flex items-center gap-6 mt-4">
           <label className="inline-flex items-center gap-2">

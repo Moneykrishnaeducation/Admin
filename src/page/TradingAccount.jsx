@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+ import React, { useState, useRef } from "react";
 import TableStructure from "../commonComponent/TableStructure";
 import { DepositModal, WithdrawModal } from "../Modals";
 import HistoryModal from "../Modals/HistoryModal";
@@ -19,7 +19,7 @@ import {
   Clock3
 } from "lucide-react";
 import InternalTransferModal from "../Modals/InternalTransferModal";
-import EditProfileModal from "../Modals/EditProfileModal";
+import ChangeUserProfileModal from "../Modals/ChangeUserProfileModal";
 import ChangeLeverageModal from "../Modals/ChangeLeverageModal";
 import AlgoTradingModal from "../Modals/AlgoTradingModal";
 
@@ -30,32 +30,9 @@ const currencyFormatter = (v) => {
 
 
 const TradingAccountPage = () => {
-  const [data, setData] = useState([
-    {
-      id: 1,
-      userId: "7001477",
-      name: "Thilsath",
-      email: "raffiullah2020@gmail.com",
-      accountId: "2141713782",
-      balance: 0,
-      leverage: "1:500",
-      group: "Real-ECN",
-      status: "Running",
-      country: "India",
-    },
-    {
-      id: 2,
-      userId: "7001488",
-      name: "Aisha",
-      email: "aisha@example.com",
-      accountId: "2141713800",
-      balance: 523.5,
-      leverage: "1:200",
-      group: "Demo-Standard",
-      status: "Running",
-      country: "USA",
-    },
-  ]);
+  const [data, setData] = useState([]);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   const [loading] = useState(false);
   const [error] = useState(null);
@@ -80,12 +57,72 @@ const TradingAccountPage = () => {
   const [selectedAccountId, setSelectedAccountId] = useState("");
   const [selectedLeverage, setSelectedLeverage] = useState("1:500");
 
-  // Edit Profile modal state and data
-  const [editProfileOpen, setEditProfileOpen] = useState(false);
-  const [editProfileData, setEditProfileData] = useState(null);
+  // Change Profile modal state and data
+  const [changeProfileOpen, setChangeProfileOpen] = useState(false);
+  const [profileAccountId, setProfileAccountId] = useState(null);
 
   // Internal transfer modal state
   const [internalTransferOpen, setInternalTransferOpen] = useState(false);
+
+  // fetch users (admin) with pagination
+  const fetchUsers = React.useCallback(
+      async ({ page: p = 1, pageSize: ps = 10, query = "" }) => {
+        const endpoint = "api/admin/trading-accounts/";
+        const params = new URLSearchParams();
+        params.set("page", String(p));
+        params.set("pageSize", String(ps));
+        if (query) params.set("query", query);
+        try {
+          const client = typeof window !== "undefined" && window.adminApiClient ? window.adminApiClient : null;
+          let resJson;
+          if (client && typeof client.get === "function") {
+            resJson = await client.get(`${endpoint}?${params.toString()}`);
+          } else {
+            const token =
+              typeof window !== "undefined"
+                ? localStorage.getItem("jwt_token") || localStorage.getItem("access_token")
+                : null;
+            const headers = { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) };
+            const res = await fetch(`${endpoint}?${params.toString()}`, { credentials: "include", headers });
+            if (!res.ok) throw new Error(`Failed to fetch ${endpoint}: ${res.status}`);
+            resJson = await res.json();
+          }
+          const items = Array.isArray(resJson.data)
+            ? resJson.data
+            : Array.isArray(resJson)
+            ? resJson
+            : resJson.results || [];
+          const total =
+            typeof resJson.total === "number"
+              ? resJson.total
+              : typeof resJson.count === "number"
+              ? resJson.count
+              : items.length;
+          const mapped = items.map((u) => ({
+            userId: u.user_id ?? u.id ?? u.pk,
+            name: `${u.username || "-"}`.trim(),
+            email: u.email,
+            accountId: u.account_id || "-",
+            balance: typeof u.balance === "number" ? u.balance : 0,
+            leverage : u.leverage || "-",
+            status: u.status ? "Running" : "Stopped",
+            country: u.country || "-",
+            isEnabled: Boolean(u.is_is_enabled ?? u.enabled ?? u.is_enabled),
+          }));
+          setData(mapped);
+          return { data: mapped, total };
+        } catch (err) {
+          console.error("Failed to load users:", err);
+          return { data: [], total: 0 };
+        }
+      },
+      []
+    );
+
+  React.useEffect(() => {
+    fetchUsers(page, pageSize);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, pageSize]);
 
   // Reference for modal backdrop to handle outside click
   const interTransModalRef = useRef(null);
@@ -162,19 +199,17 @@ const TradingAccountPage = () => {
     {
       Header: "Balance",
       accessor: "balance",
-      Cell: (value) => <strong>{currencyFormatter(value)}</strong>,
     },
     { Header: "Leverage", accessor: "leverage" },
-    { Header: "Group", accessor: "group" },
     {
       Header: "Status",
       accessor: "status",
-      Cell: (value) => (
+      Cell: (accessor) => (
         <span
-          className={`px-2 py-0.5 text-xs font-semibold rounded-full ${value === "Running" ? "bg-green-500" : "bg-gray-500"
+          className={`px-2 py-0.5 text-xs font-semibold rounded-full ${accessor === "Running" ? "bg-green-500" : "bg-gray-500"
             } text-white`}
         >
-          {value}
+          {accessor}
         </span>
       ),
     },
@@ -182,7 +217,7 @@ const TradingAccountPage = () => {
   ];
 
   const onRowClick = (row) => {
-    setExpandedId((prev) => (prev === row.id ? null : row.id));
+    setExpandedId((prev) => (prev === row.accountId ? null : row.accountId));
   };
 
   // ======================
@@ -190,10 +225,10 @@ const TradingAccountPage = () => {
   // ======================
 
   const renderRowSubComponent = (row) => {
-    const isExpanded = expandedId === row.id;
+    const isExpanded = expandedId === row.accountId;
 
 
-    const actionItems = [
+   const actionItems = [
       {
         icon: <Wallet size={18} />,
         label: "Deposit",
@@ -240,8 +275,8 @@ const TradingAccountPage = () => {
         icon: <User size={18} />,
         label: "Profile",
         onClick: () => {
-          setEditProfileData(row);
-          setEditProfileOpen(true);
+          setProfileAccountId(row.accountId);
+          setChangeProfileOpen(true);
         },
       },
       {
@@ -323,17 +358,16 @@ const TradingAccountPage = () => {
       <CreditOutModal visible={creditOutModalOpen} onClose={() => setCreditOutModalOpen(false)} accountId={modalAccountId} onSubmit={handleCreditOut} />
       <DisableModal visible={disableModalOpen} onClose={() => setDisableModalOpen(false)} accountId={disableAccountId} action={disableAction} onProceed={handleDisableProceed} setAction={setDisableAction} />
       <HistoryModal visible={historyModalOpen} onClose={() => setHistoryModalOpen(false)} accountId={historyAccountId} activeTab={historyActiveTab} setActiveTab={setHistoryActiveTab} />
-      <EditProfileModal
-        visible={editProfileOpen}
-        onClose={() => setEditProfileOpen(false)}
-        initialData={editProfileData}
-        onSave={(updatedProfile) => {
-          setEditProfileOpen(false);
-          setData((prevData) =>
-            prevData.map((item) =>
-              item.id === updatedProfile.id ? { ...item, ...updatedProfile } : item
-            )
-          );
+      {/* Change user profile (trading group) modal */}
+      <ChangeUserProfileModal
+        visible={changeProfileOpen}
+        onClose={() => setChangeProfileOpen(false)}
+        groups={Array.from(new Set(data.map(d => d.group))).map(g => ({ id: g, name: g }))}
+        onSubmit={(selectedGroup) => {
+          setChangeProfileOpen(false);
+          setData(prev => prev.map(item =>
+            item.accountId === profileAccountId ? { ...item, group: selectedGroup } : item
+          ));
         }}
       />
     </div>
