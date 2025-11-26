@@ -1,7 +1,9 @@
 // src/components/Form.jsx
 import React, { useState, useEffect } from "react";
+import { useTheme } from "../context/ThemeContext";
 
 const MailForm = () => {
+  let {isDarkMode} = useTheme();
   const [formData, setFormData] = useState({
     email: "",
     subject: "",
@@ -134,47 +136,51 @@ const MailForm = () => {
   }, []);
 
   return (
-    <div className="bg-black p-6 sm:p-8 rounded-2xl shadow-[0px_0px_10px_rgba(255,255,255,0.2),0px_0px_15px_rgba(255,255,0,0.15)] max-w-full sm:max-w-3xl mx-auto mt-8 hover:shadow-[0px_0px_15px_rgba(255,255,255,0.35),0px_0px_20px_rgba(255,215,0,0.25)] transition-shadow duration-300">
-      <h2 className="text-2xl sm:text-3xl font-bold text-yellow-400 mb-6 text-center">Send Email</h2>
+    <div className=" p-6 sm:p-8 rounded-2xl shadow-[0px_0px_10px_rgba(255,255,255,0.2),0px_0px_15px_rgba(255,255,0,0.15)] max-w-full sm:max-w-3xl mx-auto mt-8 hover:shadow-[0px_0px_15px_rgba(255,255,255,0.35),0px_0px_20px_rgba(255,215,0,0.25)] transition-shadow duration-300">
+      <h2 className={`text-2xl sm:text-3xl font-bold  mb-6 text-center ${
+          isDarkMode && "text-yellow-300"
+        }`}>Send Email</h2>
 
       {error && <div className="mb-3 text-red-400">{error}</div>}
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+      <form onSubmit={handleSubmit} className={`flex flex-col gap-4 ${
+          isDarkMode ? " text-yellow-300" : "bg-white text-black"
+        }`}>
         <div className="flex flex-col gap-1">
-          <label className="text-yellow-400 font-medium text-sm sm:text-base">Recipient Email:</label>
+          <label className=" font-medium text-sm sm:text-base">Recipient Email:</label>
           <input
             type="text"
             name="email"
             value={formData.email}
             onChange={handleChange}
             placeholder="Enter email address separated by commas"
-            className="p-3 sm:p-4 rounded-lg border border-yellow-400/30 bg-black text-yellow-400 focus:outline-none focus:border-yellow-500 text-sm sm:text-base"
+            className="p-3 sm:p-4 rounded-lg border border-yellow-400/30   focus:outline-none focus:border-yellow-500 text-sm sm:text-base"
           />
-          <small className="text-yellow-400">Leave empty and use 'Send to All Users' to broadcast to all active users.</small>
+          <small className="">Leave empty and use 'Send to All Users' to broadcast to all active users.</small>
         </div>
 
         <div className="flex flex-col gap-1">
-          <label className="text-yellow-400 font-medium text-sm sm:text-base">Subject:</label>
+          <label className=" font-medium text-sm sm:text-base">Subject:</label>
           <input
             type="text"
             name="subject"
             value={formData.subject}
             onChange={handleChange}
             placeholder="Enter subject"
-            className="p-3 sm:p-4 rounded-lg border border-yellow-400/30 bg-black text-yellow-400 focus:outline-none focus:border-yellow-500 text-sm sm:text-base"
+            className="p-3 sm:p-4 rounded-lg border border-yellow-400/30   focus:outline-none focus:border-yellow-500 text-sm sm:text-base"
             required
           />
         </div>
 
         <div className="flex flex-col gap-1">
-          <label className="text-yellow-400 font-medium text-sm sm:text-base">Message:</label>
+          <label className=" font-medium text-sm sm:text-base">Message:</label>
           <textarea
             name="message"
             value={formData.message}
             onChange={handleChange}
             placeholder="Write your message"
             rows="6"
-            className="p-3 sm:p-4 rounded-lg border border-yellow-400/30 bg-black text-yellow-400 focus:outline-none focus:border-yellow-500 text-sm sm:text-base"
+            className="p-3 sm:p-4 rounded-lg border border-yellow-400/30   focus:outline-none focus:border-yellow-500 text-sm sm:text-base"
             required
           />
         </div>
@@ -182,11 +188,11 @@ const MailForm = () => {
         {/* Active users count will be retrieved automatically when broadcasting */}
 
         <div className="flex flex-col sm:flex-row justify-between gap-3">
-          <button type="submit" disabled={loading} className="flex-1 bg-yellow-500 text-black py-3 rounded-md hover:bg-yellow-600 transition-all text-sm sm:text-base">
+          <button type="submit" disabled={loading} className="flex-1 bg-yellow-500  py-3 rounded-md hover:bg-yellow-600 transition-all text-sm sm:text-base">
             {loading ? 'Sending...' : 'Send Email'}
           </button>
 
-          <button type="button" onClick={sendBroadcast} disabled={loading} className="flex-1 bg-yellow-500 text-black py-3 rounded-md hover:bg-yellow-600 transition-all text-sm sm:text-base">
+          <button type="button" onClick={sendBroadcast} disabled={loading} className="flex-1 bg-yellow-500  py-3 rounded-md hover:bg-yellow-600 transition-all text-sm sm:text-base">
             {loading ? 'Sending...' : `Send to All Users (${activeUsersCount ?? '--'})`}
           </button>
         </div>
@@ -195,7 +201,7 @@ const MailForm = () => {
       {/* Toast notification */}
       {toast && (
         <div className="fixed right-6 top-6 z-50">
-          <div className={`px-4 py-2 rounded-lg text-white shadow-lg ${toast.variant === 'error' ? 'bg-red-600' : 'bg-green-600'}`}>
+          <div className={`px-4 py-2 rounded-lg  shadow-lg ${toast.variant === 'error' ? 'bg-red-600' : 'bg-green-600'}`}>
             {toast.message}
           </div>
         </div>
