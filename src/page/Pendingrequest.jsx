@@ -9,7 +9,7 @@ import { useTheme } from "../context/ThemeContext";
 
 // ⚠️ IMPORTANT: YOU MUST REPLACE THIS WITH YOUR ACTUAL BACKEND API BASE URL
 // Example: const API_BASE = "https://api.yourdomain.com/api";
-// const API_BASE = "YOUR_API_BASE_URL"; 
+// const API_BASE = "https://api.example.com/api"; // Replace with actual API base URL
 
 const PendingRequest = () => {
   let { isDarkMode } = useTheme();
@@ -93,14 +93,15 @@ const PendingRequest = () => {
       let endpointBase = `${approveRejectEndpoints[tab]}`;
       let fullEndpoint = '';
       let bodyData = undefined;
-      const method = 'POST';
+      let method = 'POST';
 
       // Special case for 'IB Requests' which uses the ID directly (path('api/admin/ib-request/<int:id>/'))
-      // and sends the status in the body.
+      // and sends the status in the body via PATCH method.
       if (tab === "IB Requests") {
         fullEndpoint = `${endpointBase}/${id}/`;
         // 'approve' or 'reject' should be passed as the status in the body
         bodyData = JSON.stringify({ status: action });
+        method = 'PATCH'; // Use PATCH for IB Requests as per backend
       }
       // All other requests use the explicit URL patterns like:
       // path('api/admin/bank-detail-request/<int:id>/approve/')
