@@ -131,9 +131,9 @@ const PendingRequest = () => {
     { Header: "User Id", accessor: "id" },
     { Header: "User Name", accessor: "user_name" },
     { Header: "Email", accessor: "email" },
-    { Header: "Wallet Address", accessor: "walletAddress" },
+    { Header: "Wallet Address", accessor: "wallet_address" },
     { Header: "Exchange", accessor: "exchange" },
-    { Header: "Created At", accessor: "createdAt" },
+    { Header: "Created At", accessor: "created_at" },
     {
       Header: "Actions",
       accessor: "actions",
@@ -186,7 +186,7 @@ const PendingRequest = () => {
     { Header: "Date/Time", accessor: "created_at" },
     { Header: "User Name", accessor: "username" },
     { Header: "Email", accessor: "email" },
-    { Header: "Account ID", accessor: "transaction_account_id" },
+    { Header: "Account ID", accessor: "trading_account_id" },
     { Header: "Amount (USD)", accessor: "amount" },
     { Header: "Payment Method", accessor: "transaction_type_display" },
     {
@@ -312,34 +312,20 @@ const PendingRequest = () => {
   // -------------------- Document Requests Columns --------------------
   const documentRequestsColumns = [
     { Header: "User Id", accessor: "id" },
-    { Header: "User Name", accessor: "name" },
+    { Header: "User Name", accessor: "user_name" },
     { Header: "Email", accessor: "email" },
-    { Header: "Document Type", accessor: "documentType" },
     {
-      Header: "ID Proof",
-      accessor: "idProof",
-      Cell: (cellValue, row) => {
+      Header: "Id Proof",
+      accessor: "id_proof",
+      Cell: (cellValue) => {
         if (typeof cellValue === "string" && cellValue) {
           return (
-            <a
-              href={cellValue}
-              target="_blank"
-              rel="noopener noreferrer"
+            <button
               className="text-blue-600 underline"
+              onClick={() => window.open(cellValue, '_blank')}
             >
               View
-            </a>
-          );
-        }
-        if (typeof cellValue === "object" && cellValue !== null) {
-          return (
-            <div>
-              {Object.entries(cellValue).map(([key, value]) => (
-                <div key={key}>
-                  <strong>{key.replace(/_/g, " ").toUpperCase()}:</strong> {String(value)}
-                </div>
-              ))}
-            </div>
+            </button>
           );
         }
         return "N/A";
@@ -347,35 +333,22 @@ const PendingRequest = () => {
     },
     {
       Header: "Address Proof",
-      accessor: "addressProof",
-      Cell: (cellValue, row) => {
+      accessor: "address_proof",
+      Cell: (cellValue) => {
         if (typeof cellValue === "string" && cellValue) {
           return (
-            <a
-              href={cellValue}
-              target="_blank"
-              rel="noopener noreferrer"
+            <button
               className="text-blue-600 underline"
+              onClick={() => window.open(cellValue, '_blank')}
             >
               View
-            </a>
-          );
-        }
-        if (typeof cellValue === "object" && cellValue !== null) {
-          return (
-            <div>
-              {Object.entries(cellValue).map(([key, value]) => (
-                <div key={key}>
-                  <strong>{key.replace(/_/g, " ").toUpperCase()}:</strong> {String(value)}
-                </div>
-              ))}
-            </div>
+            </button>
           );
         }
         return "N/A";
       },
     },
-    { Header: "Uploaded At", accessor: "uploadedAt" },
+    { Header: "Uploaded At", accessor: "uploaded_at" },
     {
       Header: "Actions",
       accessor: "actions",
