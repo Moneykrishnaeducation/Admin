@@ -5,12 +5,15 @@ const PendingDepositModal = ({ visible, onClose, depositData, onApprove, onRejec
   if (!depositData) return null;
 
   const {
-    dateTime,
-    name,
-    email,
-    accountId,
+    id,
+    created_at,
+    username,
+    emai,
+    trading_account_id,
     amount,
-    paymentMethod,
+    transaction_type,
+    status,
+    description,
     fileUrl, // Optional file URL if any
   } = depositData;
 
@@ -45,12 +48,15 @@ const PendingDepositModal = ({ visible, onClose, depositData, onApprove, onRejec
         className="max-h-[400px] overflow-y-auto"
         style={{ minWidth: '300px', maxWidth: '600px' }}
       >
-        <p><strong>Date/Time:</strong> {dateTime}</p>
-        <p><strong>Name:</strong> {name}</p>
-        <p><strong>Email:</strong> {email}</p>
-        <p><strong>Account ID:</strong> {accountId}</p>
+        <p><strong>Id:</strong> {id}</p>
+        <p><strong>Date/Time:</strong> {created_at}</p>
+        <p><strong>Name:</strong> {username}</p>
+        <p><strong>Email:</strong> {emai}</p>
+        <p><strong>Account ID:</strong> {trading_account_id}</p>
         <p><strong>Amount (USD):</strong> ${amount}</p>
-        <p><strong>Payment Method:</strong> {paymentMethod}</p>
+        <p><strong>Transaction Type:</strong> {transaction_type}</p>
+        <p><strong>Status:</strong> {status}</p>
+        <p><strong>Description:</strong> {description}</p>
 
         {fileUrl && (
           <div className="mt-4">

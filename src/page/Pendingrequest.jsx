@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import TableStructure from "../commonComponent/TableStructure";
 import ErrorBoundary from "../commonComponent/ErrorBoundary";
 import PendingDepositModal from "../Modals/PendingDepositModal";
+import PendingWithdrawalModal from "../Modals/PendingWithdrawalModal";
+import PendingCommissionModal from "../Modals/PendingCommissionModal";
 import { get } from "../utils/api-config"; // backend GET
 import { useTheme } from "../context/ThemeContext";
 
@@ -17,6 +19,18 @@ const PendingRequest = () => {
     "Pending Withdrawals",
     "Commission Withdrawals",
   ];
+
+  // Mapping of tab to API endpoint for loading data
+  const apiEndpoints = {
+    "IB Requests": "api/admin/ib-requests/?page=1&pageSize=5",
+    "Bank Details": "api/admin/bank-detail-requests/?page=1&pageSize=5",
+    "Profile Changes": "api/admin/profile-change-requests/?page=1&pageSize=5",
+    "Document Requests": "api/admin/document-requests/?page=1&pageSize=5",
+    "Crypto Details": "api/admin/crypto-details/?page=1&pageSize=5",
+    "Pending Deposits": "api/admin/pending-deposits/",
+    "Pending Withdrawals": "api/admin/pending-withdrawals/",
+    "Commission Withdrawals": "api/admin/pending-withdrawal-requests/",
+  };
 
   const [activeTab, setActiveTab] = useState(""); // start with no tab selected
   const [tableData, setTableData] = useState([]);
@@ -57,36 +71,39 @@ const PendingRequest = () => {
 
   const defaultColumns = [
     { Header: "User Id", accessor: "id" },
-    { Header: "User Name", accessor: "name" },
-    { Header: "Email", accessor: "email" },
-    { Header: "Created At", accessor: "createdAt" },
+    { Header: "User Name", accessor: "username" },
+    { Header: "Email", accessor: "useremail" },
+    { Header: "Created At", accessor: "created_at" },
     {
       Header: "Commissioning Profile",
       accessor: "commissionProfile",
-      Cell: (cellValue, row) => (
-        <select
-          className={`border px-2 py-1 rounded  ${
-          isDarkMode ? "bg-gray-900  " : "bg-white text-black"
-          }`}
-          value={cellValue || ""}
-          onChange={(e) =>
-            setTableData((prev) =>
-              prev.map((item) =>
-                item.id === row.id
-                  ? { ...item, commissionProfile: e.target.value }
-                  : item
+      Cell: (cellValue, _row) => {
+        const rowId = _row?.id;
+        return (
+          <select
+            className={`border px-2 py-1 rounded  ${
+              isDarkMode ? "bg-gray-900  " : "bg-white text-black"
+            }`}
+            value={cellValue || ""}
+            onChange={(e) =>
+              setTableData((prev) =>
+                prev.map((item) =>
+                  item.id === rowId
+                    ? { ...item, commissionProfile: e.target.value }
+                    : item
+                )
               )
-            )
-          }
-        >
-          <option value="">Select the profile</option>
-          {commissionProfiles.map((p) => (
-            <option key={p.profileId} value={p.profileName}>
-              {p.profileId} - {p.profileName}
-            </option>
-          ))}
-        </select>
-      ),
+            }
+          >
+            <option value="">Select the profile</option>
+            {commissionProfiles.map((p) => (
+              <option key={p.profileId} value={p.profileName}>
+                {p.profileId} - {p.profileName}
+              </option>
+            ))}
+          </select>
+        );
+      },
     },
     {
       Header: "Actions",
@@ -112,7 +129,7 @@ const PendingRequest = () => {
   // -------------------- Crypto Details Columns --------------------
   const cryptoDetailsColumns = [
     { Header: "User Id", accessor: "id" },
-    { Header: "User Name", accessor: "name" },
+    { Header: "User Name", accessor: "user_name" },
     { Header: "Email", accessor: "email" },
     { Header: "Wallet Address", accessor: "walletAddress" },
     { Header: "Exchange", accessor: "exchange" },
@@ -141,12 +158,12 @@ const PendingRequest = () => {
 
   // -------------------- Pending Deposit Columns --------------------
   const pendingDepositsColumns = [
-    { Header: "Date/Time", accessor: "dateTime" },
-    { Header: "User Name", accessor: "name" },
+    { Header: "Date/Time", accessor: "created_at" },
+    { Header: "User Name", accessor: "username" },
     { Header: "Email", accessor: "email" },
-    { Header: "Account ID", accessor: "accountId" },
+    { Header: "Account ID", accessor: "trading_account_id" },
     { Header: "Amount (USD)", accessor: "amount" },
-    { Header: "Payment Method", accessor: "paymentMethod" },
+    { Header: "Payment Method", accessor: "transaction_type_display" },
     {
       Header: "Actions",
       accessor: "actions",
@@ -166,12 +183,12 @@ const PendingRequest = () => {
 
   // -------------------- Pending Withdrawals Columns --------------------
   const pendingWithdrawalsColumns = [
-    { Header: "Date/Time", accessor: "dateTime" },
-    { Header: "User Name", accessor: "name" },
+    { Header: "Date/Time", accessor: "created_at" },
+    { Header: "User Name", accessor: "username" },
     { Header: "Email", accessor: "email" },
-    { Header: "Account ID", accessor: "accountId" },
+    { Header: "Account ID", accessor: "transaction_account_id" },
     { Header: "Amount (USD)", accessor: "amount" },
-    { Header: "Payment Method", accessor: "paymentMethod" },
+    { Header: "Payment Method", accessor: "transaction_type_display" },
     {
       Header: "Actions",
       accessor: "actions",
@@ -191,10 +208,27 @@ const PendingRequest = () => {
 
   // -------------------- Profile Changes Columns --------------------
   const profileChangesColumns = [
-    { Header: "User Id", accessor: "id" },
-    { Header: "User Name", accessor: "name" },
+    { Header: "User Id", accessor: "user_id" },
+    { Header: "User Name", accessor: "user_name" },
     { Header: "Email", accessor: "email" },
-    { Header: "Requested Changes", accessor: "requestedChanges" },
+    {
+      Header: "Requested Changes",
+      accessor: "requested_changes",
+      Cell: (cellValue) => {
+        if (typeof cellValue === "object" && cellValue !== null) {
+          return (
+            <div>
+              {Object.entries(cellValue).map(([key, value]) => (
+                <div key={key}>
+                  <strong>{key.replace(/_/g, " ").toUpperCase()}:</strong> {String(value)}
+                </div>
+              ))}
+            </div>
+          );
+        }
+        return String(cellValue);
+      },
+    },
     {
       Header: "Actions",
       accessor: "actions",
@@ -219,14 +253,14 @@ const PendingRequest = () => {
 
   // -------------------- Commission Withdrawals Columns --------------------
   const commissionWithdrawalsColumns = [
-    { Header: "Transaction ID", accessor: "transactionId" },
-    { Header: "User Name", accessor: "name" },
+    { Header: "Transaction ID", accessor: "id" },
+    { Header: "User Name", accessor: "username" },
     { Header: "E-Mail", accessor: "email" },
-    { Header: "Trading Account ID", accessor: "tradingAccountId" },
-    { Header: "Type", accessor: "type" },
+    { Header: "Trading Account ID", accessor: "trading_account_id" },
+    { Header: "Type", accessor: "transaction_type" },
     { Header: "Amount", accessor: "amount" },
     { Header: "Status", accessor: "status" },
-    { Header: "Created At", accessor: "createdAt" },
+    { Header: "Created At", accessor: "created_at" },
     {
       Header: "Actions",
       accessor: "actions",
@@ -247,12 +281,12 @@ const PendingRequest = () => {
   // -------------------- Bank Details Columns --------------------
   const bankDetailsColumns = [
     { Header: "User Id", accessor: "id" },
-    { Header: "User Name", accessor: "name" },
+    { Header: "User Name", accessor: "user_name" },
     { Header: "Email", accessor: "email" },
-    { Header: "Bank Name", accessor: "bankName" },
-    { Header: "Account Number", accessor: "accountNumber" },
-    { Header: "Branch", accessor: "branch" },
-    { Header: "IFSC Code", accessor: "ifscCode" },
+    { Header: "Bank Name", accessor: "bank_name" },
+    { Header: "Account Number", accessor: "account_number" },
+    { Header: "Branch", accessor: "branch_name" },
+    { Header: "IFSC Code", accessor: "ifsc_code" },
     {
       Header: "Actions",
       accessor: "actions",
@@ -284,18 +318,63 @@ const PendingRequest = () => {
     {
       Header: "ID Proof",
       accessor: "idProof",
-      Cell: (cellValue, row) => (
-        <a
-          href={cellValue}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-blue-600 underline"
-        >
-          View
-        </a>
-      ),
+      Cell: (cellValue, row) => {
+        if (typeof cellValue === "string" && cellValue) {
+          return (
+            <a
+              href={cellValue}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 underline"
+            >
+              View
+            </a>
+          );
+        }
+        if (typeof cellValue === "object" && cellValue !== null) {
+          return (
+            <div>
+              {Object.entries(cellValue).map(([key, value]) => (
+                <div key={key}>
+                  <strong>{key.replace(/_/g, " ").toUpperCase()}:</strong> {String(value)}
+                </div>
+              ))}
+            </div>
+          );
+        }
+        return "N/A";
+      },
     },
-    { Header: "Address Proof", accessor: "addressProof" },
+    {
+      Header: "Address Proof",
+      accessor: "addressProof",
+      Cell: (cellValue, row) => {
+        if (typeof cellValue === "string" && cellValue) {
+          return (
+            <a
+              href={cellValue}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 underline"
+            >
+              View
+            </a>
+          );
+        }
+        if (typeof cellValue === "object" && cellValue !== null) {
+          return (
+            <div>
+              {Object.entries(cellValue).map(([key, value]) => (
+                <div key={key}>
+                  <strong>{key.replace(/_/g, " ").toUpperCase()}:</strong> {String(value)}
+                </div>
+              ))}
+            </div>
+          );
+        }
+        return "N/A";
+      },
+    },
     { Header: "Uploaded At", accessor: "uploadedAt" },
     {
       Header: "Actions",
@@ -335,98 +414,57 @@ const PendingRequest = () => {
   // -------------------- Simulated data loader --------------------
   const loadTabData = async (tab) => {
     setLoading(true);
-    await new Promise((res) => setTimeout(res, 500)); // simulate API delay
-
-    let mock = [];
-    switch (tab) {
-      case "Bank Details":
-        mock = Array.from({ length: 10 }, (_, i) => ({
-          id: i + 1,
-          name: `Bank User ${i + 1}`,
-          email: `bankuser${i + 1}@example.com`,
-          bankName: "Bank of Example",
-          accountNumber: `123456789${i + 1}`,
-          branch: "Main Branch",
-          ifscCode: `IFSC000${i + 1}`,
-        }));
-        break;
-      case "Pending Deposits":
-        mock = Array.from({ length: 10 }, (_, i) => ({
-          id: i + 1,
-          dateTime: new Date(Date.now() - i * 86400000).toLocaleString(),
-          name: `Pending User ${i + 1}`,
-          email: `pendinguser${i + 1}@example.com`,
-          accountId: `ACC${1000 + i + 1}`,
-          amount: (Math.random() * 1000 + 100).toFixed(2),
-          paymentMethod: i % 2 === 0 ? "Credit Card" : "Bank Transfer",
-        }));
-        break;
-      case "Pending Withdrawals":
-        mock = Array.from({ length: 10 }, (_, i) => ({
-          id: i + 1,
-          dateTime: new Date(Date.now() - i * 86400000).toLocaleString(),
-          name: `Withdrawal User ${i + 1}`,
-          email: `withdrawaluser${i + 1}@example.com`,
-          accountId: `WDR${1000 + i + 1}`,
-          amount: (Math.random() * 2000 + 200).toFixed(2),
-          paymentMethod: i % 2 === 0 ? "Bank Transfer" : "Credit Card",
-        }));
-        break;
-      case "Profile Changes":
-        mock = Array.from({ length: 10 }, (_, i) => ({
-          id: i + 1,
-          name: `Profile User ${i + 1}`,
-          email: `profileuser${i + 1}@example.com`,
-          requestedChanges: `Change request ${i + 1}`,
-        }));
-        break;
-      case "Document Requests":
-        mock = Array.from({ length: 10 }, (_, i) => ({
-          id: i + 1,
-          name: `Doc User ${i + 1}`,
-          email: `docuser${i + 1}@example.com`,
-          documentType: i % 2 === 0 ? "Passport" : "Driving License",
-          idProof: `https://example.com/idproof${i + 1}.pdf`,
-          addressProof: `Address Proof ${i + 1}`,
-          uploadedAt: new Date().toLocaleDateString(),
-        }));
-        break;
-      case "Crypto Details":
-        mock = Array.from({ length: 10 }, (_, i) => ({
-          id: i + 1,
-          name: `Crypto User ${i + 1}`,
-          email: `cryptouser${i + 1}@example.com`,
-          walletAddress: `walletaddress${i + 1}xyz`,
-          exchange: i % 2 === 0 ? "Binance" : "Coinbase",
-          createdAt: new Date().toLocaleDateString(),
-        }));
-        break;
-      case "Commission Withdrawals":
-        mock = Array.from({ length: 10 }, (_, i) => ({
-          id: i + 1,
-          transactionId: `TXN${1000 + i + 1}`,
-          name: `Commission User ${i + 1}`,
-          email: `commissionuser${i + 1}@example.com`,
-          tradingAccountId: `TRADE${1000 + i + 1}`,
-          type: i % 2 === 0 ? "Debit" : "Credit",
-          amount: (Math.random() * 1500 + 300).toFixed(2),
-          status:
-            i % 3 === 0 ? "Pending" : i % 3 === 1 ? "Approved" : "Rejected",
-          createdAt: new Date(Date.now() - i * 86400000).toLocaleString(),
-        }));
-        break;
-      default:
-        mock = Array.from({ length: 10 }, (_, i) => ({
-          id: i + 1,
-          name: `${tab} User ${i + 1}`,
-          email: `user${i + 1}@example.com`,
-          createdAt: new Date().toLocaleDateString(),
-          commissionProfile: "",
-        }));
+    try {
+      const endpoint = apiEndpoints[tab];
+      if (!endpoint) {
+        setTableData([]);
+        setLoading(false);
+        return;
+      }
+      const accessToken = localStorage.getItem('access_token');
+      if (!accessToken) {
+        console.error("No access token found in localStorage");
+        setTableData([]);
+        setLoading(false);
+        return;
+      }
+      const response = await fetch(endpoint, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+      if (!response.ok) {
+        throw new Error(`Failed to fetch data for ${tab}`);
+      }
+      const respData = await response.json();
+      console.log(`[PendingRequest] Data received for tab "${tab}":`, respData);
+      // Ensure data is an array before setting state for TableStructure
+      let dataArray = [];
+      if (Array.isArray(respData)) {
+        dataArray = respData;
+      } else if (respData && typeof respData === "object") {
+        // Look for likely data array in response object
+        if (Array.isArray(respData.results)) {
+          dataArray = respData.results;
+        } else if (Array.isArray(respData.data)) {
+          dataArray = respData.data;
+        } else {
+          // fallback: try to get values array from object
+          const values = Object.values(respData).find(val => Array.isArray(val));
+          if (values) {
+            dataArray = values;
+          } else {
+            dataArray = [];
+          }
+        }
+      }
+      setTableData(dataArray);
+    } catch (error) {
+      console.error("Error loading tab data:", error);
+      setTableData([]);
+    } finally {
+      setLoading(false);
     }
-
-    setTableData(mock);
-    setLoading(false);
   };
 
   const handleTabClick = (tab) => {
@@ -492,10 +530,10 @@ const PendingRequest = () => {
         onReject={handleReject}
       />
 
-      <PendingDepositModal
+      <PendingWithdrawalModal
         visible={withdrawalModalVisible}
         onClose={() => setWithdrawalModalVisible(false)}
-        depositData={selectedWithdrawal}
+        withdrawalData={selectedWithdrawal}
         onApprove={(id) => {
           alert(`User ${id} withdrawal has been approved`);
           setWithdrawalModalVisible(false);
@@ -506,10 +544,10 @@ const PendingRequest = () => {
         }}
       />
 
-      <PendingDepositModal
+      <PendingCommissionModal
         visible={commissionWithdrawalModalVisible}
         onClose={() => setCommissionWithdrawalModalVisible(false)}
-        depositData={selectedCommissionWithdrawal}
+        commissiondata={selectedCommissionWithdrawal}
         onApprove={(id) => {
           alert(`User ${id} commission withdrawal has been approved`);
           setCommissionWithdrawalModalVisible(false);
