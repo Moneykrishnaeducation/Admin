@@ -524,7 +524,7 @@ const PendingRequest = () => {
       : defaultColumns;
 
   return (
-    <div className="p-4">
+    <div className="w-full px-4">
       {/* Navigation Tabs */}
       <div className="flex flex-wrap gap-2 mb-4">
         {buttons.map((btn) => (
