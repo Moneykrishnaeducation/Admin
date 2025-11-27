@@ -4,12 +4,8 @@ import ErrorBoundary from "../commonComponent/ErrorBoundary";
 import PendingDepositModal from "../Modals/PendingDepositModal";
 import PendingWithdrawalModal from "../Modals/PendingWithdrawalModal";
 import PendingCommissionModal from "../Modals/PendingCommissionModal";
-import { get } from "../utils/api-config"; // backend GET utility
+import { get, API_BASE } from "../utils/api-config"; // backend GET utility and API_BASE
 import { useTheme } from "../context/ThemeContext";
-
-// ⚠️ IMPORTANT: YOU MUST REPLACE THIS WITH YOUR ACTUAL BACKEND API BASE URL
-// Example: const API_BASE = "https://api.yourdomain.com/api";
-// const API_BASE = "https://api.example.com/api"; // Replace with actual API base URL
 
 const PendingRequest = () => {
   let { isDarkMode } = useTheme();
@@ -99,9 +95,15 @@ const PendingRequest = () => {
       // and sends the status in the body via PATCH method.
       if (tab === "IB Requests") {
         fullEndpoint = `${endpointBase}/${id}/`;
-        // 'approve' or 'reject' should be passed as the status in the body
-        bodyData = JSON.stringify({ status: action });
+        // 'approved' or 'rejected' should be passed as the status in the body
+        bodyData = JSON.stringify({ status: action === "approve" ? "approved" : "rejected" });
         method = 'PATCH'; // Use PATCH for IB Requests as per backend
+      }
+      // Special cases for Profile Changes, Document Requests, Bank Details, and Crypto Details which use PATCH method
+      else if (tab === "Profile Changes" || tab === "Document Requests" || tab === "Bank Details" || tab === "Crypto Details") {
+        // Concatenates the base path, ID, and action (e.g., admin/profile-change-request/123/approve/)
+        fullEndpoint = `${endpointBase}/${id}/${action}/`;
+        method = 'PATCH'; // Use PATCH for Profile Changes, Document Requests, Bank Details, and Crypto Details as per backend
       }
       // All other requests use the explicit URL patterns like:
       // path('api/admin/bank-detail-request/<int:id>/approve/')
@@ -524,7 +526,7 @@ const PendingRequest = () => {
       : defaultColumns;
 
   return (
-    <div className="p-4">
+    <div className="px-4">
       {/* Navigation Tabs */}
       <div className="flex flex-wrap gap-2 mb-4">
         {buttons.map((btn) => (

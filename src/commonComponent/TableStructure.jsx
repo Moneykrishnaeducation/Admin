@@ -17,6 +17,7 @@ const TableStructure = ({
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(initialPageSize);
+  const [expandedRow, setExpandedRow] = useState(null);
 
   // server-side state
   const [serverData, setServerData] = useState([]);
@@ -96,7 +97,7 @@ const TableStructure = ({
   const pageTextClass = isDarkMode ? "text-white" : "text-black";
 
   return (
-    <div>
+    <div className="w-full overflow-auto">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-3">
         <div className="flex items-center gap-3 ">
           {topActions && <div className="mr-2">{topActions}</div>}
@@ -115,8 +116,8 @@ const TableStructure = ({
         <div className="flex items-center gap-2">&nbsp;</div>
       </div>
 
-      <div className="max-w-[80vw] overflow-x-auto rounded-lg">
-        <table className={`min-w-full text-left text-sm md:text-base ${tableBg}`}>
+      <div className="w-full overflow-auto rounded-lg">
+        <table className={`w-full text-left text-sm md:text-base ${tableBg}`}>
           <thead>
             <tr className="border-b-2 border-yellow-400">
               {columns.map((col) => (
@@ -142,7 +143,12 @@ const TableStructure = ({
                 <React.Fragment key={row.id || startIndex + rowIndex}>
                   <tr
                     className={`border-b ${borderClass} ${rowHover} transition cursor-pointer`}
-                    onClick={onRowClick ? () => onRowClick(row) : undefined}
+                    onClick={() => {
+                      if (renderRowSubComponent) {
+                        setExpandedRow(expandedRow === (row.id || startIndex + rowIndex) ? null : (row.id || startIndex + rowIndex));
+                      }
+                      if (onRowClick) onRowClick(row);
+                    }}
                   >
                     {columns.map((col) => {
                       const cellValue = row[col.accessor];
@@ -156,7 +162,7 @@ const TableStructure = ({
                       <td className="p-3">{actionsColumn(row)}</td>
                     )}
                   </tr>
-                  {renderRowSubComponent && renderRowSubComponent(row, startIndex + rowIndex)}
+                  {renderRowSubComponent && expandedRow === (row.id || startIndex + rowIndex) && renderRowSubComponent(row, startIndex + rowIndex)}
                 </React.Fragment>
               ))
             ) : (

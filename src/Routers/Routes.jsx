@@ -1,3 +1,5 @@
+import '../utils/auth-utils.js';
+
 import React, { useState, useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
 import { ThemeProvider } from "../context/ThemeContext";

@@ -1,4 +1,4 @@
- import React, { useState, useRef } from "react";
+import React, { useState, useRef } from "react";
 import TableStructure from "../commonComponent/TableStructure";
 import { DepositModal, WithdrawModal } from "../Modals";
 import HistoryModal from "../Modals/HistoryModal";

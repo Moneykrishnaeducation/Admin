@@ -30,6 +30,7 @@ const TradingAccountModal = ({
   onClose,
   accounts = [],
   actionItems = null,
+  userId = null,
 }) => {
   const modalRef = useRef(null);
   const [expandedRowId, setExpandedRowId] = useState(null);
@@ -46,6 +47,7 @@ const TradingAccountModal = ({
   const [disableAction, setDisableAction] = useState("Disable");
   const [historyTab, setHistoryTab] = useState("transactions");
   const [availableGroups, setAvailableGroups] = useState([]);
+  const [accountsState, setAccountsState] = useState([]);
 
   // Close if clicked outside
   useEffect(() => {
@@ -57,6 +59,46 @@ const TradingAccountModal = ({
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, [visible, onClose]);
+
+  // Fetch accounts when `userId` is provided (use when modal opened for a specific user)
+  useEffect(() => {
+    if (!visible || !userId) return;
+
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const endpoint = `ib-user/${userId}/trading-accounts/`;
+        const token = typeof window !== "undefined" ? (localStorage.getItem("jwt_token") || localStorage.getItem("access_token")) : null;
+        const headers = { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) };
+        const res = await fetch(endpoint, { credentials: "include", headers });
+        if (!res.ok) throw new Error(`Failed to fetch ${endpoint}: ${res.status}`);
+        const json = await res.json();
+        const items = json?.data || json?.accounts || [];
+        const mapped = (Array.isArray(items) ? items : []).map((u) => ({
+          // map API fields to component expected shape
+          id: u.id ?? u.pk,
+          userId: u.user_id ?? u.userId ?? u.user,
+          name: u.account_name || u.username || u.name || "-",
+          email: u.email || "",
+          accountId: u.account_id || u.accountId || u.accountNo || "-",
+          balance: typeof u.balance === "number" ? u.balance : parseFloat(u.balance) || 0,
+          accountType: u.account_type || u.accountType || "-",
+          leverage: u.leverage ?? "-",
+          availableGroups: u.group_name ? [u.group_name] : [],
+          raw: u,
+        }));
+        if (!cancelled) setAccountsState(mapped);
+      } catch (err) {
+        console.error("Failed to fetch trading accounts for user", userId, err);
+        if (!cancelled) setAccountsState([]);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [userId, visible]);
 
   if (!visible) return null;
 
@@ -217,6 +259,8 @@ const TradingAccountModal = ({
   const borderColor = isDarkMode ? "border-gray-700" : "border-gray-200";
   const headerText = isDarkMode ? "text-gray-100" : "text-gray-900";
 
+  const displayAccounts = Array.isArray(accounts) && accounts.length ? accounts : accountsState;
+
   return (
     <div className={`fixed inset-0 ${overlayBg} flex items-center justify-center z-50 p-4`}>
       <div
@@ -250,7 +294,7 @@ const TradingAccountModal = ({
             </thead>
 
             <tbody>
-              {accounts.length === 0 ? (
+              {displayAccounts.length === 0 ? (
                 <tr>
                   <td
                     colSpan="6"
@@ -260,7 +304,7 @@ const TradingAccountModal = ({
                   </td>
                 </tr>
               ) : (
-                accounts.map((row) => (
+                displayAccounts.map((row) => (
                   <React.Fragment key={row.accountId}>
                     {/* Main Row */}
                     <tr className={`${isDarkMode ? "hover:bg-gray-800" : "hover:bg-gray-50"}`}>

@@ -34,6 +34,9 @@ function shouldUseTestEndpoints() {
 const API_BASE = getApiBase();
 const USE_TEST_ENDPOINTS = shouldUseTestEndpoints();
 
+// Export API_BASE for use in other modules
+export { API_BASE };
+
 // Debug logging
 console.log('🔧 Admin API Configuration:', {
     hostname: window.location.hostname,
