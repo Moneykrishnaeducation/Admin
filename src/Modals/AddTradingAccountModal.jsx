@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, TrendingUp, Play } from 'lucide-react';
+import { AdminAuthenticatedFetch } from "../utils/fetch-utils.js";
+const apiClient = new AdminAuthenticatedFetch('/api');
 
 const AddTradingAccountModal = ({ visible, onClose, userName, userId, isDarkMode = false }) => {
   const [activeTab, setActiveTab] = useState('Live');
@@ -29,17 +31,10 @@ const AddTradingAccountModal = ({ visible, onClose, userName, userId, isDarkMode
     setLoading(true);
     setError(null);
     try {
-      const [leverageRes, groupsRes] = await Promise.all([
-        fetch('/api/available-leverage/'),
-        fetch('/api/available-groups/')
+      const [leverageData, groupsData] = await Promise.all([
+        apiClient.get('/available-leverage/'),
+        apiClient.get('/available-groups/')
       ]);
-
-      if (!leverageRes.ok || !groupsRes.ok) {
-        throw new Error('Failed to fetch options');
-      }
-
-      const leverageData = await leverageRes.json();
-      const groupsData = await groupsRes.json();
 
       setLeverageOptions(leverageData.leverage_options.map(opt => opt.value));
       setTradingGroups(groupsData.groups.map(group => ({ value: group.id, label: group.label })));
@@ -67,27 +62,19 @@ const AddTradingAccountModal = ({ visible, onClose, userName, userId, isDarkMode
     setError(null);
 
     try {
-      const leverageNumeric = parseInt(liveForm.leverage.split(':')[1]);
+      if (!userId) {
+        throw new Error('User ID is required');
+      }
+
+      const leverageNumeric = parseInt(liveForm.leverage);
       const payload = {
         userId: userId.toString(),
         accountName: liveForm.accountName || userName,
-        leverage: leverageNumeric,
+        leverage: leverageNumeric.toString(),
         group: liveForm.tradingGroup,
       };
 
-      const response = await fetch('/api/create-trading-account/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to create live trading account');
-      }
-
-      const data = await response.json();
+      const data = await apiClient.post(`/create-trading-account/`, payload);
       console.log('Live account created:', data);
       setLiveForm({ accountName: '', leverage: '', tradingGroup: '' });
       onClose();
@@ -106,27 +93,19 @@ const AddTradingAccountModal = ({ visible, onClose, userName, userId, isDarkMode
     setError(null);
 
     try {
-      const leverageNumeric = parseInt(demoForm.leverage.split(':')[1]);
+      if (!userId) {
+        throw new Error('User ID is required');
+      }
+
+      const leverageNumeric = parseInt(demoForm.leverage);
       const payload = {
         userId: userId.toString(),
         accountName: demoForm.accountName || userName,
-        leverage: leverageNumeric,
+        leverage: leverageNumeric.toString(),
         balance: parseFloat(demoForm.initialDeposit),
       };
 
-      const response = await fetch('/api/create-demo-account/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to create demo account');
-      }
-
-      const data = await response.json();
+      const data = await apiClient.post(`/create-demo-account/`, payload);
       console.log('Demo account created:', data);
       setDemoForm({ accountName: '', leverage: '', initialDeposit: '10000' });
       onClose();
@@ -182,7 +161,7 @@ const AddTradingAccountModal = ({ visible, onClose, userName, userId, isDarkMode
               }`}
             >
               {tab === 'Live' ? <TrendingUp size={16} /> : <Play size={16} />}
-              {tab} {tab === 'Live' ? 'Account' : 'Trading Group'}
+              {tab} Account
             </button>
           ))}
         </div>
