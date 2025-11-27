@@ -1,44 +1,57 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import { X, Eye, Trash2 } from "lucide-react";
 
-export default function DemoAccountModal({
-  isOpen,
-  onClose,
-  userRow,
-  isDarkMode,
-}) {
-  if (!isOpen || !userRow) return null;
-
-  // Demo Account Data - later API replace:
-  const demoAccounts = [
-    {
-      userId: 1,
-      userName: "John Doe",
-      accountId: "D-1001",
-      email: "john@example.com",
-      registration: "2024-01-10",
-      country: "USA",
-    },
-    {
-      userId: 2,
-      userName: "Jane",
-      accountId: "D-2001",
-      email: "jane@example.com",
-      registration: "2024-02-11",
-      country: "India",
-    },
-  ];
-
+export default function DemoAccountModal({ isOpen, onClose, userRow, isDarkMode }) {
   const [search, setSearch] = useState("");
+  const [demoAccounts, setDemoAccounts] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  const filteredData = useMemo(() => {
-    return demoAccounts.filter(
-      (acc) =>
-        acc.userId === userRow.id &&
-        (acc.accountId.toLowerCase().includes(search.toLowerCase()) ||
-          acc.email.toLowerCase().includes(search.toLowerCase()))
-    );
-  }, [search, userRow]);
+  const userId = userRow ? userRow.id ?? userRow.userId ?? userRow.user_id : null;
+
+  useEffect(() => {
+    if (!isOpen || !userId) return;
+
+    let cancelled = false;
+    const controller = new AbortController();
+
+    const fetchData = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const token = typeof window !== "undefined" ? localStorage.getItem("jwt_token") || localStorage.getItem("access_token") : null;
+        const params = new URLSearchParams();
+        params.set("user_id", String(userId));
+        if (search) params.set("search", search);
+        const res = await fetch(`/api/demo_accounts/?${params.toString()}`, {
+          method: "GET",
+          credentials: "include",
+          headers: {
+            Accept: "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          signal: controller.signal,
+        });
+        if (!res.ok) throw new Error(`Failed to load demo accounts: ${res.status}`);
+        const data = await res.json();
+        if (!cancelled) setDemoAccounts(Array.isArray(data) ? data : []);
+      } catch (err) {
+        if (!cancelled) setError(err.message || String(err));
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    // debounce search
+    const t = setTimeout(fetchData, 250);
+    return () => {
+      cancelled = true;
+      controller.abort();
+      clearTimeout(t);
+    };
+  }, [isOpen, userId, search]);
+
+  if (!isOpen || !userRow) return null;
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
@@ -87,21 +100,29 @@ export default function DemoAccountModal({
             </tr>
           </thead>
           <tbody>
-            {filteredData.length > 0 ? (
-              filteredData.map((acc, index) => (
+            {loading ? (
+              <tr>
+                <td className="p-3 text-center" colSpan="7">Loading...</td>
+              </tr>
+            ) : error ? (
+              <tr>
+                <td className="p-3 text-center text-red-400" colSpan="7">{error}</td>
+              </tr>
+            ) : demoAccounts && demoAccounts.length > 0 ? (
+              demoAccounts.map((acc, index) => (
                 <tr
-                  key={index}
+                  key={acc.id ?? index}
                   className={`text-center ${
                     isDarkMode
                       ? "hover:bg-black/40"
                       : "hover:bg-gray-200 ease-in"
                   }`}
                 >
-                  <td className="p-2">{acc.userId}</td>
-                  <td className="p-2">{acc.userName}</td>
-                  <td className="p-2">{acc.accountId}</td>
+                  <td className="p-2">{acc.user_id ?? acc.userId ?? acc.userId}</td>
+                  <td className="p-2">{acc.name ?? acc.userName ?? acc.username}</td>
+                  <td className="p-2">{acc.account_id ?? acc.accountId}</td>
                   <td className="p-2">{acc.email}</td>
-                  <td className="p-2">{acc.registration}</td>
+                  <td className="p-2">{acc.registered_date ?? acc.registration}</td>
                   <td className="p-2">{acc.country}</td>
                   <td className="p-2 flex justify-center gap-2">
                     <button className="px-2 py-1 bg-blue-500 text-white text-xs rounded-md flex items-center gap-1">
