@@ -17,6 +17,7 @@ const TableStructure = ({
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(initialPageSize);
+  const [expandedRow, setExpandedRow] = useState(null);
 
   // server-side state
   const [serverData, setServerData] = useState([]);
@@ -142,7 +143,12 @@ const TableStructure = ({
                 <React.Fragment key={row.id || startIndex + rowIndex}>
                   <tr
                     className={`border-b ${borderClass} ${rowHover} transition cursor-pointer`}
-                    onClick={onRowClick ? () => onRowClick(row) : undefined}
+                    onClick={() => {
+                      if (renderRowSubComponent) {
+                        setExpandedRow(expandedRow === (row.id || startIndex + rowIndex) ? null : (row.id || startIndex + rowIndex));
+                      }
+                      if (onRowClick) onRowClick(row);
+                    }}
                   >
                     {columns.map((col) => {
                       const cellValue = row[col.accessor];
@@ -156,7 +162,7 @@ const TableStructure = ({
                       <td className="p-3">{actionsColumn(row)}</td>
                     )}
                   </tr>
-                  {renderRowSubComponent && renderRowSubComponent(row, startIndex + rowIndex)}
+                  {renderRowSubComponent && expandedRow === (row.id || startIndex + rowIndex) && renderRowSubComponent(row, startIndex + rowIndex)}
                 </React.Fragment>
               ))
             ) : (

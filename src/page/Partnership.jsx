@@ -1,12 +1,61 @@
 import React, { useState, useEffect } from "react";
 import TableStructure from "../commonComponent/TableStructure";
-import SubRowButtons from "../commonComponent/SubRowButtons";
+import PartnershipModals from "../Modals/PartnershipModals";
 
 const Partnership = () => {
   const [activeTab, setActiveTab] = useState("partnerList");
   const [showCommissionModal, setShowCommissionModal] = useState(false);
+  const [showTransferModal, setShowTransferModal] = useState(false);
+  const [selectedRow, setSelectedRow] = useState(null);
+  const [selectedAccount, setSelectedAccount] = useState("");
+  const [withdrawAmount, setWithdrawAmount] = useState("");
+  const [databaseOnly, setDatabaseOnly] = useState(false);
+  const [tradingAccounts, setTradingAccounts] = useState([]);
+  const [commissionBalance, setCommissionBalance] = useState(0);
   const [editRowId, setEditRowId] = useState(null);
   const [editedRowData, setEditedRowData] = useState({});
+
+  // New states for button modals
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [showAddClientModal, setShowAddClientModal] = useState(false);
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [showStatisticsModal, setShowStatisticsModal] = useState(false);
+  const [showDisableIBModal, setShowDisableIBModal] = useState(false);
+  const [showClientListModal, setShowClientListModal] = useState(false);
+  const [selectedId, setSelectedId] = useState(null);
+
+  // New states for profile modal
+  const [currentProfile, setCurrentProfile] = useState(null);
+  const [selectedNewProfile, setSelectedNewProfile] = useState("");
+  const [availableProfiles, setAvailableProfiles] = useState([]);
+
+  // New states for add client modal
+  const [unassignedClients, setUnassignedClients] = useState([]);
+  const [selectedClient, setSelectedClient] = useState("");
+  const [clientSearchTerm, setClientSearchTerm] = useState("");
+
+  // New states for history modal
+  const [historyData, setHistoryData] = useState([]);
+
+  // New states for client list modal
+  // eslint-disable-next-line no-unused-vars
+  const [clientListData, setClientListData] = useState([]);
+
+  // New state for statistics data
+  const [statisticsData, setStatisticsData] = useState(null);
+
+  // New state for statistics tab
+  const [statisticsTab, setStatisticsTab] = useState("summary");
+
+  // New state for commission details data
+  const [commissionDetailsData, setCommissionDetailsData] = useState(null);
+
+
+
+  // New states for commission stats filters
+  const [commissionLevelFilter, setCommissionLevelFilter] = useState("All Levels");
+  const [commissionDateFrom, setCommissionDateFrom] = useState("");
+  const [commissionDateTo, setCommissionDateTo] = useState("");
 
   // New states for create mode and new commission form
   const [isCreateMode, setIsCreateMode] = useState(false);
@@ -93,11 +142,11 @@ const Partnership = () => {
     withdrawalPending: { items: [], total: 0 },
   });
 
-  const [pageByTab, setPageByTab] = useState({ partnerList: 1, withdrawalRequest: 1, withdrawalPending: 1 });
-  const [perPage, setPerPage] = useState(10);
-  const [loading, setLoading] = useState(false);
+  const [pageByTab] = useState({ partnerList: 1, withdrawalRequest: 1, withdrawalPending: 1 });
+  const [perPage] = useState(10);
   const [error, setError] = useState(null);
   const [actionLoading, setActionLoading] = useState({});
+  const [_modalLoading, setModalLoading] = useState(false);
 
   // Map tabs to API endpoints — adjust endpoints to match your backend
   const API_ENDPOINTS = {
@@ -110,20 +159,22 @@ const Partnership = () => {
     // Actions - base path; handlers will append the transaction id and action
     withdrawalApprove: "/api/admin/transaction/",
     withdrawalReject: "/api/admin/transaction/",
+    tradingAccounts: "/ib-user/",
+    commissionBalance: "/api/admin/ib-user/",
+    partnerProfile: "/partner-profile/",
+    unassignedClients: "/api/admin/unassigned-clients/",
+    statistics: "/api/admin/ib-user/",
   };
-
-  const currentPage = pageByTab[activeTab] || 1;
 
   const fetchData = async (tab) => {
     const endpoint = API_ENDPOINTS[tab];
     if (!endpoint) return;
-    setLoading(true);
     setError(null);
     try {
       // Build headers and include credentials to support cookie-based auth
       const headers = { Accept: "application/json" };
       // If you store a token in localStorage (e.g. 'accessToken' or 'token'), include it
-      const token = window.localStorage.getItem("accessToken") || window.localStorage.getItem("token");
+      const token = window.localStorage.getItem("access_token") || window.localStorage.getItem("token");
       if (token) headers["Authorization"] = `Bearer ${token}`;
 
       const res = await fetch(`${endpoint}?page=${pageByTab[tab]}&per_page=${perPage}`, {
@@ -155,6 +206,7 @@ const Partnership = () => {
         transformed = items.map((u) => ({
           ibUserName: u.username ?? `${u.first_name ?? ""} ${u.last_name ?? ""}`.trim(),
           userId: u.user_id ?? u.userId ?? u.id,
+          email: u.email ?? "",
           commissionProfile: u.commission_profile_name ?? u.commissioning_profile ?? u.commission_profile ?? "",
           totalClients: u.total_clients ?? u.totalClients ?? 0,
           // keep original object for advanced rows if needed
@@ -173,7 +225,7 @@ const Partnership = () => {
           approvedAt: it.approved_at ? (() => {
             try {
               return new Date(it.approved_at).toLocaleString();
-            } catch (e) {
+            } catch {
               return String(it.approved_at);
             }
           })() : "",
@@ -188,8 +240,6 @@ const Partnership = () => {
       setDataState((prev) => ({ ...prev, [tab]: { items: transformed, total } }));
     } catch (err) {
       setError(err.message || "Failed to fetch data");
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -200,7 +250,7 @@ const Partnership = () => {
     setActionLoading((s) => ({ ...s, [id]: true }));
     setError(null);
     try {
-      const token = window.localStorage.getItem("accessToken") || window.localStorage.getItem("token");
+      const token = window.localStorage.getItem("access_token") || window.localStorage.getItem("token");
       // Build URL with id (backend expects /api/admin/transaction/<id>/approve/)
       const url = `${API_ENDPOINTS.withdrawalApprove}${id}/approve/`;
       const res = await fetch(url, {
@@ -263,6 +313,14 @@ const Partnership = () => {
     fetchData(activeTab);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, pageByTab[activeTab], perPage]);
+
+  // Re-fetch commission details when filters change and modal is open
+  useEffect(() => {
+    if (selectedId && showStatisticsModal && statisticsTab === "commissionStats") {
+      fetchCommissionDetails(selectedId, commissionLevelFilter, commissionDateFrom, commissionDateTo);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [commissionLevelFilter, commissionDateFrom, commissionDateTo, selectedId, showStatisticsModal, statisticsTab]);
 
   // Commission profiles data and columns for modal
   const [commissionProfiles, setCommissionProfiles] = useState([
@@ -399,60 +457,513 @@ const Partnership = () => {
     setEditedRowData({});
   };
 
-  const [modalLoading, setModalLoading] = useState(false);
   const [viewingGroups, setViewingGroups] = useState(null); // array of groups being viewed in popover
   const [availableGroups, setAvailableGroups] = useState([]);
-  const [expandedRow, setExpandedRow] = useState(null);
 
   // Partner-list specific sub-row actions (stubs — wire to real behaviour later)
-  const handleTransfer = (row) => {
-    const id = row.userId ?? row._raw?.user_id ?? row._raw?.id;
-    console.log("Transfer clicked for", id, row);
-    alert(`Transfer action for user ${id}`);
+  const fetchTradingAccounts = async (userId) => {
+    const endpoint = `${API_ENDPOINTS.tradingAccounts}${userId}/trading-accounts/`;
+    setError(null);
+    try {
+      const token = window.localStorage.getItem("access_token") || window.localStorage.getItem("token");
+      const res = await fetch(endpoint, {
+        method: "GET",
+        headers: { Accept: "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        credentials: "include",
+      });
+      if (res.status === 401) {
+        setError("Unauthorized: please log in to view trading accounts.");
+        setTradingAccounts([]);
+        return;
+      }
+      if (!res.ok) throw new Error(`Failed to fetch trading accounts: ${res.status}`);
+      const json = await res.json();
+      const accounts = json.results ?? json.items ?? json.data ?? (Array.isArray(json) ? json : []);
+      setTradingAccounts(accounts);
+    } catch (err) {
+      setError(err.message || "Failed to load trading accounts");
+      setTradingAccounts([]);
+    }
   };
 
-  const handleProfile = (row) => {
-    const id = row.userId ?? row._raw?.user_id ?? row._raw?.id;
-    console.log("Profile clicked for", id, row);
-    alert(`Open profile for user ${id}`);
+  const fetchCommissionBalance = async (userId) => {
+    const endpoint = `${API_ENDPOINTS.commissionBalance}${userId}/commission-balance/`;
+    setError(null);
+    try {
+      const token = window.localStorage.getItem("access_token") || window.localStorage.getItem("token");
+      const res = await fetch(endpoint, {
+        method: "GET",
+        headers: { Accept: "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        credentials: "include",
+      });
+      if (res.status === 401) {
+        setError("Unauthorized: please log in to view commission balance.");
+        setCommissionBalance(0);
+        return;
+      }
+      if (!res.ok) throw new Error(`Failed to fetch commission balance: ${res.status}`);
+      const json = await res.json();
+      const balance = json.balance ?? json.commission_balance ?? 0;
+      setCommissionBalance(balance);
+    } catch (err) {
+      setError(err.message || "Failed to load commission balance");
+      setCommissionBalance(0);
+    }
   };
 
-  const handleAddClient = (row) => {
+  const handleTransfer = async (row) => {
+    setSelectedRow(row);
+    setSelectedAccount("");
+    setWithdrawAmount("");
+    setDatabaseOnly(false);
+    setShowTransferModal(true);
+    // Fetch trading accounts and commission balance
+    const userId = row.userId ?? row._raw?.user_id ?? row._raw?.id;
+    if (userId) {
+      await Promise.all([fetchTradingAccounts(userId), fetchCommissionBalance(userId)]);
+    }
+  };
+
+
+
+
+
+  const handleTransferSubmit = async () => {
+    if (!selectedAccount || !withdrawAmount) {
+      alert("Please select an account and enter an amount");
+      return;
+    }
+    setError(null);
+    try {
+      const endpoint = "/api/admin/commission-db-withdraw/";
+      const token = window.localStorage.getItem("access_token") || window.localStorage.getItem("token");
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          user_id: selectedRow.userId ?? selectedRow._raw?.user_id ?? selectedRow._raw?.id,
+          accountId: selectedAccount,
+          amount: parseFloat(withdrawAmount),
+          database_only: databaseOnly,
+        }),
+      });
+      if (res.status === 401) {
+        setError("Unauthorized: please log in to perform this action.");
+        return;
+      }
+      if (!res.ok) throw new Error(`Transfer failed: ${res.status}`);
+      alert("Transfer submitted successfully");
+      setShowTransferModal(false);
+      // Refresh data if needed
+      fetchData(activeTab);
+    } catch (err) {
+      setError(err.message || "Failed to submit transfer");
+    }
+  };
+
+  const handleZeroBalance = async () => {
+    setError(null);
+    try {
+      const endpoint = "/api/admin/commission-zero/";
+      const token = window.localStorage.getItem("access_token") || window.localStorage.getItem("token");
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          user_id: selectedRow.userId ?? selectedRow._raw?.user_id ?? selectedRow._raw?.id,
+        }),
+      });
+      if (res.status === 401) {
+        setError("Unauthorized: please log in to perform this action.");
+        return;
+      }
+      if (!res.ok) throw new Error(`Zero balance failed: ${res.status}`);
+      alert("Commission balance zeroed successfully");
+      setShowTransferModal(false);
+      // Refresh data if needed
+      fetchData(activeTab);
+    } catch (err) {
+      setError(err.message || "Failed to zero balance");
+    }
+  };
+
+  const fetchCurrentProfile = async (userId) => {
+    const endpoint = `${API_ENDPOINTS.partnerProfile}${userId}/`;
+    setError(null);
+    try {
+      const token = window.localStorage.getItem("access_token") || window.localStorage.getItem("token");
+      const res = await fetch(endpoint, {
+        method: "GET",
+        headers: { Accept: "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        credentials: "include",
+      });
+      if (res.status === 401) {
+        setError("Unauthorized: please log in to view current profile.");
+        setCurrentProfile(null);
+        return;
+      }
+      if (!res.ok) throw new Error(`Failed to fetch current profile: ${res.status}`);
+      const json = await res.json();
+      setCurrentProfile(json);
+    } catch (err) {
+      setError(err.message || "Failed to load current profile");
+      setCurrentProfile(null);
+    }
+  };
+
+  const fetchAvailableProfiles = async () => {
+    const endpoint = API_ENDPOINTS.commissionProfiles;
+    setError(null);
+    try {
+      const token = window.localStorage.getItem("access_token") || window.localStorage.getItem("token");
+      const res = await fetch(endpoint, {
+        method: "GET",
+        headers: { Accept: "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        credentials: "include",
+      });
+      if (res.status === 401) {
+        setError("Unauthorized: please log in to view available profiles.");
+        setAvailableProfiles([]);
+        return;
+      }
+      if (!res.ok) throw new Error(`Failed to fetch available profiles: ${res.status}`);
+      const json = await res.json();
+      const items = json.results ?? json.items ?? json.data ?? (Array.isArray(json) ? json : []);
+      const profiles = items.map(p => ({ id: p.profileId, name: p.profileName }));
+      setAvailableProfiles(profiles);
+    } catch (err) {
+      setError(err.message || "Failed to load available profiles");
+      setAvailableProfiles([]);
+    }
+  };
+
+  const handleChangeProfile = async () => {
+    if (!selectedNewProfile) {
+      alert("Please select a new profile");
+      return;
+    }
+    setError(null);
+    try {
+      const endpoint = `/update-partner-profile/${selectedId}/`;
+      const token = window.localStorage.getItem("access_token") || window.localStorage.getItem("token");
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        credentials: "include",
+        body: JSON.stringify({ profile_id: selectedNewProfile }),
+      });
+      if (res.status === 401) {
+        setError("Unauthorized: please log in to change profile.");
+        return;
+      }
+      if (!res.ok) throw new Error(`Failed to change profile: ${res.status}`);
+      alert("Profile changed successfully");
+      setShowProfileModal(false);
+      // Refresh data
+      fetchData(activeTab);
+    } catch (err) {
+      setError(err.message || "Failed to change profile");
+    }
+  };
+
+  const handleProfile = async (row) => {
     const id = row.userId ?? row._raw?.user_id ?? row._raw?.id;
-    console.log("Add client for", id, row);
-    alert(`Add client for user ${id}`);
+    setSelectedId(id);
+    setSelectedNewProfile("");
+    await Promise.all([fetchCurrentProfile(id), fetchAvailableProfiles()]);
+    setShowProfileModal(true);
+  };
+
+  const fetchUnassignedClients = async () => {
+    const endpoint = API_ENDPOINTS.unassignedClients;
+    setError(null);
+    try {
+      const token = window.localStorage.getItem("access_token") || window.localStorage.getItem("token");
+      const res = await fetch(endpoint, {
+        method: "GET",
+        headers: { Accept: "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        credentials: "include",
+      });
+      if (res.status === 401) {
+        setError("Unauthorized: please log in to view unassigned clients.");
+        setUnassignedClients([]);
+        return;
+      }
+      if (!res.ok) throw new Error(`Failed to fetch unassigned clients: ${res.status}`);
+      const json = await res.json();
+      const clients = json.results ?? json.items ?? json.data ?? (Array.isArray(json) ? json : []);
+      setUnassignedClients(clients);
+    } catch (err) {
+      setError(err.message || "Failed to load unassigned clients");
+      setUnassignedClients([]);
+    }
+  };
+
+  const handleAddClient = async (row) => {
+    const id = row.userId ?? row._raw?.user_id ?? row._raw?.id;
+    setSelectedId(id);
+    setSelectedClient("");
+    setClientSearchTerm("");
+    await fetchUnassignedClients();
+    setShowAddClientModal(true);
+  };
+
+  const handleAddClientSubmit = async () => {
+    if (!selectedClient) {
+      alert("Please select a client");
+      return;
+    }
+    setError(null);
+    try {
+      // First, get the IB user email
+      const ibUserEndpoint = `/api/admin/user-info/${selectedId}/`;
+      const token = window.localStorage.getItem("access_token") || window.localStorage.getItem("token");
+      const ibRes = await fetch(ibUserEndpoint, {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        credentials: "include",
+      });
+      if (!ibRes.ok) throw new Error(`Failed to fetch IB user info: ${ibRes.status}`);
+      const ibUserData = await ibRes.json();
+      const parentIbEmail = ibUserData.email;
+
+      // Then, get the client user email
+      const clientUserEndpoint = `/api/admin/user-info/${selectedClient}/`;
+      const clientRes = await fetch(clientUserEndpoint, {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        credentials: "include",
+      });
+      if (!clientRes.ok) throw new Error(`Failed to fetch client user info: ${clientRes.status}`);
+      const clientUserData = await clientRes.json();
+      const clientEmail = clientUserData.email;
+
+      // Now, assign the client
+      const endpoint = `/api/admin/assign-specific-client/`;
+      const assignRes = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          client_email: clientEmail,
+          parent_ib_email: parentIbEmail
+        }),
+      });
+      if (assignRes.status === 401) {
+        setError("Unauthorized: please log in to add client.");
+        return;
+      }
+      if (!assignRes.ok) throw new Error(`Failed to add client: ${assignRes.status}`);
+      alert("Client added successfully");
+      setShowAddClientModal(false);
+      // Refresh data
+      fetchData(activeTab);
+    } catch (err) {
+      setError(err.message || "Failed to add client");
+    }
+  };
+
+  const fetchHistoryData = async (userId) => {
+    const endpoint = `/api/admin/commission-withdrawal-history/${userId}/`;
+    setError(null);
+    try {
+      const token = window.localStorage.getItem("access_token") || window.localStorage.getItem("token");
+      const res = await fetch(endpoint, {
+        method: "GET",
+        headers: { Accept: "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        credentials: "include",
+      });
+      if (res.status === 401) {
+        setError("Unauthorized: please log in to view history.");
+        setHistoryData([]);
+        return;
+      }
+      if (!res.ok) throw new Error(`Failed to fetch history: ${res.status}`);
+      const json = await res.json();
+      const items = json.results ?? json.items ?? json.data ?? (Array.isArray(json) ? json : []);
+      const transformed = items.map((it) => ({
+        transactionId: it.id ?? it.transaction_id ?? "",
+        date: it.created_at ?? it.date ?? "",
+        amount: it.amount ?? "",
+        tradingAccount: it.trading_account_id ?? it.trading_account ?? "",
+      }));
+      setHistoryData(transformed);
+    } catch (err) {
+      setError(err.message || "Failed to load history");
+      setHistoryData([]);
+    }
   };
 
   const handleHistory = (row) => {
     const id = row.userId ?? row._raw?.user_id ?? row._raw?.id;
-    console.log("History for", id, row);
-    alert(`History for user ${id}`);
+    setSelectedId(id);
+    fetchHistoryData(id);
+    setShowHistoryModal(true);
   };
 
-  const handleStatistics = (row) => {
+  const fetchCommissionDetails = async (userId, level = "", dateFrom = "", dateTo = "") => {
+    let endpoint = `/api/admin/ib-users/${userId}/commission-details/?page=1&pageSize=10&per_page=10`;
+    const params = new URLSearchParams();
+    if (level) params.append("level", level);
+    if (dateFrom) params.append("date_from", dateFrom);
+    if (dateTo) params.append("date_to", dateTo);
+    if (params.toString()) endpoint += `&${params.toString()}`;
+
+    setError(null);
+    try {
+      const token = window.localStorage.getItem("access_token") || window.localStorage.getItem("token");
+      const res = await fetch(endpoint, {
+        method: "GET",
+        headers: { Accept: "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        credentials: "include",
+      });
+      if (res.status === 401) {
+        setError("Unauthorized: please log in to view commission details.");
+        setCommissionDetailsData(null);
+        return;
+      }
+      if (!res.ok) throw new Error(`Failed to fetch commission details: ${res.status}`);
+      const json = await res.json();
+      setCommissionDetailsData(json.details || []);
+    } catch (err) {
+      setError(err.message || "Failed to load commission details");
+      setCommissionDetailsData(null);
+    }
+  };
+
+  const handleStatistics = async (row) => {
     const id = row.userId ?? row._raw?.user_id ?? row._raw?.id;
-    console.log("Statistics for", id, row);
-    alert(`Statistics for user ${id}`);
+    setSelectedId(id);
+    // Reset filters
+    setCommissionLevelFilter("");
+    setCommissionDateFrom("");
+    setCommissionDateTo("");
+    // Fetch statistics data
+    const endpoint = `${API_ENDPOINTS.statistics}${id}/statistics/`;
+    setError(null);
+    try {
+      const token = window.localStorage.getItem("access_token") || window.localStorage.getItem("token");
+      const res = await fetch(endpoint, {
+        method: "GET",
+        headers: { Accept: "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        credentials: "include",
+      });
+      if (res.status === 401) {
+        setError("Unauthorized: please log in to view statistics.");
+        setStatisticsData(null);
+        return;
+      }
+      if (!res.ok) throw new Error(`Failed to fetch statistics: ${res.status}`);
+      const json = await res.json();
+      setStatisticsData(json);
+    } catch (err) {
+      setError(err.message || "Failed to load statistics");
+      setStatisticsData(null);
+    }
+    // Fetch commission details data
+    await fetchCommissionDetails(id);
+    setShowStatisticsModal(true);
   };
 
   const handleDisableIB = (row) => {
     const id = row.userId ?? row._raw?.user_id ?? row._raw?.id;
-    console.log("Disable IB for", id, row);
-    if (window.confirm(`Disable IB for user ${id}?`)) {
-      alert(`Disabled IB ${id} (stub)`);
+    setSelectedId(id);
+    setSelectedRow(row);
+    setShowDisableIBModal(true);
+  };
+
+  const handleDisableIBSubmit = async () => {
+    setError(null);
+    try {
+      const endpoint = `/api/admin/disable-ib/${selectedId}/`;
+      const token = window.localStorage.getItem("access_token") || window.localStorage.getItem("token");
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        credentials: "include",
+      });
+      if (res.status === 401) {
+        setError("Unauthorized: please log in to disable IB.");
+        return;
+      }
+      if (!res.ok) throw new Error(`Failed to disable IB: ${res.status}`);
+      alert("IB disabled successfully");
+      setShowDisableIBModal(false);
+      // Refresh data
+      fetchData(activeTab);
+    } catch (err) {
+      setError(err.message || "Failed to disable IB");
+    }
+  };
+
+  const fetchClientListData = async (userId) => {
+    const endpoint = `/api/admin/ib-users/${userId}/clients/`;
+    setError(null);
+    try {
+      const token = window.localStorage.getItem("access_token") || window.localStorage.getItem("token");
+      const res = await fetch(endpoint, {
+        method: "GET",
+        headers: { Accept: "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        credentials: "include",
+      });
+      if (res.status === 401) {
+        setError("Unauthorized: please log in to view client list.");
+        setClientListData([]);
+        return;
+      }
+      if (!res.ok) throw new Error(`Failed to fetch client list: ${res.status}`);
+      const json = await res.json();
+      let clients = [];
+      if (Array.isArray(json)) {
+        clients = json[0]?.clients ?? [];
+      } else {
+        clients = json.levels?.[0]?.clients ?? [];
+      }
+      const transformed = clients.map((client) => ({
+        name: client.name,
+        email: client.email,
+        user_id: client.user_id,
+      }));
+      setClientListData(transformed);
+    } catch (err) {
+      setError(err.message || "Failed to load client list");
+      setClientListData([]);
     }
   };
 
   const handleClientList = (row) => {
     const id = row.userId ?? row._raw?.user_id ?? row._raw?.id;
-    console.log("Client List for", id, row);
-    alert(`Open client list for user ${id}`);
+    setSelectedId(id);
+    fetchClientListData(id);
+    setShowClientListModal(true);
   };
 
   const fetchCommissionProfiles = async () => {
     const endpoint = API_ENDPOINTS.commissionProfiles;
     if (!endpoint) return;
-    setModalLoading(true);
     setError(null);
     try {
       const token = window.localStorage.getItem("accessToken") || window.localStorage.getItem("token");
@@ -491,8 +1002,6 @@ const Partnership = () => {
       setCommissionProfiles(mapped);
     } catch (err) {
       setError(err.message || "Failed to load commission profiles");
-    } finally {
-      setModalLoading(false);
     }
   };
 
@@ -590,7 +1099,7 @@ const Partnership = () => {
         return;
       }
       if (!res.ok) throw new Error(`Create failed: ${res.status}`);
-      const created = await res.json();
+      await res.json();
       // Refresh list
       await fetchCommissionProfiles();
       setShowCommissionModal(false);
@@ -642,28 +1151,86 @@ const Partnership = () => {
     );
   };
 
+  // Subrow component for Partner List
+  const renderPartnerSubRow = (row, rowIndex) => {
+    return (
+      <tr key={`sub-${rowIndex}`} className="bg-gray-50 dark:bg-gray-800">
+        <td colSpan={partnerListColumns.length} className="p-4">
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => handleTransfer(row)}
+              className="bg-yellow-500 text-black px-3 py-1 rounded hover:bg-yellow-600 transition"
+            >
+              Transfer
+            </button>
+            <button
+              onClick={() => handleProfile(row)}
+              className="bg-yellow-500 text-black px-3 py-1 rounded hover:bg-yellow-600 transition"
+            >
+              Profile
+            </button>
+            <button
+              onClick={() => handleAddClient(row)}
+              className="bg-yellow-500 text-black px-3 py-1 rounded hover:bg-yellow-600 transition"
+            >
+              Add Client
+            </button>
+            <button
+              onClick={() => handleHistory(row)}
+              className="bg-yellow-500 text-black px-3 py-1 rounded hover:bg-yellow-600 transition"
+            >
+              History
+            </button>
+            <button
+              onClick={() => handleStatistics(row)}
+              className="bg-yellow-500 text-black px-3 py-1 rounded hover:bg-yellow-600 transition"
+            >
+              Statistics
+            </button>
+            <button
+              onClick={() => handleDisableIB(row)}
+              className="bg-yellow-500 text-black px-3 py-1 rounded hover:bg-yellow-600 transition"
+            >
+              Disable IB
+            </button>
+            <button
+              onClick={() => handleClientList(row)}
+              className="bg-yellow-500 text-black px-3 py-1 rounded hover:bg-yellow-600 transition"
+            >
+              Client List
+            </button>
+          </div>
+        </td>
+      </tr>
+    );
+  };
+
   // Determine columns, data, and actions based on active tab
   let columns = [];
   let data = [];
   let actionsColumn = undefined;
+  let renderRowSubComponent = undefined;
 
   switch (activeTab) {
     case "partnerList":
       columns = partnerListColumns;
       data = dataState.partnerList.items;
       actionsColumn = undefined;
+      renderRowSubComponent = renderPartnerSubRow;
       break;
     case "withdrawalRequest":
       columns = withdrawalRequestColumns;
       data = dataState.withdrawalRequest.items;
       // actions removed per request (no Approve/Reject buttons in table)
       actionsColumn = undefined;
+      renderRowSubComponent = undefined;
       break;
     case "withdrawalPending":
       columns = withdrawalPendingColumns;
       data = dataState.withdrawalPending.items;
       // enable actions (Approve/Reject) for pending withdrawals
       actionsColumn = withdrawalRequestActions;
+      renderRowSubComponent = undefined;
       break;
     default:
       break;
@@ -726,190 +1293,76 @@ const Partnership = () => {
         columns={columns}
         data={data}
         actionsColumn={actionsColumn}
+        renderRowSubComponent={renderRowSubComponent}
       />
 
-      {showCommissionModal && (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70">
-    <div className="bg-black text-white rounded-lg shadow-lg w-11/12 max-w-4xl p-6 relative">
-      <h2 className="text-xl font-semibold mb-4 text-yellow-400">Commission Profiles</h2>
-      {isCreateMode ? (
-        <form
-          onSubmit={handleCreateProfile}
-          className="space-y-4"
-          style={{ maxHeight: "500px", overflowY: "auto" }}
-        >
-          <div className="py-2 px-3 bg-black text-white rounded shadow-sm">
-            <label className="block font-semibold mb-1">Profile Name</label>
-            <input
-              type="text"
-              className="border rounded px-2 py-1 w-full bg-black text-white"
-              value={newProfile.profileName}
-              onChange={(e) => setNewProfile({ ...newProfile, profileName: e.target.value })}
-              required
-            />
-          </div>
-          <div className="py-2 px-3 bg-black text-white rounded shadow-sm mt-3">
-            <label className="block font-semibold mb-1">Commission Type</label>
-            <div className="flex gap-4 mt-1">
-              <label className="inline-flex items-center">
-                <input
-                  type="radio"
-                  name="commissionType"
-                  checked={!newProfile.isPercentageBased}
-                  onChange={() => setNewProfile({ ...newProfile, isPercentageBased: false })}
-                  className="text-white"
-                />
-                <span className="ml-2">USD per Lot</span>
-              </label>
-              <label className="inline-flex items-center">
-                <input
-                  type="radio"
-                  name="commissionType"
-                  checked={newProfile.isPercentageBased}
-                  onChange={() => setNewProfile({ ...newProfile, isPercentageBased: true })}
-                  className="text-white"
-                />
-                <span className="ml-2">Percentage-based</span>
-              </label>
-            </div>
-          </div>
-          {newProfile.isPercentageBased ? (
-            <div className="py-2 px-3 bg-black text-white rounded shadow-sm mt-3">
-              <label className="block font-semibold mb-1">Level Percentages (e.g., 50,20,20,10)</label>
-              <input
-                type="text"
-                className="border rounded px-2 py-1 w-full bg-black text-white"
-                value={newProfile.levelPercentages}
-                onChange={(e) => setNewProfile({ ...newProfile, levelPercentages: e.target.value })}
-                placeholder="Comma-separated percentages"
-                pattern="^(?:\d+,)*\d+$"
-              />
-            </div>
-          ) : (
-            <div className="py-2 px-3 bg-black text-white rounded shadow-sm mt-3">
-              <label className="block font-semibold mb-1">USD per Lot</label>
-              <input
-                type="text"
-                className="border rounded px-2 py-1 w-full bg-black text-white"
-                value={newProfile.usdPerLot}
-                onChange={(e) => setNewProfile({ ...newProfile, usdPerLot: e.target.value })}
-                placeholder="e.g., 50"
-              />
-            </div>
-          )}
-          <div className="py-2 px-3 bg-black text-white rounded shadow-sm mt-3">
-            <label className="block font-semibold mb-1">Select Groups</label>
-            <div className="border rounded bg-black text-white p-2" style={{ maxHeight: 180, overflowY: 'auto' }}>
-              {availableGroups.length > 0 ? (
-                availableGroups.map((g) => {
-                  const checked = newProfile.selectedGroups.includes(g);
-                  return (
-                    <label key={g} className="flex items-center gap-2 py-1">
-                      <input
-                        type="checkbox"
-                        className="text-white"
-                        checked={checked}
-                        onChange={(e) => {
-                          setNewProfile((prev) => {
-                            const set = new Set(prev.selectedGroups || []);
-                            if (e.target.checked) set.add(g);
-                            else set.delete(g);
-                            return { ...prev, selectedGroups: Array.from(set) };
-                          });
-                        }}
-                      />
-                      <span className="select-none">{g}</span>
-                    </label>
-                  );
-                })
-              ) : (
-                <div className="text-sm text-gray-400">No groups available</div>
-              )}
-            </div>
-            <div className="mt-2">
-              <label className="inline-flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  className="text-white"
-                  checked={availableGroups.length > 0 && newProfile.selectedGroups.length === availableGroups.length}
-                  onChange={(e) => {
-                    if (e.target.checked) {
-                      // select all groups
-                      setNewProfile((prev) => ({ ...prev, selectedGroups: Array.from(availableGroups) }));
-                    } else {
-                      // clear selection (backend interprets empty array as 'all groups')
-                      setNewProfile((prev) => ({ ...prev, selectedGroups: [] }));
-                    }
-                  }}
-                />
-                <span className="ml-2">Select All Groups</span>
-              </label>
-            </div>
-          </div>
-          <div className="flex gap-4 justify-end mt-4">
-            <button
-              type="button"
-              className="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-500"
-              onClick={() => {
-                setShowCommissionModal(false);
-                setIsCreateMode(false);
-              }}
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600"
-            >
-              Create
-            </button>
-          </div>
-        </form>
-      ) : (
-        <>
-          <TableStructure
-            columns={commissionProfileColumns}
-            data={commissionProfiles}
-            actionsColumn={commissionActionsColumn}
-          />
-          {viewingGroups && (
-            <div className="fixed inset-0 z-60 flex items-center justify-center bg-black bg-opacity-60">
-              <div className="bg-black text-white rounded-lg shadow-lg w-3/4 max-w-2xl p-4 relative">
-                <h3 className="text-lg font-semibold mb-2 text-yellow-400">Groups</h3>
-                <div style={{ maxHeight: 400, overflowY: 'auto' }} className="text-sm">
-                  {viewingGroups.map((g, i) => (
-                    <div key={i} className="py-1 border-b border-white/10">{g}</div>
-                  ))}
-                </div>
-                <div className="flex justify-end mt-3">
-                  <button
-                    onClick={() => setViewingGroups(null)}
-                    className="bg-gray-600 text-white px-3 py-1 rounded hover:bg-gray-500"
-                  >
-                    Close
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-          <button
-            onClick={() => {
-              setShowCommissionModal(false);
-              setEditRowId(null);
-              setEditedRowData({});
-            }}
-            className="absolute top-3 right-3 text-white hover:text-gray-300 font-bold text-2xl"
-            aria-label="Close modal"
-          >
-            &times;
-          </button>
-        </>
-      )}
-
-
-          </div>
-        </div>
-      )}
+      <PartnershipModals
+        showCommissionModal={showCommissionModal}
+        setShowCommissionModal={setShowCommissionModal}
+        isCreateMode={isCreateMode}
+        setIsCreateMode={setIsCreateMode}
+        newProfile={newProfile}
+        setNewProfile={setNewProfile}
+        availableGroups={availableGroups}
+        commissionProfiles={commissionProfiles}
+        commissionProfileColumns={commissionProfileColumns}
+        commissionActionsColumn={commissionActionsColumn}
+        viewingGroups={viewingGroups}
+        setViewingGroups={setViewingGroups}
+        setEditRowId={setEditRowId}
+        setEditedRowData={setEditedRowData}
+        handleCreateProfile={handleCreateProfile}
+        showTransferModal={showTransferModal}
+        setShowTransferModal={setShowTransferModal}
+        selectedRow={selectedRow}
+        selectedAccount={selectedAccount}
+        setSelectedAccount={setSelectedAccount}
+        withdrawAmount={withdrawAmount}
+        setWithdrawAmount={setWithdrawAmount}
+        databaseOnly={databaseOnly}
+        setDatabaseOnly={setDatabaseOnly}
+        handleTransferSubmit={handleTransferSubmit}
+        handleZeroBalance={handleZeroBalance}
+        tradingAccounts={tradingAccounts}
+        commissionBalance={commissionBalance}
+        showProfileModal={showProfileModal}
+        setShowProfileModal={setShowProfileModal}
+        ProfileName={currentProfile}
+        availableProfiles={availableProfiles}
+        selectedNewProfile={selectedNewProfile}
+        setSelectedNewProfile={setSelectedNewProfile}
+        handleChangeProfile={handleChangeProfile}
+        showAddClientModal={showAddClientModal}
+        setShowAddClientModal={setShowAddClientModal}
+        unassignedClients={unassignedClients}
+        selectedClient={selectedClient}
+        setSelectedClient={setSelectedClient}
+        clientSearchTerm={clientSearchTerm}
+        setClientSearchTerm={setClientSearchTerm}
+        handleAddClientSubmit={handleAddClientSubmit}
+        showHistoryModal={showHistoryModal}
+        setShowHistoryModal={setShowHistoryModal}
+        historyData={historyData}
+        clientListData={clientListData}
+        showStatisticsModal={showStatisticsModal}
+        setShowStatisticsModal={setShowStatisticsModal}
+        statisticsData={statisticsData}
+        statisticsTab={statisticsTab}
+        setStatisticsTab={setStatisticsTab}
+        commissionDetailsData={commissionDetailsData}
+        commissionLevelFilter={commissionLevelFilter}
+        setCommissionLevelFilter={setCommissionLevelFilter}
+        commissionDateFrom={commissionDateFrom}
+        setCommissionDateFrom={setCommissionDateFrom}
+        commissionDateTo={commissionDateTo}
+        setCommissionDateTo={setCommissionDateTo}
+        showDisableIBModal={showDisableIBModal}
+        setShowDisableIBModal={setShowDisableIBModal}
+        showClientListModal={showClientListModal}
+        setShowClientListModal={setShowClientListModal}
+        selectedId={selectedId}
+        handleDisableIBSubmit={handleDisableIBSubmit}
+      />
     </div>
   );
 };
