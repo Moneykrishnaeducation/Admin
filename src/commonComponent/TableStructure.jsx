@@ -96,7 +96,7 @@ const TableStructure = ({
   const pageTextClass = isDarkMode ? "text-white" : "text-black";
 
   return (
-    <div>
+    <div className="w-full overflow-auto">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-3">
         <div className="flex items-center gap-3 ">
           {topActions && <div className="mr-2">{topActions}</div>}
@@ -115,8 +115,8 @@ const TableStructure = ({
         <div className="flex items-center gap-2">&nbsp;</div>
       </div>
 
-      <div className="max-w-[80vw] overflow-x-auto rounded-lg">
-        <table className={`min-w-full text-left text-sm md:text-base ${tableBg}`}>
+      <div className="w-full overflow-auto rounded-lg">
+        <table className={`w-full text-left text-sm md:text-base ${tableBg}`}>
           <thead>
             <tr className="border-b-2 border-yellow-400">
               {columns.map((col) => (
