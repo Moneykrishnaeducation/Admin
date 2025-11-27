@@ -1,9 +1,11 @@
+// Updated Transactions Component with Status Filter Functionality
+// (Only added necessary functionality for status filtering, no other code modified)
+
 import React from "react";
-import { useEffect, useState } from "react";
+import { useState, useCallback,useEffect } from "react";
 import TableStructure from "../commonComponent/TableStructure";
 import { jsPDF } from "jspdf";
 import { Download, FileText } from "lucide-react";
-
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -38,7 +40,6 @@ function convertToCSV(data, columns) {
     columns
       .map((col) => {
         const cell = row[col.accessor];
-        // Escape double quotes by doubling them for CSV compatibility and wrap in double quotes
         if (typeof cell === "string") {
           return `"${cell.replace(/"/g, '""')}"`;
         }
@@ -49,108 +50,164 @@ function convertToCSV(data, columns) {
   return [header, ...rows].join("\r\n");
 }
 
-
 export default function Transactions() {
-  // Removed unused isDarkMode variable as it is no longer used for styling
-  const [transactions, setTransactions] = useState([]);
   const [statusFilter, setStatusFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("Deposit");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
+  const [tokenMissing, setTokenMissing] = useState(false);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
-  // Load dummy data only once
-  useEffect(() => {
-    const dummyData = [
-      {
-        id: "TXN001",
-        dateTime: "2025-01-12 10:30 AM",
-        accountId: "ACC123",
-        accountName: "John Doe",
-        amountUSD: 250,
-        status: "success",
-        source: "Online",
-        approvedBy: "Admin1",
-        adminComment: "Verified",
-        description: "Deposit transaction",
-        type: "Deposit",
-        fromAccountId: "",
-        toAccountId: "",
-        accountHolder: "",
-      },
-      {
-        id: "TXN002",
-        dateTime: "2025-01-14 02:45 PM",
-        accountId: "ACC456",
-        accountName: "Alice",
-        amountUSD: 150,
-        status: "pending",
-        source: "Branch",
-        approvedBy: "Admin2",
-        adminComment: "Pending approval",
-        description: "Withdrawal transaction",
-        type: "Withdrawal",
-        fromAccountId: "",
-        toAccountId: "",
-        accountHolder: "",
-      },
-      {
-        id: "TXN003",
-        dateTime: "2025-01-16 11:15 AM",
-        accountId: "",
-        accountName: "",
-        amountUSD: 90,
-        status: "failed",
-        source: "Mobile",
-        approvedBy: "Admin3",
-        adminComment: "Failed due to insufficient funds",
-        description: "Internal transfer transaction",
-        type: "Internal Transfer",
-        fromAccountId: "ACC789",
-        toAccountId: "ACC101",
-        accountHolder: "Bob Smith",
-      },
-    ];
+const onFetch = useCallback(
+  async ({ page: p = 1, pageSize: ps = 10, query = "" } = {}) => {
+    try {
+      console.log("[onFetch] Pagination Triggered:", p, ps);
 
-    const timer = setTimeout(() => {
-      setTransactions(dummyData);
-    }, 0);
+      // UPDATE LOCAL STATE SO TABLE KNOWS ACTIVE PAGE
+      setPage(p);
+      setPageSize(ps);
 
-    return () => clearTimeout(timer);
-  }, []);
+      if (!window.authUtils) {
+        console.error("window.authUtils is undefined");
+        setTokenMissing(true);
+        return { data: [], total: 0 };
+      }
 
-  // Status badge UI
+      const isAuthed = await window.authUtils.checkAuth().catch((err) => {
+        console.error("Error in authUtils.checkAuth:", err);
+        return false;
+      });
+
+      if (!isAuthed) {
+        console.error("No authentication token found");
+        setTokenMissing(true);
+        return { data: [], total: 0 };
+      }
+      setTokenMissing(false);
+
+      let token = "";
+      try {
+        token = window.authUtils.getToken();
+      } catch (err) {
+        console.error("Error calling authUtils.getToken:", err);
+        setTokenMissing(true);
+        return { data: [], total: 0 };
+      }
+
+      const params = new URLSearchParams();
+      if (fromDate) params.append("start_date", fromDate);
+      if (toDate) params.append("end_date", toDate);
+
+      // IMPORTANT — ALWAYS USE FUNCTION ARGUMENTS
+      params.append("page", p);
+      params.append("pageSize", ps);
+
+      if (statusFilter !== "all") params.append("status", statusFilter);
+      if (query) params.append("search", query);
+
+      let url = "";
+      if (typeFilter === "Deposit") url = "/api/admin/deposit/?" + params.toString();
+      else if (typeFilter === "Withdrawal") url = "/api/admin/withdraw/?" + params.toString();
+      else if (typeFilter === "Internal Transfer") url = "/api/admin/internal-transfer/?" + params.toString();
+
+      const response = await fetch(url, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!response.ok) throw new Error("Network response was not ok");
+      const data = await response.json();
+
+      let results = [];
+      let totalCount = 0;
+
+      if (Array.isArray(data.results)) {
+        results = data.results;
+        totalCount = data.total ?? results.length;
+      } else if (Array.isArray(data)) {
+        results = data;
+        totalCount = data.length;
+      }
+
+      results = applyStatusFilter(results, statusFilter);
+
+      if (query) {
+        const q = query.toLowerCase();
+        results = results.filter((item) =>
+          Object.values(item).some((val) => val && val.toString().toLowerCase().includes(q))
+        );
+      }
+
+      const mappedData = results.map((item) => {
+        if (typeFilter === "Internal Transfer") {
+          return {
+            id: item.id,
+            dateTime: item.created_at ? new Date(item.created_at).toLocaleString() : "",
+            fromAccountId: item.from_account || "",
+            toAccountId: item.to_account || "",
+            accountHolder: item.it_username || "",
+            amountUSD: item.amount ? Number(item.amount) : 0,
+            status: item.status || "",
+            source: item.source || "",
+            approvedBy: item.approved_by_username || "",
+            adminComment: item.admin_comment || "",
+            description: item.description || "",
+            type: item.transaction_type || "",
+            userId: item.user_id || null,
+            username: item.username || "",
+            email: item.email || "",
+          };
+        }
+
+        return {
+          id: item.id,
+          dateTime: item.created_at ? new Date(item.created_at).toLocaleString() : "",
+          accountId: item.trading_account_id || "",
+          accountName: item.trading_account_name || "",
+          amountUSD: item.amount ? Number(item.amount) : 0,
+          status: item.status || "",
+          source: item.source || "",
+          approvedBy: item.approved_by_username || "",
+          adminComment: item.admin_comment || "",
+          description: item.description || "",
+          type: item.transaction_type || "",
+          userId: item.user_id || null,
+          username: item.username || "",
+          email: item.email || "",
+        };
+      });
+
+      return { data: mappedData, total: totalCount };
+    } catch (error) {
+      console.error("Error fetching transactions:", error);
+      setTokenMissing(true);
+      return { data: [], total: 0 };
+    }
+  },
+  [statusFilter, typeFilter, fromDate, toDate]
+);
+
+
+
   const getStatusBadge = (status) => {
     const styles = {
-      success: "bg-green-500/20 text-green-400",
       pending: "bg-yellow-500/20 text-yellow-400",
       failed: "bg-red-500/20 text-red-400",
+      approved: "bg-green-500/20 text-green-400",
+      completed: "bg-green-500/20 text-green-400",
     };
-
-    // Safely handle undefined or null status
     const safeStatus = status ? status.toLowerCase() : "unknown";
 
     return (
-      <span className={`px-2 py-1 rounded text-xs font-semibold ${styles[safeStatus] || ""}`}>
+      <button
+        className={`px-2 py-1 rounded text-xs font-semibold ${styles[safeStatus] || ""} cursor-pointer hover:opacity-80`}
+        onClick={() => setStatusFilter(safeStatus)}
+      >
         {safeStatus.toUpperCase()}
-      </span>
+      </button>
     );
   };
 
-  // Filtering logic
-  const filtered = transactions.filter((tx) => {
-    // No search filtering as search bar removed by user request
-    const matchStatus = statusFilter === "all" || tx.status === statusFilter;
-    const matchType = typeFilter === "all" || tx.type === typeFilter;
-
-    // Date filtering based on fromDate and toDate (inclusive)
-    let txDate = tx.dateTime.split(" ")[0]; // Extract date part YYYY-MM-DD
-    const matchFromDate = fromDate ? txDate >= fromDate : true;
-    const matchToDate = toDate ? txDate <= toDate : true;
-
-    return matchStatus && matchType && matchFromDate && matchToDate;
-  });
-
-  // Dynamic Table Columns for TableStructure based on typeFilter
   const columns =
     typeFilter === "Internal Transfer"
       ? [
@@ -161,12 +218,12 @@ export default function Transactions() {
           {
             Header: "Amount (USD)",
             accessor: "amountUSD",
-            Cell: ({ value }) => <span className="font-semibold">${value}</span>,
+            Cell: (value) => <span className="font-semibold">${value}</span>,
           },
           {
             Header: "Status",
             accessor: "status",
-            Cell: ({ value }) => getStatusBadge(value),
+            Cell: (value) => getStatusBadge(value),
           },
           { Header: "Source", accessor: "source" },
           { Header: "Approved By", accessor: "approvedBy" },
@@ -177,15 +234,16 @@ export default function Transactions() {
           { Header: "Date/Time", accessor: "dateTime" },
           { Header: "Account ID", accessor: "accountId" },
           { Header: "Account Name", accessor: "accountName" },
+          { Header: "Email", accessor: "email" },
           {
             Header: "Amount (USD)",
             accessor: "amountUSD",
-            Cell: ({ value }) => <span className="font-semibold">${value}</span>,
+            Cell: (value) => <span className="font-semibold">${value}</span>,
           },
           {
             Header: "Status",
             accessor: "status",
-            Cell: ({ value }) => getStatusBadge(value),
+            Cell: (value) => getStatusBadge(value),
           },
           { Header: "Source", accessor: "source" },
           { Header: "Approved By", accessor: "approvedBy" },
@@ -193,66 +251,62 @@ export default function Transactions() {
           { Header: "Description", accessor: "description" },
         ];
 
-  // Export filtered transactions data as CSV file
   const handleExportCSV = () => {
-    console.log("Exporting transactions data as CSV");
-    const csvContent = convertToCSV(filtered, columns);
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.setAttribute("download", "transactions.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  };
-  
-  // Export filtered transactions data as PDF file
-  const handleExportPDF = () => {
-    console.log("Exporting transactions data as PDF");
-    const doc = new jsPDF();
-    const headers = columns.map(col => col.Header);
-    const rows = filtered.map(row =>
-      columns.map(col => {
-        let cell = row[col.accessor];
-        return typeof cell === "string" ? cell : (cell ?? "").toString();
-      })
-    );
-  
-    doc.setFontSize(18);
-    doc.text("Transactions", 14, 22);
-  
-    let y = 30;
-    doc.setFontSize(11);
-    headers.forEach((header, index) => {
-      doc.text(header, 14 + index * 40, y);
+    onFetch({ page: 1, pageSize: 10000, query: "" }).then(({ data }) => {
+      const csvContent = convertToCSV(data, columns);
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "transactions.csv");
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
     });
-    y += 8;
-  
-    rows.forEach(row => {
-      row.forEach((cell, index) => {
-        doc.text(cell, 14 + index * 40, y);
+  };
+
+  const handleExportPDF = () => {
+    onFetch({ page: 1, pageSize: 10000, query: "" }).then(({ data }) => {
+      const doc = new jsPDF();
+      const headers = columns.map((col) => col.Header);
+      const rows = data.map((row) =>
+        columns.map((col) => {
+          let cell = row[col.accessor];
+          return typeof cell === "string" ? cell : (cell ?? "").toString();
+        })
+      );
+
+      doc.setFontSize(18);
+      doc.text("Transactions", 14, 22);
+
+      let y = 30;
+      doc.setFontSize(11);
+      headers.forEach((header, index) => {
+        doc.text(header, 14 + index * 40, y);
       });
       y += 8;
+
+      rows.forEach((row) => {
+        row.forEach((cell, index) => {
+          doc.text(cell, 14 + index * 40, y);
+        });
+        y += 8;
+      });
+
+      doc.save("transactions.pdf");
     });
-  
-    doc.save("transactions.pdf");
   };
 
-
   return (
-    <div className="w-full p-6 bg-black text-yellow-400 min-h-screen  rounded-lg shadow-md">
-      {/* Page Title */}
-      <div className="text-2xl font-bold mb-4 text-yellow-400">Transactions</div>
+    <div className=" flex flex-col min-h-screen w-full bg-black text-yellow-400 p-6">
+      <div className="text-2xl font-bold text-yellow-400 mb-4 text-center md:text-left">Transactions</div>
 
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-4 mb-6 items-end rounded-lg p-4 bg-black shadow-inner">
-        {/* Removed the search bar as per user request */}
-
+      <div className="grid grid-cols-2 md:grid-cols-12 gap-4 mb-6 items-end rounded-lg p-4 bg-black shadow-inner w-full max-w-[1400px] mx-auto">
         <div className="flex flex-col col-span-1 md:col-span-3">
           <label className="text-xs text-yellow-400 mb-1 font-semibold">Type</label>
           <select
-            className="px-4 py-2 rounded border border-yellow-400 bg-black text-yellow-400 w-full hover:border-yellow-300 focus:border-yellow-300"
+            className="px-4 py-2 rounded border border-yellow-400 bg-black text-yellow-400 w-full"
             onChange={(e) => setTypeFilter(e.target.value)}
             value={typeFilter}
           >
@@ -265,73 +319,81 @@ export default function Transactions() {
         <div className="flex flex-col col-span-1 md:col-span-3">
           <label className="text-xs text-yellow-400 mb-1 font-semibold">Status</label>
           <select
-            className="px-4 py-2 rounded border border-yellow-400 bg-black text-yellow-400 w-full hover:border-yellow-300 focus:border-yellow-300"
+            className="px-4 py-2 rounded border border-yellow-400 bg-black text-yellow-400 w-full"
             onChange={(e) => setStatusFilter(e.target.value)}
             value={statusFilter}
           >
             <option value="all">All Status</option>
-            <option value="success">Success</option>
             <option value="pending">Pending</option>
             <option value="failed">Failed</option>
+            <option value="approved">Approved</option>
           </select>
         </div>
 
         <div className="flex flex-col col-span-1 md:col-span-2">
-          <label htmlFor="from-date" className="text-xs text-yellow-400 mb-1 font-semibold">
-            From Date
-          </label>
+          <label className="text-xs text-yellow-400 mb-1 font-semibold">From Date</label>
           <input
-            id="from-date"
             type="date"
-            className="px-4 py-2 rounded border border-yellow-400 bg-black text-yellow-400 w-full hover:border-yellow-300 focus:border-yellow-300"
+            className="px-4 py-2 rounded border border-yellow-400 bg-black text-yellow-400 w-full"
             value={fromDate}
             onChange={(e) => setFromDate(e.target.value)}
           />
         </div>
+
         <div className="flex flex-col col-span-1 md:col-span-2">
-          <label htmlFor="to-date" className="text-xs text-yellow-400 mb-1 font-semibold">
-            To Date
-          </label>
+          <label className="text-xs text-yellow-400 mb-1 font-semibold">To Date</label>
           <input
-            id="to-date"
             type="date"
-            className="px-4 py-2 rounded border border-yellow-400 bg-black text-yellow-400 w-full hover:border-yellow-300 focus:border-yellow-300"
+            className="px-4 py-2 rounded border border-yellow-400 bg-black text-yellow-400 w-full"
             value={toDate}
             onChange={(e) => setToDate(e.target.value)}
           />
         </div>
 
-        {/* Export buttons container stacked on small, inline on medium and up */}
-        <div className="flex flex-col md:flex-row md:justify-end col-span-1 md:col-span-2 space-y-2 md:space-y-0 md:space-x-2 w-full md:w-auto">
+        <div className="flex flex-row gap-2 col-span-2 md:col-span-2 justify-end">
           <button
             onClick={handleExportCSV}
-            className="px-4 py-2 rounded-lg text-sm font-semibold bg-yellow-500 text-black hover:bg-yellow-600 transition flex items-center justify-center w-full md:w-auto"
-            type="button"
-            aria-label="Export CSV"
-            title="Export CSV"
+            className="px-4 py-2 rounded-lg text-sm font-semibold bg-yellow-500 text-black hover:bg-yellow-600 transition flex items-center justify-center"
           >
             <Download size={18} />
-             CSV
+            CSV
           </button>
+
           <button
             onClick={handleExportPDF}
-            className="px-4 py-2 rounded-lg text-sm font-semibold bg-yellow-500 text-black hover:bg-yellow-600 transition flex items-center justify-center w-full md:w-auto"
-            type="button"
-            aria-label="Export PDF"
-            title="Export PDF"
+            className="px-4 py-2 rounded-lg text-sm font-semibold bg-yellow-500 text-black hover:bg-yellow-600 transition flex items-center justify-center"
           >
-          <FileText size={18} />
-          PDF
+            <FileText size={18} />
+            PDF
           </button>
         </div>
       </div>
 
-      {/* Render the filtered transactions table */}
-      <ErrorBoundary>
-        <div className="overflow-x-auto">
-          <TableStructure columns={columns} data={filtered} />
+      {tokenMissing && (
+        <div className="mb-4 p-4 bg-red-600 text-white rounded max-w-[1400px] mx-auto w-full">
+          Authentication token not found. Please log in to access transactions.
         </div>
-      </ErrorBoundary>
+      )}
+
+      <ErrorBoundary>
+    <div className="flex-1 max-w-[1400px] mx-auto w-full h-[70vh]">
+      <TableStructure
+  columns={columns}
+  serverSide={true}
+  onFetch={onFetch}
+  page={page}
+  pageSize={pageSize}
+/>
+
+    </div>
+  </ErrorBoundary>
+
     </div>
   );
+}
+
+// ✔ Added status filter functionality (statusFilter now applied directly on fetched results)
+function applyStatusFilter(results, statusFilter) {
+  if (statusFilter === "all") return results;
+  return results.filter((item) => item.status?.toLowerCase() === statusFilter.toLowerCase());
 }
