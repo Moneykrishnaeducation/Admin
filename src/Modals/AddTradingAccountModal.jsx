@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, TrendingUp, Play } from 'lucide-react';
 
-const AddTradingAccountModal = ({ visible, onClose, userName, isDarkMode = false }) => {
+const AddTradingAccountModal = ({ visible, onClose, userName, userId, isDarkMode = false }) => {
   const [activeTab, setActiveTab] = useState('Live');
   const [liveForm, setLiveForm] = useState({
     accountName: '',
@@ -14,9 +14,42 @@ const AddTradingAccountModal = ({ visible, onClose, userName, isDarkMode = false
     initialDeposit: '10000',
   });
 
-  // Sample data for dropdowns
-  const leverageOptions = ['1:10', '1:50', '1:100', '1:200', '1:500', '1:1000'];
-  const tradingGroups = ['Standard Group', 'Premium Group', 'Elite Group', 'VIP Group'];
+  const [leverageOptions, setLeverageOptions] = useState([]);
+  const [tradingGroups, setTradingGroups] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    if (visible) {
+      fetchOptions();
+    }
+  }, [visible]);
+
+  const fetchOptions = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const [leverageRes, groupsRes] = await Promise.all([
+        fetch('/api/available-leverage/'),
+        fetch('/api/available-groups/')
+      ]);
+
+      if (!leverageRes.ok || !groupsRes.ok) {
+        throw new Error('Failed to fetch options');
+      }
+
+      const leverageData = await leverageRes.json();
+      const groupsData = await groupsRes.json();
+
+      setLeverageOptions(leverageData.leverage_options.map(opt => opt.value));
+      setTradingGroups(groupsData.groups.map(group => ({ value: group.id, label: group.label })));
+    } catch (err) {
+      setError('Failed to load options. Please try again.');
+      console.error('Error fetching options:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleLiveFormChange = (e) => {
     const { name, value } = e.target;
@@ -28,26 +61,82 @@ const AddTradingAccountModal = ({ visible, onClose, userName, isDarkMode = false
     setDemoForm(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleCreateLiveAccount = (e) => {
+  const handleCreateLiveAccount = async (e) => {
     e.preventDefault();
-    console.log('Creating live trading account:', {
-      ...liveForm,
-      userName,
-    });
-    // TODO: Call API to create live trading account
-    setLiveForm({ accountName: '', leverage: '', tradingGroup: '' });
-    onClose();
+    setLoading(true);
+    setError(null);
+
+    try {
+      const leverageNumeric = parseInt(liveForm.leverage.split(':')[1]);
+      const payload = {
+        userId: userId.toString(),
+        accountName: liveForm.accountName || userName,
+        leverage: leverageNumeric,
+        group: liveForm.tradingGroup,
+      };
+
+      const response = await fetch('/api/create-trading-account/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create live trading account');
+      }
+
+      const data = await response.json();
+      console.log('Live account created:', data);
+      setLiveForm({ accountName: '', leverage: '', tradingGroup: '' });
+      onClose();
+      // Optionally, show success message or refresh data
+    } catch (err) {
+      setError('Failed to create live trading account. Please try again.');
+      console.error('Error creating live account:', err);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleCreateDemoAccount = (e) => {
+  const handleCreateDemoAccount = async (e) => {
     e.preventDefault();
-    console.log('Creating demo account:', {
-      ...demoForm,
-      userName,
-    });
-    // TODO: Call API to create demo account
-    setDemoForm({ accountName: '', leverage: '', initialDeposit: '10000' });
-    onClose();
+    setLoading(true);
+    setError(null);
+
+    try {
+      const leverageNumeric = parseInt(demoForm.leverage.split(':')[1]);
+      const payload = {
+        userId: userId.toString(),
+        accountName: demoForm.accountName || userName,
+        leverage: leverageNumeric,
+        balance: parseFloat(demoForm.initialDeposit),
+      };
+
+      const response = await fetch('/api/create-demo-account/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create demo account');
+      }
+
+      const data = await response.json();
+      console.log('Demo account created:', data);
+      setDemoForm({ accountName: '', leverage: '', initialDeposit: '10000' });
+      onClose();
+      // Optionally, show success message or refresh data
+    } catch (err) {
+      setError('Failed to create demo account. Please try again.');
+      console.error('Error creating demo account:', err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (!visible) return null;
@@ -100,6 +189,17 @@ const AddTradingAccountModal = ({ visible, onClose, userName, isDarkMode = false
 
         {/* Form Content */}
         <div className="p-6">
+          {error && (
+            <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+              {error}
+            </div>
+          )}
+          {loading && (
+            <div className="mb-4 text-center">
+              <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-yellow-500"></div>
+              <span className="ml-2">Loading...</span>
+            </div>
+          )}
           {/* Live Account Tab */}
           {activeTab === 'Live' && (
             <form onSubmit={handleCreateLiveAccount} className="space-y-4">
@@ -153,8 +253,8 @@ const AddTradingAccountModal = ({ visible, onClose, userName, isDarkMode = false
                 >
                   <option value="">Select Trading Group</option>
                   {tradingGroups.map((group) => (
-                    <option key={group} value={group}>
-                      {group}
+                    <option key={group.value} value={group.value}>
+                      {group.label}
                     </option>
                   ))}
                 </select>

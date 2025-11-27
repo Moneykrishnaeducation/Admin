@@ -18,13 +18,16 @@ import {
   ArrowUpCircle,
   Power,
   Shuffle,
+  Award,
 } from "lucide-react";
 import Verify from "../Modals/verify";
 
 import DemoAccountModal from "../Modals/DemoAccountModal";
 import BankCryptoModal from "../Modals/BankCryptoModal";
-import { ChangeStatusModal, EditProfileModal, HistoryModal, TicketsModal, AddTradingAccountModal } from "../Modals";
+import { ChangeStatusModal, EditProfileModal, TicketsModal, AddTradingAccountModal } from "../Modals";
+import Transactions from "../Modals/Transactions";
 import TradingAccountModal from "../Modals/TradingAccountModal";
+import IbStatusModal from "../Modals/IbStatusModal";
 
 const User = () => {
   const { isDarkMode } = useTheme(); // from your ThemeContext
@@ -40,6 +43,8 @@ const User = () => {
   const [bankCryptoModalVisible, setBankCryptoModalVisible] = useState(false);
   const [bankCryptoRow, setBankCryptoRow] = useState(null);
 
+
+
   const [data, setData] = useState([]);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -51,7 +56,7 @@ const User = () => {
       const params = new URLSearchParams();
       params.set("page", String(p));
       params.set("pageSize", String(ps));
-      if (query) params.set("query", query);
+      if (query) params.set("search", query);
       try {
         const client = typeof window !== "undefined" && window.adminApiClient ? window.adminApiClient : null;
         let resJson;
@@ -101,11 +106,20 @@ const User = () => {
     []
   );
 
-  // Load data for client-side filtering
-  useEffect(() => {
-    handleTableFetch(page, pageSize);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, pageSize]);
+  const patchUser = async (userId, payload) => {
+    const res = await fetch(`/api/user/${userId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err?.message || "Failed to update user");
+    }
+    return await res.json();
+  };
+
   // Row expansion
   const [expandedRows, setExpandedRows] = useState(new Set());
   const toggleRowExpanded = (row) => {
@@ -228,13 +242,59 @@ const User = () => {
   const [uploadingAddress, setUploadingAddress] = useState(false);
 
   const handleOpenVerifyModal = (row) => {
-    setVerifyRow(row);
+    // Ensure `id` exists on verifyRow (some sources use `userId`)
+    setVerifyRow({ ...row, id: row.id ?? row.userId ?? row.user_id });
     setIdFile(null);
     setAddressFile(null);
     setIdMismatch(false);
     setAddressMismatch(false);
     setVerifyModalOpen(true);
   };
+
+  // Listen for legacy/openVerificationModal events dispatched by global scripts
+  useEffect(() => {
+    function onOpenVerify(event) {
+      const detail = (event && event.detail) || {};
+      const userIdFromEvent = detail.userId ?? detail.id ?? detail;
+      const userDetails = detail.userDetails ?? detail.user ?? null;
+      if (!userIdFromEvent) return;
+
+      const row = {
+        id: userIdFromEvent,
+        userId: userIdFromEvent,
+        user_id: userIdFromEvent,
+        username: userDetails?.username,
+        name: userDetails?.username || `${userDetails?.first_name || ''} ${userDetails?.last_name || ''}`.trim() || userDetails?.name,
+        first_name: userDetails?.first_name,
+        last_name: userDetails?.last_name,
+        email: userDetails?.email,
+        phone: userDetails?.phone_number || userDetails?.phone,
+      };
+
+      setVerifyRow(row);
+      setIdFile(null);
+      setAddressFile(null);
+      setIdMismatch(false);
+      setAddressMismatch(false);
+      setVerifyModalOpen(true);
+    }
+
+    window.addEventListener("openVerificationModal", onOpenVerify);
+    // expose a direct hook for legacy code to call React directly
+    // eslint-disable-next-line no-unused-expressions
+    window.__openVerificationModalReact = (userId, userDetails) => onOpenVerify({ detail: { userId, userDetails } });
+
+    return () => {
+      window.removeEventListener("openVerificationModal", onOpenVerify);
+      try {
+        // cleanup global hook
+        if (window.__openVerificationModalReact) delete window.__openVerificationModalReact;
+      } catch (err) {
+        // ignore
+      }
+    };
+  }, []);
+
 
   const handleIdSelect = (e) => {
     const f = e.target.files?.[0] ?? null;
@@ -278,6 +338,7 @@ const User = () => {
     }
   };
 
+
   // Trading modal (NEW)
   const [showTradingModal, setShowTradingModal] = useState(false);
   const [selectedTradingRow, setSelectedTradingRow] = useState(null);
@@ -305,6 +366,10 @@ const User = () => {
     setBankCryptoRow(row);
     setBankCryptoModalVisible(true);
   };
+  const handleIbStatus = (row) => {
+    setIbStatusRow(row);
+    setIbStatusModalVisible(true);
+  };
 
   const handleSaveBankCrypto = (data) => {
     console.log("Bank/Crypto save data for user id", bankCryptoRow?.id, data);
@@ -320,13 +385,15 @@ const User = () => {
 
   const [historyModalVisible, setHistoryModalVisible] = useState(false);
   const [historyRow, setHistoryRow] = useState(null);
-  const [activeHistoryTab, setActiveHistoryTab] = useState("transactions");
 
   const [ticketsModalVisible, setTicketsModalVisible] = useState(false);
   const [ticketsRow, setTicketsRow] = useState(null);
 
   const [addTradingAccountModalVisible, setAddTradingAccountModalVisible] = useState(false);
   const [addTradingAccountRow, setAddTradingAccountRow] = useState(null);
+
+  const [ibStatusModalVisible, setIbStatusModalVisible] = useState(false);
+  const [ibStatusRow, setIbStatusRow] = useState(null);
 
   const handlePromote = (row) => {
     setChangeStatusRow(row);
@@ -351,47 +418,47 @@ const User = () => {
     // Optimistically update UI
     setData(prevData =>
       prevData.map(user =>
-      user.userId === row.userId ? { ...user, isEnabled: !user.isEnabled } : user
+        user.userId === row.userId ? { ...user, isEnabled: !user.isEnabled } : user
       )
     );
     // Call API to actually enable/disable user
     try {
       const token =
-      typeof window !== "undefined"
-        ? localStorage.getItem("jwt_token") || localStorage.getItem("access_token")
-        : null;
+        typeof window !== "undefined"
+          ? localStorage.getItem("jwt_token") || localStorage.getItem("access_token")
+          : null;
       const headers = {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
       };
       const response = await fetch(`/api/users/${row.userId}/status/`, {
-      method: "PATCH",
-      headers,
-      credentials: "include",
-      body: JSON.stringify({ active: !row.isEnabled }),
+        method: "PATCH",
+        headers,
+        credentials: "include",
+        body: JSON.stringify({ active: !row.isEnabled }),
       });
       if (!response.ok) {
-      throw new Error("Failed to update user status");
+        throw new Error("Failed to update user status");
       }
     } catch (err) {
       alert("Failed to update user status");
       // Optionally revert UI change if needed
       setData(prevData =>
-      prevData.map(user =>
-        user.userId === row.userId ? { ...user, isEnabled: row.isEnabled } : user
-      )
+        prevData.map(user =>
+          user.userId === row.userId ? { ...user, isEnabled: row.isEnabled } : user
+        )
       );
     }
   };
   const handleTransactions = (row) => {
     setHistoryRow(row);
-    setActiveHistoryTab("transactions");
     setHistoryModalVisible(true);
   };
   const handleAddAccount = (row) => {
     setAddTradingAccountRow(row);
     setAddTradingAccountModalVisible(true);
   };
+
 
   const renderRowSubComponent = (row) => {
     const isExpanded = expandedRows.has(row.userId);
@@ -401,6 +468,7 @@ const User = () => {
       { icon: <LineChart size={15} />, label: "Trading", onClick: () => handleTrading(row) }, // changed to open modal
       { icon: <Gamepad2 size={15} />, label: "Demo", onClick: () => handleDemo(row) },
       { icon: <Ticket size={15} />, label: "Tickets", onClick: () => handleTickets(row) },
+      { icon: <Award size={15} />, label: "IB Status", onClick: () => handleIbStatus(row) },
       { icon: <UserIcon size={15} />, label: "Profile", onClick: () => handleProfile(row) },
       { icon: <Landmark size={15} />, label: "Bank/Crypto", onClick: () => handleBankCrypto(row) },
       { icon: <ArrowUpCircle size={15} />, label: "Promote", onClick: () => handlePromote(row) },
@@ -467,11 +535,13 @@ const User = () => {
       {/* Table */}
       <TableStructure
         columns={columns}
-        data={data}
         onRowClick={toggleRowExpanded}
         renderRowSubComponent={renderRowSubComponent}
         onFetch={handleTableFetch}
+        serverSide={true}
+        initialPageSize={10}
       />
+
       {/* Add User Modal */}
       {showAddModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -660,7 +730,7 @@ const User = () => {
             setShowTradingModal(false);
             setSelectedTradingRow(null);
           }}
-          accounts={selectedTradingRow ? [selectedTradingRow] : []}
+          userId={selectedTradingRow?.userId}
         />
       )}
 
@@ -724,21 +794,20 @@ const User = () => {
           }}
           onSave={handleSaveProfile}
           isDarkMode={isDarkMode}
+          
         />
       )}
 
-      {/* History Modal */}
+      {/* Transactions Modal */}
       {historyModalVisible && historyRow && (
-        <HistoryModal
+        <Transactions
           visible={historyModalVisible}
           onClose={() => {
             setHistoryModalVisible(false);
             setHistoryRow(null);
-            setActiveHistoryTab("transactions");
           }}
           accountId={historyRow?.id}
-          activeTab={activeHistoryTab}
-          setActiveTab={setActiveHistoryTab}
+          isDarkMode={isDarkMode}
         />
       )}
 
@@ -764,6 +833,19 @@ const User = () => {
             setAddTradingAccountRow(null);
           }}
           userName={addTradingAccountRow?.name}
+          isDarkMode={isDarkMode}
+        />
+      )}
+
+      {/* IB Status Modal */}
+      {ibStatusModalVisible && ibStatusRow && (
+        <IbStatusModal
+          visible={ibStatusModalVisible}
+          onClose={() => {
+            setIbStatusModalVisible(false);
+            setIbStatusRow(null);
+          }}
+          userRow={ibStatusRow}
           isDarkMode={isDarkMode}
         />
       )}
