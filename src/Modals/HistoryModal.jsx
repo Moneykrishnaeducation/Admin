@@ -1,8 +1,33 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import ModalWrapper from './ModalWrapper';
 import TableStructure from '../commonComponent/TableStructure';
+import { AdminAuthenticatedFetch } from "../utils/fetch-utils.js";
 
 const HistoryModal = ({ visible, onClose, accountId, activeTab, setActiveTab }) => {
+  const [selectedDays, setSelectedDays] = useState(30);
+  const [historyData, setHistoryData] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const apiClient = new AdminAuthenticatedFetch('/api');
+
+  const fetchHistory = async () => {
+    setLoading(true);
+    try {
+      const response = await apiClient.get(`/trading-account/${accountId}/history/?days_back=${selectedDays}`);
+      setHistoryData(response);
+    } catch (error) {
+      console.error('Error fetching history:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (accountId) {
+      fetchHistory();
+    }
+  }, [accountId, selectedDays]);
+
   if (!visible) return null;
 
   const transactionsColumns = [
@@ -13,36 +38,13 @@ const HistoryModal = ({ visible, onClose, accountId, activeTab, setActiveTab }) 
     { Header: "Comment", accessor: "comment" },
   ];
 
-  const transactionsData = [
-    {
-      date: "2023-06-10",
-      type: "Deposit",
-      amount: "$1000",
-      status: "Completed",
-      comment: "Initial Deposit",
-    },
-    {
-      date: "2023-06-15",
-      type: "Withdrawal",
-      amount: "$500",
-      status: "Completed",
-      comment: "Cashout",
-    },
-    {
-      date: "2023-07-01",
-      type: "Credit In",
-      amount: "$200",
-      status: "Approved",
-      comment: "-",
-    },
-    {
-      date: "2023-07-05",
-      type: "Credit Out",
-      amount: "$100",
-      status: "Approved",
-      comment: "Requested",
-    },
-  ];
+  const transactionsData = historyData?.transactions?.map(transaction => ({
+    date: new Date(transaction.created_at).toLocaleDateString(),
+    type: transaction.transaction_type,
+    amount: `$${transaction.amount}`,
+    status: transaction.status,
+    comment: transaction.description,
+  })) || [];
 
   const positionsColumns = [
     { Header: "ID", accessor: "id" },
@@ -52,22 +54,13 @@ const HistoryModal = ({ visible, onClose, accountId, activeTab, setActiveTab }) 
     { Header: "P/L", accessor: "pl" },
   ];
 
-  const positionsData = [
-    {
-      id: 1,
-      symbol: "XAUUSD",
-      volume: 0.50,
-      price: "2350.20",
-      pl: "+$120.00",
-    },
-    {
-      id: 2,
-      symbol: "EURUSD",
-      volume: 1.00,
-      price: "1.0820",
-      pl: "-$30.00",
-    },
-  ];
+  const positionsData = historyData?.positions?.map(position => ({
+    id: position.id,
+    symbol: position.symbol,
+    volume: position.volume,
+    price: position.price,
+    pl: position.pl,
+  })) || [];
 
   return (
     <ModalWrapper title={`Account Summary (ID: ${accountId})`} visible={visible} onClose={onClose}>
@@ -76,18 +69,40 @@ const HistoryModal = ({ visible, onClose, accountId, activeTab, setActiveTab }) 
       <div className="grid grid-cols-3 gap-6 bg-gray-900 p-4 rounded-lg border border-yellow-500/30 mb-6">
         <div>
           <p className="text-gray-400 text-sm">Balance</p>
-          <p className="text-yellow-400 text-lg font-semibold">$0.00</p>
+          <p className="text-yellow-400 text-lg font-semibold">${historyData?.account_summary?.balance?.toFixed(2) || '0.00'}</p>
         </div>
 
         <div>
           <p className="text-gray-400 text-sm">Equity</p>
-          <p className="text-yellow-400 text-lg font-semibold">$0.00</p>
+          <p className="text-yellow-400 text-lg font-semibold">${historyData?.account_summary?.equity?.toFixed(2) || '0.00'}</p>
         </div>
 
         <div>
           <p className="text-gray-400 text-sm">Open Positions</p>
-          <p className="text-yellow-400 text-lg font-semibold">0</p>
+          <p className="text-yellow-400 text-lg font-semibold">{historyData?.account_summary?.open_positions || 0}</p>
         </div>
+      </div>
+
+      {/* History Range Section */}
+      <div className="flex items-center gap-4 mb-4">
+        <label className="text-gray-400 text-sm">History Range:</label>
+        <select
+          value={selectedDays}
+          onChange={(e) => setSelectedDays(Number(e.target.value))}
+          className="bg-gray-700 text-white px-3 py-1 rounded border border-gray-600"
+        >
+          <option value={7}>Last 7 days</option>
+          <option value={30}>Last 30 days</option>
+          <option value={60}>Last 60 days</option>
+          <option value={90}>Last 90 days</option>
+        </select>
+        <button
+          onClick={fetchHistory}
+          disabled={loading}
+          className="bg-yellow-400 text-black px-4 py-2 rounded hover:bg-yellow-500 transition disabled:opacity-50"
+        >
+          {loading ? 'Refreshing...' : 'Refresh'}
+        </button>
       </div>
 
       {/* Toggle Buttons */}

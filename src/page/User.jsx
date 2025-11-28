@@ -800,7 +800,7 @@ const User = () => {
             setHistoryModalVisible(false);
             setHistoryRow(null);
           }}
-          accountId={historyRow?.id}
+          accountId={historyRow?.userId}
           isDarkMode={isDarkMode}
         />
       )}
