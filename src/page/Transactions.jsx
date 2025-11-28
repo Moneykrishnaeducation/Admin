@@ -2,7 +2,7 @@
 // (Only added necessary functionality for status filtering, no other code modified)
 
 import React from "react";
-import { useState, useCallback,useEffect } from "react";
+import { useState, useCallback } from "react";
 import TableStructure from "../commonComponent/TableStructure";
 import { jsPDF } from "jspdf";
 import { Download, FileText } from "lucide-react";
@@ -67,7 +67,6 @@ const onFetch = useCallback(
       // UPDATE LOCAL STATE SO TABLE KNOWS ACTIVE PAGE
       setPage(p);
       setPageSize(ps);
-
       if (!window.authUtils) {
         console.error("window.authUtils is undefined");
         setTokenMissing(true);
@@ -129,6 +128,8 @@ const onFetch = useCallback(
         totalCount = data.length;
       }
 
+    
+
       results = applyStatusFilter(results, statusFilter);
 
       if (query) {
@@ -138,7 +139,10 @@ const onFetch = useCallback(
         );
       }
 
-      const mappedData = results.map((item) => {
+      const startIndex = (p - 1) * ps;
+      const paginatedResults = results.slice(startIndex, startIndex + ps);
+
+      const mappedData = paginatedResults.map((item) => {
         if (typeFilter === "Internal Transfer") {
           return {
             id: item.id,
@@ -251,8 +255,107 @@ const onFetch = useCallback(
           { Header: "Description", accessor: "description" },
         ];
 
+  const fetchAllData = async () => {
+    try {
+      if (!window.authUtils) {
+        console.error("window.authUtils is undefined");
+        return [];
+      }
+
+      const isAuthed = await window.authUtils.checkAuth().catch((err) => {
+        console.error("Error in authUtils.checkAuth:", err);
+        return false;
+      });
+
+      if (!isAuthed) {
+        console.error("No authentication token found");
+        return [];
+      }
+
+      let token = "";
+      try {
+        token = window.authUtils.getToken();
+      } catch (err) {
+        console.error("Error calling authUtils.getToken:", err);
+        return [];
+      }
+
+      const params = new URLSearchParams();
+      if (fromDate) params.append("start_date", fromDate);
+      if (toDate) params.append("end_date", toDate);
+
+      // Do not append page and pageSize to fetch all data
+      if (statusFilter !== "all") params.append("status", statusFilter);
+
+      let url = "";
+      if (typeFilter === "Deposit") url = "/api/admin/deposit/?" + params.toString();
+      else if (typeFilter === "Withdrawal") url = "/api/admin/withdraw/?" + params.toString();
+      else if (typeFilter === "Internal Transfer") url = "/api/admin/internal-transfer/?" + params.toString();
+
+      const response = await fetch(url, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!response.ok) throw new Error("Network response was not ok");
+      const data = await response.json();
+
+      let results = [];
+      if (Array.isArray(data.results)) {
+        results = data.results;
+      } else if (Array.isArray(data)) {
+        results = data;
+      }
+
+      results = applyStatusFilter(results, statusFilter);
+
+      const mappedData = results.map((item) => {
+        if (typeFilter === "Internal Transfer") {
+          return {
+            id: item.id,
+            dateTime: item.created_at ? new Date(item.created_at).toLocaleString() : "",
+            fromAccountId: item.from_account || "",
+            toAccountId: item.to_account || "",
+            accountHolder: item.it_username || "",
+            amountUSD: item.amount ? Number(item.amount) : 0,
+            status: item.status || "",
+            source: item.source || "",
+            approvedBy: item.approved_by_username || "",
+            adminComment: item.admin_comment || "",
+            description: item.description || "",
+            type: item.transaction_type || "",
+            userId: item.user_id || null,
+            username: item.username || "",
+            email: item.email || "",
+          };
+        }
+
+        return {
+          id: item.id,
+          dateTime: item.created_at ? new Date(item.created_at).toLocaleString() : "",
+          accountId: item.trading_account_id || "",
+          accountName: item.trading_account_name || "",
+          amountUSD: item.amount ? Number(item.amount) : 0,
+          status: item.status || "",
+          source: item.source || "",
+          approvedBy: item.approved_by_username || "",
+          adminComment: item.admin_comment || "",
+          description: item.description || "",
+          type: item.transaction_type || "",
+          userId: item.user_id || null,
+          username: item.username || "",
+          email: item.email || "",
+        };
+      });
+
+      return mappedData;
+    } catch (error) {
+      console.error("Error fetching all transactions:", error);
+      return [];
+    }
+  };
+
   const handleExportCSV = () => {
-    onFetch({ page: 1, pageSize: 10000, query: "" }).then(({ data }) => {
+    fetchAllData().then((data) => {
       const csvContent = convertToCSV(data, columns);
       const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
       const url = URL.createObjectURL(blob);
@@ -266,37 +369,66 @@ const onFetch = useCallback(
     });
   };
 
-  const handleExportPDF = () => {
-    onFetch({ page: 1, pageSize: 10000, query: "" }).then(({ data }) => {
-      const doc = new jsPDF();
-      const headers = columns.map((col) => col.Header);
-      const rows = data.map((row) =>
-        columns.map((col) => {
-          let cell = row[col.accessor];
-          return typeof cell === "string" ? cell : (cell ?? "").toString();
-        })
-      );
+const handleExportPDF = () => {
+  fetchAllData().then((data) => {
+    const doc = new jsPDF({ orientation: 'landscape' });
+    const headers = columns.map((col) => col.Header);
+    const rows = data.map((row) =>
+      columns.map((col) => {
+        let cell = row[col.accessor];
+        return typeof cell === "string" ? cell : (cell ?? "").toString();
+      })
+    );
 
-      doc.setFontSize(18);
-      doc.text("Transactions", 14, 22);
+    doc.setFontSize(14);
+    doc.text("Transactions", 14, 18);
 
-      let y = 30;
-      doc.setFontSize(11);
-      headers.forEach((header, index) => {
-        doc.text(header, 14 + index * 40, y);
-      });
-      y += 8;
+    let y = 30;
+    doc.setFontSize(6);
 
-      rows.forEach((row) => {
-        row.forEach((cell, index) => {
-          doc.text(cell, 14 + index * 40, y);
-        });
-        y += 8;
-      });
+    // Define column widths based on content for landscape
+    const columnWidths = [30, 20, 25, 35, 18, 12, 18, 25, 30, 35]; // Further adjusted
 
-      doc.save("transactions.pdf");
+    // Draw table headers
+    headers.forEach((header, index) => {
+      const x = 14 + columnWidths.slice(0, index).reduce((a, b) => a + b, 0);
+      doc.text(header, x, y);
     });
-  };
+
+    y += 6;
+
+    // Draw a line under headers
+    doc.line(14, y - 2, 14 + columnWidths.reduce((a, b) => a + b, 0), y - 2);
+
+    rows.forEach((row) => {
+      if (y > 180) { // Adjusted for landscape
+        doc.addPage();
+        y = 20;
+        // Redraw headers on new page
+        doc.setFontSize(6);
+        headers.forEach((header, index) => {
+          const x = 14 + columnWidths.slice(0, index).reduce((a, b) => a + b, 0);
+          doc.text(header, x, y);
+        });
+        y += 6;
+        doc.line(14, y - 2, 14 + columnWidths.reduce((a, b) => a + b, 0), y - 2);
+      }
+
+      row.forEach((cell, index) => {
+        const x = 14 + columnWidths.slice(0, index).reduce((a, b) => a + b, 0);
+        // Truncate long text if necessary
+        const maxWidth = columnWidths[index] - 1;
+        const truncatedCell = cell.length > maxWidth ? cell.substring(0, maxWidth) + '...' : cell;
+        doc.text(truncatedCell, x, y);
+      });
+
+      y += 5; // Even tighter spacing
+    });
+
+    doc.save("transactions.pdf");
+  });
+};
+
 
   return (
     <div className=" flex flex-col min-h-screen w-full bg-black text-yellow-400 p-6">
