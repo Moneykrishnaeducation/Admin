@@ -1,15 +1,39 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import ModalWrapper from './ModalWrapper';
+import { AdminAuthenticatedFetch } from "../utils/fetch-utils.js";
 
-const ChangeUserProfileModal = ({ 
-  visible, 
-  onClose, 
-  groups = [], 
+const apiClient = new AdminAuthenticatedFetch('/api');
+const client = new AdminAuthenticatedFetch('');
+
+const ChangeUserProfileModal = ({
+  visible,
+  onClose,
   onSubmit,
-  isDarkMode 
+  isDarkMode
 }) => {
   const [selectedGroup, setSelectedGroup] = useState('');
+  const [groups, setGroups] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (visible) {
+      fetchGroups();
+    }
+  }, [visible]);
+
+  const fetchGroups = async () => {
+    setLoading(true);
+    try {
+      const data = await apiClient.get('/available-groups/');
+      setGroups(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error('Error fetching groups:', error);
+      setGroups([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSubmit = () => {
     if (!selectedGroup) {
