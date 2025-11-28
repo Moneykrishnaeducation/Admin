@@ -1,7 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { X } from 'lucide-react';
 import TableStructure from '../commonComponent/TableStructure';
+import { AdminAuthenticatedFetch } from "../utils/fetch-utils.js";
 
+const apiClient = new AdminAuthenticatedFetch('/api');
+const client = new AdminAuthenticatedFetch('');
 const Transactions = ({ visible, onClose, accountId, isDarkMode }) => {
   const modalBg = isDarkMode ? "bg-gray-900 text-yellow-300" : "bg-white text-black";
   const btnPrimary = "bg-yellow-500 text-black hover:bg-yellow-400";
@@ -35,20 +38,12 @@ const Transactions = ({ visible, onClose, accountId, isDarkMode }) => {
         ? localStorage.getItem("jwt_token") || localStorage.getItem("access_token")
         : null;
 
-      const res = await fetch(`/api/ib-user/${accountId}/transactions/`, {
-        method: "GET",
-        credentials: "include",
+      const data = await client.get(`/user/${accountId}/transactions/`, {
         headers: {
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
         },
       });
-
-      if (!res.ok) {
-        throw new Error(`Failed to fetch transactions: ${res.status}`);
-      }
-
-      const data = await res.json();
       setCompletedData(data.completed || []);
       setPendingData(data.pending || []);
       setTotalCompleted(data.total_completed || 0);

@@ -93,8 +93,22 @@ class AdminAuthenticatedFetch {
         // Prevent double /api if url already starts with /api/
         const fullUrl = url.startsWith('/api/') ? url : this.baseURL + url;
 
-        // Merge headers
-        const headers = this.createHeaders(options.headers);
+        let headers;
+        // For FormData, don't use default headers to avoid Content-Type conflict
+        if (options.body instanceof FormData) {
+            headers = options.headers || {};
+            // Add authorization and CSRF for FormData
+            const token = this.getToken();
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+            const csrfToken = this.getCsrfToken();
+            if (csrfToken) {
+                headers['X-CSRFToken'] = csrfToken;
+            }
+        } else {
+            headers = this.createHeaders(options.headers);
+        }
 
         const config = {
             credentials: 'include', // Always send cookies/session
@@ -182,7 +196,12 @@ class AdminAuthenticatedFetch {
         };
 
         if (data) {
-            options.body = JSON.stringify(data);
+            // Don't JSON.stringify FormData
+            options.body = data instanceof FormData ? data : JSON.stringify(data);
+            // For FormData, don't set Content-Type header
+            if (data instanceof FormData) {
+                delete options.headers['Content-Type'];
+            }
         }
 
         return this.fetchWithAuth(url, options);
@@ -196,7 +215,12 @@ class AdminAuthenticatedFetch {
         };
 
         if (data) {
-            options.body = JSON.stringify(data);
+            // Don't JSON.stringify FormData
+            options.body = data instanceof FormData ? data : JSON.stringify(data);
+            // For FormData, don't set Content-Type header
+            if (data instanceof FormData) {
+                delete options.headers['Content-Type'];
+            }
         }
 
         return this.fetchWithAuth(url, options);
@@ -210,7 +234,12 @@ class AdminAuthenticatedFetch {
         };
 
         if (data) {
-            options.body = JSON.stringify(data);
+            // Don't JSON.stringify FormData
+            options.body = data instanceof FormData ? data : JSON.stringify(data);
+            // For FormData, don't set Content-Type header
+            if (data instanceof FormData) {
+                delete options.headers['Content-Type'];
+            }
         }
 
         return this.fetchWithAuth(url, options);

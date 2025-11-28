@@ -757,6 +757,8 @@ const User = () => {
           }}
           initialData={bankCryptoRow}
           onSave={handleSaveBankCrypto}
+          userId={bankCryptoRow.userId}
+          isDarkMode={isDarkMode}
         />
       )}
 
@@ -784,17 +786,9 @@ const User = () => {
             setEditProfileModalVisible(false);
             setEditProfileRow(null);
           }}
-          initialData={{
-            firstName: editProfileRow.name?.split(' ')[0] || '',
-            lastName: editProfileRow.name?.split(' ')[1] || '',
-            email: editProfileRow.email || '',
-            contactNumber: editProfileRow.phone || '',
-            registeredDate: editProfileRow.registeredDate || '',
-            country: editProfileRow.country || '',
-          }}
+          userId={editProfileRow.userId}
           onSave={handleSaveProfile}
           isDarkMode={isDarkMode}
-          
         />
       )}
 
@@ -834,6 +828,7 @@ const User = () => {
           }}
           userName={addTradingAccountRow?.name}
           isDarkMode={isDarkMode}
+          userId ={addTradingAccountRow?.userId}
         />
       )}
 

@@ -26,7 +26,7 @@ export default function IbStatusModal({ visible, onClose, userRow, isDarkMode })
   };
 
   const fetchPATCH = async (payload) => {
-    return await client.patch(`/user/${userId}`, payload);
+    return await client.patch(`/ib-user/${userId}/ib-status/`, payload);
   };
   // ========= FETCH DATA ON OPEN ==========
   useEffect(() => {
@@ -62,7 +62,7 @@ export default function IbStatusModal({ visible, onClose, userRow, isDarkMode })
   const toggleStatus = async () => {
     try {
       const newStatus = !status.enabled;
-      await fetchPATCH({ is_ib: newStatus });
+      await fetchPATCH({ enabled: newStatus, profile_id: status.profile_id });
 
       setStatus((p) => ({ ...p, enabled: newStatus }));
       alert(`IB ${newStatus ? "Enabled" : "Disabled"}`);
@@ -73,16 +73,16 @@ export default function IbStatusModal({ visible, onClose, userRow, isDarkMode })
 
   const selectProfile = async (profile) => {
     try {
-      await fetchPATCH({ ib_profile: profile.id });
+      const userData = await fetchGET(`/users/${userId}/`);
 
       setStatus((prev) => ({
         ...prev,
+        enabled: userData.IB_status,
         profile_id: profile.id,
         profile_name: profile.name,
         commission: profile.commission,
       }));
 
-      alert("Profile updated successfully");
     } catch (e) {
       alert("Update failed");
     }
