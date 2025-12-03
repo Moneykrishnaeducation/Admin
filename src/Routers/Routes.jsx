@@ -25,48 +25,80 @@ import GroupConfiguration from "../page/TradingGroup";
 
 const AppRoutes = () => {
   const location = useLocation();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
-  // Store current page in localStorage for all tabs
   useEffect(() => {
-    localStorage.setItem('current_page', location.pathname);
+    localStorage.setItem("current_page", location.pathname);
   }, [location.pathname]);
 
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const isLoginPage = location.pathname === "/";
+  // --------------------------
+  // GET ROLE FROM LOCAL STORAGE
+  // --------------------------
+  const userData = JSON.parse(localStorage.getItem("user"));
+  const role = userData?.role || "manager"; // default manager
+
+  // --------------------------
+  // ADMIN ROUTES
+  // --------------------------
+  const adminRoutes = [
+    { path: "/dashboard", element: <Dashboard /> },
+    { path: "/tradingaccount", element: <TradingAccount /> },
+    { path: "/tradingaccounts", element: <TradingAccount /> },
+    { path: "/settings", element: <Settings /> },
+    { path: "/propfirm", element: <Propfirm /> },
+    { path: "/user", element: <User /> },
+    { path: "/tickets", element: <Tickets /> },
+    { path: "/activities", element: <Activities /> },
+    { path: "/mamaccount", element: <MamAccount /> },
+    { path: "/pendingrequest", element: <Pendingrequest /> },
+    { path: "/demo", element: <DemoAccount /> },
+    { path: "/mail", element: <Mail /> },
+    { path: "/transactions", element: <Transactions /> },
+    { path: "/partnership", element: <Partnership /> },
+    { path: "/admin", element: <AdminManagerList /> },
+    { path: "/trading-group", element: <GroupConfiguration /> },
+  ];
+
+  // --------------------------
+  // MANAGER ROUTES
+  // --------------------------
+  const managerRoutes = [
+    { path: "manager/dashboard", element: <Dash /> },
+    { path: "manager/user", element: <User /> },
+    { path: "manager/tradingaccount", element: <TradingAccount /> },
+    { path: "manager/tradingaccounts", element: <TradingAccount /> },
+    { path: "manager/demo", element: <DemoAccount /> },
+    { path: "manager/transactions", element: <Transactions /> },
+    { path: "manager/tickets", element: <Tickets /> },
+    { path: "manager/activities", element: <Activities /> },
+  ];
+
+  const allowedRoutes = role === "admin" ? adminRoutes : managerRoutes;
+
+  const isLoginPage = location.pathname === "/" || location.pathname === "/login";
 
   return (
     <div className="w-screen flex">
       {!isLoginPage && (
-        <Navbar isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} />
+        <Navbar 
+          isSidebarOpen={isSidebarOpen} 
+          setIsSidebarOpen={setIsSidebarOpen} 
+        />
       )}
 
       {isLoginPage ? (
         <Routes>
-          <Route path="/login" element={<Login />} />
-          {/* If user navigates to root while on login, keep them on login */}
           <Route path="/" element={<Login />} />
+          <Route path="/login" element={<Login />} />
           <Route path="*" element={<Login />} />
         </Routes>
       ) : (
         <Main isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen}>
           <Routes>
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/tradingaccount" element={<TradingAccount />} />
-            <Route path="/tradingaccounts" element={<TradingAccount />} />
-            <Route path="/settings" element={<Settings />} />
-            <Route path="/propfirm" element={<Propfirm />} />
-            <Route path="/user" element={<User />} />
-            <Route path="/tickets" element={<Tickets />} />
-            <Route path="/activities" element={<Activities />} />
-            <Route path="/mamaccount" element={<MamAccount />} />
-            <Route path="/pendingrequest" element={<Pendingrequest />} />
-            <Route path="/demo" element={<DemoAccount />} />
-            <Route path="/mail" element={<Mail />} />
-            <Route path="transactions" element={<Transactions />} />
-            <Route path="partnership" element={<Partnership />} />
-            <Route path="admin" element={<AdminManagerList />} />
-            <Route path="trading-group" element={<GroupConfiguration />} />
-            
+            {allowedRoutes.map((r, i) => (
+              <Route key={i} path={r.path} element={r.element} />
+            ))}
+            <Route path="*" element={<Dashboard />} />
           </Routes>
         </Main>
       )}
@@ -75,12 +107,18 @@ const AppRoutes = () => {
 };
 
 const Routers = () => {
-  // Determine a sensible basename so the SPA works when served from a sub-path
-  // Examples: '/static/admin', '/admin', or root '/'
-  const pathname = typeof window !== 'undefined' ? window.location.pathname : '/';
-  let basename = '/';
-  if (pathname.startsWith('/static/admin')) basename = '/static/admin';
-  else if (pathname.startsWith('/admin')) basename = '/admin';
+  // -------------------------------------------
+  // BASE URL CHANGES BASED ON USER ROLE
+  // -------------------------------------------
+  const userData = JSON.parse(localStorage.getItem("user"));
+  const role = userData?.role || "manager";
+
+  let basename = "/";
+  if (role === "admin") {
+    basename = "/static/admin";
+  } else if (role === "manager") {
+    basename = "/static/admin/manager";
+  }
 
   return (
     <ThemeProvider>
