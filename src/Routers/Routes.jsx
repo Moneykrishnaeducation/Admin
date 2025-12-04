@@ -56,17 +56,17 @@ const AppRoutes = ({ role }) => {
   ];
 
   // --------------------------
-  // MANAGER ROUTES
-  // --------------------------
+// MANAGER ROUTES
+// --------------------------
   const managerRoutes = [
-    { path: "manager/dashboard", element: <Dash/> },
-    { path: "manager/user", element: <ManagerUser /> },
-    { path: "manager/tradingaccount", element: <TradingAccount /> },
-    { path: "manager/tradingaccounts", element: <TradingAccount /> },
-    { path: "manager/demo", element: <DemoAccount /> },
-    { path: "manager/transactions", element: <Transactions /> },
-    { path: "manager/tickets", element: <Tickets /> },
-    { path: "manager/activities", element: <Activities /> },
+    { path: "/manager/dashboard", element: <Dash/> },
+    { path: "/manager/user", element: <ManagerUser /> },
+    { path: "/manager/tradingaccount", element: <TradingAccount /> },
+    { path: "/manager/tradingaccounts", element: <TradingAccount /> },
+    { path: "/manager/demo", element: <DemoAccount /> },
+    { path: "/manager/transactions", element: <Transactions /> },
+    { path: "/manager/tickets", element: <Tickets /> },
+    { path: "/manager/activities", element: <Activities /> },
 
   ];
 
