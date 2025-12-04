@@ -19,53 +19,79 @@ const ManagerDashboard = () => {
     return value;
   };
 
+  // Format currency values
+  const formatCurrency = (value) => {
+    if (value === null || value === undefined) return '$0.00';
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(value);
+  };
+
   // Fetch dashboard data + activities
+  const loadDashboardData = async () => {
+    try {
+      // Fetch dashboard stats
+      const managerStatus = window.__managerStatus;
+      const url = managerStatus ? `dashboard/data/?manager_status=${encodeURIComponent(managerStatus)}` : 'dashboard/data/';
+      const statsResponse = await get(url);
+
+      if (statsResponse.status === "success") {
+        setStatsData(statsResponse.data);
+      } else {
+        setError("Failed to fetch dashboard stats");
+      }
+
+      // Fetch dashboard activities
+      const activityResponse = await get("dashboard/activity/");
+
+      if (activityResponse.activities) {
+        setRecentActivity(activityResponse.activities);
+      } else {
+        setError("Failed to fetch activities");
+      }
+    } catch (err) {
+      console.error(err);
+      setError("Failed to load dashboard");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const loadDashboardData = async () => {
-      try {
-        // Fetch dashboard stats
-        const statsResponse = await get("dashboard/data/");
+    loadDashboardData();
 
-        if (statsResponse.status === "success") {
-          setStatsData(statsResponse.data);
-        } else {
-          setError("Failed to fetch dashboard stats");
-        }
-
-        // Fetch dashboard activities
-        const activityResponse = await get("dashboard/activity/");
-
-        if (activityResponse.activities) {
-          setRecentActivity(activityResponse.activities);
-        } else {
-          setError("Failed to fetch activities");
-        }
-      } catch (err) {
-        console.error(err);
-        setError("Failed to load dashboard");
-      } finally {
-        setLoading(false);
+    // Listen for manager_status messages from parent
+    const handleMessage = (event) => {
+      if (event.data.type === 'MANAGER_STATUS' && event.data.status) {
+        window.__managerStatus = event.data.status;
+        console.log('Dashboard iframe received manager_status:', event.data.status);
+        // Refetch data with the new manager_status
+        loadDashboardData();
       }
     };
 
-    loadDashboardData();
+    window.addEventListener('message', handleMessage);
+
+    return () => {
+      window.removeEventListener('message', handleMessage);
+    };
   }, []);
 
   // Map API data to cards
   const stats = statsData
     ? [
-        { label: "Total Trading Accounts", value: formatValue(statsData.total_trading_accounts) },
-        { label: "Total Demo Accounts", value: formatValue(statsData.demo_accounts) },
-        { label: "Total Users", value: formatValue(statsData.total_users) },
-        { label: "Total Manager", value: formatValue(statsData.total_managers) },
-        { label: "Total IBs", value: formatValue(statsData.total_ibs) },
-        { label: "Active MAM Accounts", value: formatValue(statsData.active_mam_accounts) },
-        { label: "MAM Investor Account", value: formatValue(statsData.mam_investor_accounts) },
-        { label: "Total Prop Accounts", value: formatValue(statsData.total_prop_accounts) },
+        { label: "Total Clients", value: formatValue(statsData.total_clients) },
+        { label: "Live Trading Accounts", value: formatValue(statsData.live_accounts) },
+        { label: "Demo Accounts", value: formatValue(statsData.demo_accounts) },
+        { label: "IB Earnings", value: formatCurrency(statsData.ib_earnings) },
         { label: "Pending Transactions", value: formatValue(statsData.pending_transactions) },
         { label: "Pending Tickets", value: formatValue(statsData.pending_tickets) },
-        { label: "Pending Requests", value: formatValue(statsData.pending_requests) },
-        { label: "Pending Prop Requests", value: 0 },
+        { label: "Overall Deposits", value: formatCurrency(statsData.total_deposits) },
+        { label: "Real Balance (USD)", value: formatCurrency(statsData.total_balance) },
+        { label: "Total Withdrawn", value: formatCurrency(statsData.total_withdrawn) },
       ]
     : [];
 
