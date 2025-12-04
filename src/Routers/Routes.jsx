@@ -22,22 +22,16 @@ import Transactions from "../page/Transactions";
 import Partnership from "../page/Partnership";
 import AdminManagerList from "../page/Admin";
 import GroupConfiguration from "../page/TradingGroup";
-import ManagerDashboard from '../ManagerComponent/Dashboard.jsx';
-import ManagerUser from '../ManagerComponent/User.jsx';
+import Dash from "../ManagerComponent/Dashboard";
+import ManagerUser from "../ManagerComponent/User";
 
-const AppRoutes = () => {
+const AppRoutes = ({ role }) => {
   const location = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   useEffect(() => {
     localStorage.setItem("current_page", location.pathname);
   }, [location.pathname]);
-
-  // --------------------------
-  // GET ROLE FROM LOCAL STORAGE
-  // --------------------------
-  const userData = JSON.parse(localStorage.getItem("user"));
-  const role = userData?.role || "manager"; // default manager
 
   // --------------------------
   // ADMIN ROUTES
@@ -65,14 +59,8 @@ const AppRoutes = () => {
   // MANAGER ROUTES
   // --------------------------
   const managerRoutes = [
-    { path: "manager/dashboard", element: <ManagerDashboard /> },
-    { path: "manager/user", element: <ManagerUser /> },
-    { path: "manager/tradingaccount", element: <TradingAccount /> },
-    { path: "manager/tradingaccounts", element: <TradingAccount /> },
-    { path: "manager/demo", element: <DemoAccount /> },
-    { path: "manager/transactions", element: <Transactions /> },
-    { path: "manager/tickets", element: <Tickets /> },
-    { path: "manager/activities", element: <Activities /> },
+    { path: "/dashboard", element: <Dash /> },
+    { path: "/user", element: <ManagerUser /> },
   ];
 
   const allowedRoutes = role === "admin" ? adminRoutes : managerRoutes;
@@ -82,9 +70,10 @@ const AppRoutes = () => {
   return (
     <div className="w-screen flex">
       {!isLoginPage && (
-        <Navbar 
-          isSidebarOpen={isSidebarOpen} 
-          setIsSidebarOpen={setIsSidebarOpen} 
+        <Navbar
+          isSidebarOpen={isSidebarOpen}
+          setIsSidebarOpen={setIsSidebarOpen}
+          role={role}
         />
       )}
 
@@ -100,7 +89,7 @@ const AppRoutes = () => {
             {allowedRoutes.map((r, i) => (
               <Route key={i} path={r.path} element={r.element} />
             ))}
-            <Route path="*" element={<Dashboard />} />
+            <Route path="*" element={role === "admin" ? <Dashboard /> : <Dash />} />
           </Routes>
         </Main>
       )}
@@ -109,16 +98,34 @@ const AppRoutes = () => {
 };
 
 const Routers = () => {
-  // -------------------------------------------
-  // BASE URL CHANGES BASED ON USER ROLE
-  // -------------------------------------------
-  const userData = JSON.parse(localStorage.getItem("user"));
-  const role = userData?.role || "manager";
+  // -----------------------------------
+  // GET ROLE FROM LOCAL STORAGE
+  // -----------------------------------
+  const [role, setRole] = useState(() => {
+    const userData = JSON.parse(localStorage.getItem("user"));
+    return userData?.role || "admin";
+  });
+
+  useEffect(() => {
+    const checkRole = () => {
+      const userData = JSON.parse(localStorage.getItem("user"));
+      const newRole = userData?.role || "admin";
+      setRole(newRole);
+    };
+
+    // Check on mount
+    checkRole();
+
+    // Check on window focus (after login)
+    window.addEventListener("focus", checkRole);
+
+    return () => window.removeEventListener("focus", checkRole);
+  }, []);
 
   return (
     <ThemeProvider>
       <Router>
-        <AppRoutes />
+        <AppRoutes role={role} />
       </Router>
     </ThemeProvider>
   );
