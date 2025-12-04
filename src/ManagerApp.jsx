@@ -1,13 +1,10 @@
 import React from "react";
-import ManagerDashboard from "./ManagerComponent/ManagerDashboard.jsx";
+import Routers from "./Routers/Routes.jsx";
 
 const ManagerApp = () => {
-  return (
-    <div>
-      <h1>Manager Panel</h1>
-      <ManagerDashboard />
-    </div>
-  );
+  return <div className='w-screen flex relative'>
+    <Routers/>
+  </div>;
 };
 
 export default ManagerApp;

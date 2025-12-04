@@ -319,11 +319,11 @@ const AdminAPI = {
     }
 };
 
-// Export for use in other modules
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { AdminAuthenticatedFetch, adminApiClient, AdminAPI };
-} else {
-    // Browser environment - attach to window
+// ES6 exports for modern module systems
+export { AdminAuthenticatedFetch, adminApiClient, AdminAPI };
+
+// For backward compatibility in browser environment
+if (typeof window !== 'undefined') {
     window.AdminAuthenticatedFetch = AdminAuthenticatedFetch;
     window.adminApiClient = adminApiClient;
     window.AdminAPI = AdminAPI;
