@@ -27,7 +27,6 @@ import BankCryptoModal from "../Modals/BankCryptoModal";
 import { ChangeStatusModal, EditProfileModal, TicketsModal, AddTradingAccountModal } from "../Modals";
 import Transactions from "../Modals/Transactions";
 import TradingAccountModal from "../Modals/TradingAccountModal";
-import IbStatusModal from "../Modals/IbStatusModal";
 
 const ManagerUser = () => {
   const { isDarkMode } = useTheme(); // from your ThemeContext
@@ -92,7 +91,6 @@ const ManagerUser = () => {
               : String(u.date_joined)
             : "-",
           country: u.country || "-",
-          isEnabled: Boolean(u.is_active),
         }));
         setData(mapped);
         return { data: mapped, total };
@@ -350,10 +348,6 @@ const ManagerUser = () => {
     setBankCryptoRow(row);
     setBankCryptoModalVisible(true);
   };
-  const handleIbStatus = (row) => {
-    setIbStatusRow(row);
-    setIbStatusModalVisible(true);
-  };
 
   const handleSaveBankCrypto = (data) => {
     console.log("Bank/Crypto save data for user id", bankCryptoRow?.id, data);
@@ -376,13 +370,6 @@ const ManagerUser = () => {
   const [addTradingAccountModalVisible, setAddTradingAccountModalVisible] = useState(false);
   const [addTradingAccountRow, setAddTradingAccountRow] = useState(null);
 
-  const [ibStatusModalVisible, setIbStatusModalVisible] = useState(false);
-  const [ibStatusRow, setIbStatusRow] = useState(null);
-
-  const handlePromote = (row) => {
-    setChangeStatusRow(row);
-    setChangeStatusModalVisible(true);
-  };
 
   const handleStatusUpdate = (newStatus) => {
     console.log('Updated user', changeStatusRow?.id, 'to status:', newStatus);
@@ -396,44 +383,7 @@ const ManagerUser = () => {
     setEditProfileModalVisible(false);
     setEditProfileRow(null);
   };
-  const handleDisable = async (row) => {
-    console.log("Toggle user:", row?.id, "New status:", !row.isEnabled);
-    // TODO: Call API to disable/enable user
-    // Optimistically update UI
-    setData(prevData =>
-      prevData.map(user =>
-        user.userId === row.userId ? { ...user, isEnabled: !user.isEnabled } : user
-      )
-    );
-    // Call API to actually enable/disable user
-    try {
-      const token =
-        typeof window !== "undefined"
-          ? localStorage.getItem("jwt_token") || localStorage.getItem("access_token")
-          : null;
-      const headers = {
-        "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      };
-      const response = await fetch(`/api/users/${row.userId}/status/`, {
-        method: "PATCH",
-        headers,
-        credentials: "include",
-        body: JSON.stringify({ active: !row.isEnabled }),
-      });
-      if (!response.ok) {
-        throw new Error("Failed to update user status");
-      }
-    } catch (err) {
-      alert("Failed to update user status");
-      // Optionally revert UI change if needed
-      setData(prevData =>
-        prevData.map(user =>
-          user.userId === row.userId ? { ...user, isEnabled: row.isEnabled } : user
-        )
-      );
-    }
-  };
+
   const handleTransactions = (row) => {
     setHistoryRow(row);
     setHistoryModalVisible(true);
@@ -452,10 +402,8 @@ const ManagerUser = () => {
       { icon: <LineChart size={15} />, label: "Trading", onClick: () => handleTrading(row) }, // changed to open modal
       { icon: <Gamepad2 size={15} />, label: "Demo", onClick: () => handleDemo(row) },
       { icon: <Ticket size={15} />, label: "Tickets", onClick: () => handleTickets(row) },
-      { icon: <Award size={15} />, label: "IB Status", onClick: () => handleIbStatus(row) },
       { icon: <UserIcon size={15} />, label: "Profile", onClick: () => handleProfile(row) },
       { icon: <Landmark size={15} />, label: "Bank/Crypto", onClick: () => handleBankCrypto(row) },
-      { icon: <ArrowUpCircle size={15} />, label: "Promote", onClick: () => handlePromote(row) },
       { icon: <Shuffle size={15} />, label: "Transactions", onClick: () => handleTransactions(row) },
       { icon: <PlusCircle size={15} />, label: "Add Account", onClick: () => handleAddAccount(row) },
     ];
@@ -473,22 +421,6 @@ const ManagerUser = () => {
             className={`${isDarkMode ? "bg-gray-900 text-yellow-400 border-t border-yellow-600" : "bg-white text-black border-t border-yellow-500"} rounded p-2 flex gap-4 flex-wrap items-center justify-between`}
           >
             <SubRowButtons actionItems={actionItems} />
-            <div className="flex items-center gap-2 ml-auto">
-              <span className={`text-sm font-semibold ${row.isEnabled ? "text-green-400" : "text-red-400"}`}>
-                {row.isEnabled ? "Enabled" : "Disabled"}
-              </span>
-              <button
-                onClick={() => handleDisable(row)}
-                className={`relative w-14 h-7 rounded-full transition-colors duration-300 ${row.isEnabled ? "bg-green-500" : "bg-red-500"
-                  } hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-offset-2 ${isDarkMode ? "focus:ring-yellow-400" : "focus:ring-yellow-500"
-                  }`}
-              >
-                <div
-                  className={`absolute top-1 h-5 w-5 bg-white rounded-full transition-transform duration-300 ${row.isEnabled ? "translate-x-7" : "translate-x-1"
-                    }`}
-                />
-              </button>
-            </div>
           </div>
         </td>
       </tr>
@@ -816,18 +748,6 @@ const ManagerUser = () => {
         />
       )}
 
-      {/* IB Status Modal */}
-      {ibStatusModalVisible && ibStatusRow && (
-        <IbStatusModal
-          visible={ibStatusModalVisible}
-          onClose={() => {
-            setIbStatusModalVisible(false);
-            setIbStatusRow(null);
-          }}
-          userRow={ibStatusRow}
-          isDarkMode={isDarkMode}
-        />
-      )}
     </div>
   );
 };

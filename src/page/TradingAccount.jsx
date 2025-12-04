@@ -67,7 +67,7 @@ const TradingAccountPage = () => {
   // fetch users (admin) with pagination
   const fetchUsers = React.useCallback(
       async ({ page: p = 1, pageSize: ps = 10, query = "" }) => {
-        const endpoint = "api/admin/trading-accounts/";
+        const endpoint = "/admin/trading-accounts/";
         const params = new URLSearchParams();
         params.set("page", String(p));
         params.set("pageSize", String(ps));
