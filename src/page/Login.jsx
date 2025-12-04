@@ -39,7 +39,14 @@ const Login = () => {
         localStorage.setItem('user', JSON.stringify(response.data.user)); // Store user information
 
         // Redirect or navigate to the dashboard page after successful login
-        navigate('/dashboard');
+        const userData = JSON.parse(localStorage.getItem("user"));
+        const role = userData?.role || "manager";
+
+        if (role === "admin") {
+          navigate('/dashboard');
+        } else {
+          navigate('manager/dashboard');
+        }
       }
     } catch (error) {
       // Handle errors (e.g., wrong credentials)
