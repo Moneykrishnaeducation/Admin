@@ -431,14 +431,14 @@ const handleExportPDF = () => {
 
 
   return (
-    <div className=" flex flex-col min-h-screen w-full bg-black text-yellow-400 p-6">
+    <div className=" flex flex-col min-h-screen w-full text-yellow-400 p-6">
       <div className="text-2xl font-bold text-yellow-400 mb-4 text-center md:text-left">Transactions</div>
 
-      <div className="grid grid-cols-2 md:grid-cols-12 gap-4 mb-6 items-end rounded-lg p-4 bg-black shadow-inner w-full max-w-[1400px] mx-auto">
+      <div className="grid grid-cols-2 md:grid-cols-12 gap-4 mb-6 items-end rounded-lg p-4 shadow-inner w-full max-w-[1400px] mx-auto">
         <div className="flex flex-col col-span-1 md:col-span-3">
           <label className="text-xs text-yellow-400 mb-1 font-semibold">Type</label>
           <select
-            className="px-4 py-2 rounded border border-yellow-400 bg-black text-yellow-400 w-full"
+            className="px-4 py-2 rounded border border-yellow-400  text-yellow-400 w-full"
             onChange={(e) => setTypeFilter(e.target.value)}
             value={typeFilter}
           >
@@ -451,7 +451,7 @@ const handleExportPDF = () => {
         <div className="flex flex-col col-span-1 md:col-span-3">
           <label className="text-xs text-yellow-400 mb-1 font-semibold">Status</label>
           <select
-            className="px-4 py-2 rounded border border-yellow-400 bg-black text-yellow-400 w-full"
+            className="px-4 py-2 rounded border border-yellow-400  text-yellow-400 w-full"
             onChange={(e) => setStatusFilter(e.target.value)}
             value={statusFilter}
           >
@@ -466,7 +466,7 @@ const handleExportPDF = () => {
           <label className="text-xs text-yellow-400 mb-1 font-semibold">From Date</label>
           <input
             type="date"
-            className="px-4 py-2 rounded border border-yellow-400 bg-black text-yellow-400 w-full"
+            className="px-4 py-2 rounded border border-yellow-400  text-yellow-400 w-full"
             value={fromDate}
             onChange={(e) => setFromDate(e.target.value)}
           />
@@ -476,7 +476,7 @@ const handleExportPDF = () => {
           <label className="text-xs text-yellow-400 mb-1 font-semibold">To Date</label>
           <input
             type="date"
-            className="px-4 py-2 rounded border border-yellow-400 bg-black text-yellow-400 w-full"
+            className="px-4 py-2 rounded border border-yellow-400  w-full"
             value={toDate}
             onChange={(e) => setToDate(e.target.value)}
           />
