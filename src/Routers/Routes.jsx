@@ -59,8 +59,15 @@ const AppRoutes = ({ role }) => {
   // MANAGER ROUTES
   // --------------------------
   const managerRoutes = [
-    { path: "/dashboard", element: <Dash /> },
-    { path: "/user", element: <ManagerUser /> },
+    { path: "manager/dashboard", element: <ManagerDashboard /> },
+    { path: "manager/user", element: <ManagerUser /> },
+    { path: "manager/tradingaccount", element: <TradingAccount /> },
+    { path: "manager/tradingaccounts", element: <TradingAccount /> },
+    { path: "manager/demo", element: <DemoAccount /> },
+    { path: "manager/transactions", element: <Transactions /> },
+    { path: "manager/tickets", element: <Tickets /> },
+    { path: "manager/activities", element: <Activities /> },
+
   ];
 
   const allowedRoutes = role === "admin" ? adminRoutes : managerRoutes;
