@@ -207,7 +207,7 @@ const StyledWrapper = styled.div`
 
 .login {
   position: absolute;
-  inset: 60px;
+  inset: 40px;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -232,7 +232,7 @@ const StyledWrapper = styled.div`
   padding-top: 60px;
   gap: 20px;
   width: 70%;
-  transform: translateY(126px);
+  transform: translateY(0px);
   transition: 0.5s;
 }
 

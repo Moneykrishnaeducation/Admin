@@ -19,6 +19,10 @@ const Navbar = ({ isSidebarOpen, setIsSidebarOpen }) => {
   const location = useLocation();
   const [isMobileView, setIsMobileView] = React.useState(false);
 
+  // Get user role from localStorage
+  const userData = JSON.parse(localStorage.getItem("user"));
+  const role = userData?.role || "manager";
+
   React.useEffect(() => {
     // Function to check window size
     const handleResize = () => {
@@ -35,7 +39,8 @@ const Navbar = ({ isSidebarOpen, setIsSidebarOpen }) => {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const menuItems = [
+  // Define menu items for admin (all items)
+  const adminMenuItems = [
     { path: "/dashboard", icon: Home, label: "Dashboard" },
     { path: "/user", icon: Users, label: "User" },
     { path: "/pendingrequest", icon: CreditCard, label: "Pending request" },
@@ -51,6 +56,24 @@ const Navbar = ({ isSidebarOpen, setIsSidebarOpen }) => {
     { path: "/admin", icon: Headphones, label: "Admin" },
     { path: "/settings", icon: CreditCard, label: "Settings" },
   ];
+
+  // Define menu items for manager (subset)
+  const managerMenuItems = [
+    { path: "/dashboard", icon: Home, label: "Dashboard" },
+    { path: "/user", icon: Users, label: "User" },
+    { path: "/tradingaccounts", icon: CreditCard, label: "Trading Accounts" },
+    { path: "/demo", icon: CreditCard, label: "Demo Accounts" },
+    { path: "/transactions", icon: Repeat, label: "Transactions" },
+    { path: "/tickets", icon: Ticket, label: "Ticket" },
+    { path: "/activities", icon: Calendar, label: "Activities" },
+  ];
+
+  // Select menu items based on role and adjust paths for manager
+  const basePath = role === "manager" ? "/manager" : "";
+  const menuItems = (role === "admin" ? adminMenuItems : managerMenuItems).map(item => ({
+    ...item,
+    path: basePath + item.path
+  }));
 
   return (
     <nav

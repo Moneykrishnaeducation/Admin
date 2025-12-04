@@ -22,6 +22,8 @@ import Transactions from "../page/Transactions";
 import Partnership from "../page/Partnership";
 import AdminManagerList from "../page/Admin";
 import GroupConfiguration from "../page/TradingGroup";
+import ManagerDashboard from '../ManagerComponent/Dashboard.jsx';
+import ManagerUser from '../ManagerComponent/User.jsx';
 
 const AppRoutes = () => {
   const location = useLocation();
@@ -63,8 +65,8 @@ const AppRoutes = () => {
   // MANAGER ROUTES
   // --------------------------
   const managerRoutes = [
-    { path: "manager/dashboard", element: <Dash /> },
-    { path: "manager/user", element: <User /> },
+    { path: "manager/dashboard", element: <ManagerDashboard /> },
+    { path: "manager/user", element: <ManagerUser /> },
     { path: "manager/tradingaccount", element: <TradingAccount /> },
     { path: "manager/tradingaccounts", element: <TradingAccount /> },
     { path: "manager/demo", element: <DemoAccount /> },
@@ -113,16 +115,9 @@ const Routers = () => {
   const userData = JSON.parse(localStorage.getItem("user"));
   const role = userData?.role || "manager";
 
-  let basename = "/";
-  if (role === "admin") {
-    basename = "/static/admin";
-  } else if (role === "manager") {
-    basename = "/static/admin/manager";
-  }
-
   return (
     <ThemeProvider>
-      <Router basename={basename}>
+      <Router>
         <AppRoutes />
       </Router>
     </ThemeProvider>

@@ -1,10 +1,6 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
-// Read Vite build mode from command line (NOT env)
-const modeArg = process.argv.find(arg => arg.startsWith("--mode="));
-const MODE = modeArg ? modeArg.split("=")[1] : "admin";
-
 // ADMIN CONFIG
 const ADMIN = {
   base: "/static/admin/",
@@ -14,7 +10,7 @@ const ADMIN = {
     emptyOutDir: true,
     rollupOptions: {
       input: {
-        admin: "./index.html",
+        index: "./index.html",
       },
     },
   },
@@ -35,4 +31,6 @@ const MANAGER = {
   },
 };
 
-export default defineConfig(MODE === "manager" ? MANAGER : ADMIN);
+export default defineConfig(({ mode }) => {
+  return mode === "manager" ? MANAGER : ADMIN;
+});
