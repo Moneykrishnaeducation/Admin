@@ -67,13 +67,6 @@ const ManagerActivities = () => {
 
   return (
     <div className="p-6 max-w-6xl mx-auto">
-      <div className="flex gap-4 mb-4">
-        <button
-          className={`px-4 py-2 rounded-md font-semibold bg-yellow-500 text-black }`}
-        >
-          Client Logs
-        </button>
-      </div>
 
       {loading && <div className="mb-4">Loading logs...</div>}
       {error && <div className="mb-4 text-red-600">Error: {error}</div>}
