@@ -1,11 +1,11 @@
 import React from "react";
-import Dashboard from "./ManagerComponent/Dashboard.jsx";
+import ManagerDashboard from "./ManagerComponent/ManagerDashboard.jsx";
 
 const ManagerApp = () => {
   return (
     <div>
       <h1>Manager Panel</h1>
-      <Dashboard />
+      <ManagerDashboard />
     </div>
   );
 };

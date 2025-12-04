@@ -46,13 +46,11 @@ const ManagerUser = () => {
 
 
   const [data, setData] = useState([]);
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
 
   // Client-side fetch for TableStructure
   const handleTableFetch = React.useCallback(
     async ({ page: p = 1, pageSize: ps = 10, query = "" }) => {
-    //   const endpoint = "/api/admin/users/";
+      const endpoint = "/api/admin/users/";
       const params = new URLSearchParams();
       params.set("page", String(p));
       params.set("pageSize", String(ps));
@@ -105,20 +103,6 @@ const ManagerUser = () => {
     },
     []
   );
-
-  const patchUser = async (userId, payload) => {
-    const res = await fetch(`/api/user/${userId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
-
-    if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err?.message || "Failed to update user");
-    }
-    return await res.json();
-  };
 
   // Row expansion
   const [expandedRows, setExpandedRows] = useState(new Set());
