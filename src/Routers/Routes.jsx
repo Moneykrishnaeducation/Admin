@@ -28,6 +28,7 @@ import ManagerTradingaccount from '../ManagerComponent/ManagerTradingaccount.jsx
 import ManagerDemo from '../ManagerComponent/ManagerDemo.jsx';
 import ManagerTickets from '../ManagerComponent/ManagerTickets.jsx';
 import ManagerActivities from '../ManagerComponent/MangerActivities.jsx';
+import ManagerTransactions from '../ManagerComponent/ManagerTransActions.jsx';
 
 const AppRoutes = ({ role }) => {
   const location = useLocation();
