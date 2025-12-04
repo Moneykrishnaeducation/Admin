@@ -70,37 +70,6 @@ const ManagerDashboard = () => {
     : [];
 
   // CSV Download Handler with Authentication
-  const downloadCSV = (url, filename) => {
-    const token = localStorage.getItem("access_token"); // adjust if token is stored elsewhere
-    if (!token) {
-      alert("You must be logged in to download CSV.");
-      return;
-    }
-
-    fetch(url, {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "text/csv",
-      },
-    })
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error(`Failed to download CSV: ${res.status}`);
-        }
-        return res.blob();
-      })
-      .then((blob) => {
-        const link = document.createElement("a");
-        link.href = window.URL.createObjectURL(blob);
-        link.download = filename;
-        link.click();
-      })
-      .catch((err) => {
-        console.error(err);
-        alert("Failed to download CSV. Make sure you are logged in.");
-      });
-  };
 
   if (loading) {
     return (
@@ -124,28 +93,7 @@ const ManagerDashboard = () => {
 
       <div className="flex-1 min-h-screen  text-yellow-400 p-4 sm:p-8 transition-all duration-300">
 
-        {/* Stats Buttons */}
-        <div className="flex flex-col sm:flex-row justify-center gap-4 sm:gap-6 mb-6">
-          <button
-            className="flex items-center justify-center gap-2 bg-yellow-500 text-black px-4 sm:px-6 py-2 sm:py-3 rounded-md hover:bg-yellow-600 transition-all text-sm sm:text-base"
-            onClick={() => downloadCSV("/api/export/users/csv/", "users.csv")}
-          >
-            <Download className="w-5 h-5" /> User Account
-          </button>
-          <button
-            className="flex items-center justify-center gap-2 bg-yellow-500 text-black px-4 sm:px-6 py-2 sm:py-3 rounded-md hover:bg-yellow-600 transition-all text-sm sm:text-base"
-            onClick={() => downloadCSV("/api/export/trading-accounts/csv/", "trading_accounts.csv")}
-          >
-            <Download className="w-5 h-5" /> Trading Account
-          </button>
-          <button
-            className="flex items-center justify-center gap-2 bg-yellow-500 text-black px-4 sm:px-6 py-2 sm:py-3 rounded-md hover:bg-yellow-600 transition-all text-sm sm:text-base"
-            onClick={() => downloadCSV("/api/export/transactions/csv/", "transactions.csv")}
-          >
-            <Download className="w-5 h-5" /> Transaction
-          </button>
-        </div>
-
+       
         {/* Stats Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-8">
           {stats.map((stat, index) => (
@@ -163,24 +111,30 @@ const ManagerDashboard = () => {
         <div className="mt-6 sm:mt-10">
           <h2 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4">Recent Activities</h2>
           <div className="space-y-3">
-            {recentActivity.slice(0, 5).map((activity, index) => (
-              <div key={index} className="border-b border-yellow-400/40 pb-2 sm:pb-3">
-                <p className="text-white text-sm sm:text-base">{activity.message}</p>
-                <p className="text-yellow-400 text-xs mt-1">
-                  {activity.user} • {new Date(activity.timestamp).toLocaleString()}
-                </p>
-              </div>
-            ))}
+            {recentActivity.length === 0 ? (
+              <p className="text-white text-sm sm:text-base">No activities found.</p>
+            ) : (
+              <>
+                {recentActivity.slice(0, 5).map((activity, index) => (
+                  <div key={index} className="border-b border-yellow-400/40 pb-2 sm:pb-3">
+                    <p className="text-white text-sm sm:text-base">{activity.message}</p>
+                    <p className="text-yellow-400 text-xs mt-1">
+                      {activity.user} • {new Date(activity.timestamp).toLocaleString()}
+                    </p>
+                  </div>
+                ))}
 
-            {recentActivity.length > 5 && (
-              <div className="mt-3">
-                <Link
-                  to="/activities"
-                  className="text-yellow-400 text-sm hover:underline cursor-pointer"
-                >
-                  View more activities
-                </Link>
-              </div>
+                {recentActivity.length > 5 && (
+                  <div className="mt-3">
+                    <Link
+                      to="/activities"
+                      className="text-yellow-400 text-sm hover:underline cursor-pointer"
+                    >
+                      View more activities
+                    </Link>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>
