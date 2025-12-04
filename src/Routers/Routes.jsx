@@ -22,8 +22,8 @@ import Transactions from "../page/Transactions";
 import Partnership from "../page/Partnership";
 import AdminManagerList from "../page/Admin";
 import GroupConfiguration from "../page/TradingGroup";
-import Dash from "../ManagerComponent/Dashboard";
-import ManagerUser from "../ManagerComponent/User";
+import Dash from "../ManagerComponent/ManagerDashboard";
+import ManagerUser from "../ManagerComponent/ManagerUser";
 
 const AppRoutes = ({ role }) => {
   const location = useLocation();
@@ -59,7 +59,7 @@ const AppRoutes = ({ role }) => {
   // MANAGER ROUTES
   // --------------------------
   const managerRoutes = [
-    { path: "manager/dashboard", element: <ManagerDashboard /> },
+    { path: "manager/dashboard", element: <Dash/> },
     { path: "manager/user", element: <ManagerUser /> },
     { path: "manager/tradingaccount", element: <TradingAccount /> },
     { path: "manager/tradingaccounts", element: <TradingAccount /> },
