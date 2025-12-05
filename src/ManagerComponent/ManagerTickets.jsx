@@ -7,7 +7,7 @@ import TableStructure from "../commonComponent/TableStructure";
 const ManagerTickets = () => {
   const { isDarkMode } = useTheme();
 
-  const [activePage, setActivePage] = useState("view");
+  const [activePage, setActivePage] = useState("create");
   const [activeTab, setActiveTab] = useState("Open");
 
   const [userId] = useState(() => {
@@ -95,10 +95,10 @@ const ManagerTickets = () => {
       // Move in UI
       setTickets((prev) => {
         const updated = { ...prev };
-        const idx = updated.waiting.findIndex((t) => t.id === selectedTicketId);
+        const idx = updated.open.findIndex((t) => t.id === selectedTicketId);
         if (idx !== -1) {
-          const ticket = updated.waiting[idx];
-          updated.waiting.splice(idx, 1);
+          const ticket = updated.open[idx];
+          updated.open.splice(idx, 1);
           updated.pending.push({ ...ticket, status: "Pending" });
         }
         return updated;
@@ -106,7 +106,7 @@ const ManagerTickets = () => {
 
       setShowOpenModal(false);
       setSelectedTicketId(null);
-      alert("Ticket opened successfully!");
+      alert("Ticket opened successfully!")
     } catch (err) {
       console.error("Error opening ticket:", err);
       alert("Failed to open ticket.");
@@ -167,27 +167,43 @@ const ManagerTickets = () => {
         isDarkMode ? "bg-black text-white" : "bg-white text-black"
       } h-full px-4 py-6 md:px-8`}
     >
+      {/* TOP BUTTONS */}
+      <header className="text-center mb-6">
+        <h2 className="text-2xl md:text-3xl font-bold text-yellow-400">
+          Support Tickets
+        </h2>
+        <div className="flex justify-center gap-4 mt-4">
+          <button
+            onClick={() => setActivePage("create")}
+            className={`flex items-center justify-center gap-2 font-semibold px-4 py-2 rounded-md transition ${
+              activePage === "create"
+                ? "bg-yellow-400 text-black"
+                : "bg-gray-700 text-yellow-300 hover:bg-gray-600"
+            }`}
+          >
+            <Plus size={18} />
+            Create
+          </button>
+          <button
+            onClick={() => setActivePage("view")}
+            className={`flex items-center justify-center gap-2 font-semibold px-4 py-2 rounded-md transition ${
+              activePage === "view"
+                ? "bg-yellow-400 text-black"
+                : "bg-gray-700 text-yellow-300 hover:bg-gray-600"
+            }`}
+          >
+            View Tickets
+          </button>
+        </div>
+      </header>
+
       {/* VIEW PAGE */}
       {activePage === "view" && (
         <>
-          <header className="text-center mb-6">
-            <h2 className="text-2xl md:text-3xl font-bold text-yellow-400">
-              Support Tickets
-            </h2>
-            <div className="flex justify-center gap-4 mt-4">
-              <button
-                onClick={() => setActivePage("create")}
-                className="flex items-center justify-center gap-2 bg-yellow-400 hover:bg-yellow-500 text-black font-semibold px-4 py-2 rounded-md transition"
-              >
-                <Plus size={18} />
-                Create Ticket
-              </button>
-            </div>
-          </header>
 
           {/* TABS */}
           <div className="flex justify-center gap-4 mb-6">
-            {["Open", "Pending", "Closed"].map((tab) => (
+            {["open", "pending", "closed"].map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
@@ -213,29 +229,33 @@ const ManagerTickets = () => {
             <TableStructure
               columns={columns}
               data={dataForTable}
-              actionsColumn={(row) => {
-                if (activeTab === "Open") {
-                  return (
-                    <button
-                      onClick={() => openTicket(row.id)}
-                      className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded"
-                    >
-                      Open
-                    </button>
-                  );
-                }
-                if (activeTab === "Pending") {
-                  return (
-                    <button
-                      onClick={() => closeTicket(row.id)}
-                      className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
-                    >
-                      Close
-                    </button>
-                  );
-                }
-                return null;
-              }}
+              actionsColumn={
+                activeTab !== "closed"
+                  ? (row) => {
+                      if (activeTab === "open") {
+                        return (
+                          <button
+                            onClick={() => openTicket(row.id)}
+                            className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded"
+                          >
+                            Open
+                          </button>
+                        );
+                      }
+                      if (activeTab === "pending") {
+                        return (
+                          <button
+                            onClick={() => closeTicket(row.id)}
+                            className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
+                          >
+                            Close
+                          </button>
+                        );
+                      }
+                      return null;
+                    }
+                  : undefined
+              }
             />
           </div>
         </>
