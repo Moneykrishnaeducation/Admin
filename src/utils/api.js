@@ -2,7 +2,7 @@ import React from 'react';
 import { useLocation } from 'react-router-dom';
 // API utility functions for consistent token handling
 
-export const API_BASE_URL = 'http://client.localhost:8000/';
+export const API_BASE_URL = 'http://admin.localhost:8000/';
 
 // Get CSRF token from cookies
 export function getCookie(name) {

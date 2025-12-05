@@ -82,18 +82,55 @@ export async function get(endpoint) {
 }
 
 // Named export for the 'post' function
-export async function post(endpoint, data) {
+export async function post(endpoint, data, isFormData = false) {
+    const url = `${API_BASE}/${endpoint}`;
+
+    try {
+        if (isFormData) {
+            // For FormData, use fetch directly without Content-Type header
+            const token = localStorage.getItem('access_token') || localStorage.getItem('jwt_token');
+            const response = await fetch(url, {
+                method: 'POST',
+                body: data,
+                headers: {
+                    ...(token && { 'Authorization': `Bearer ${token}` }),
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const responseData = await response.json();
+            return responseData;
+        } else {
+            // For JSON data, use the authenticated fetch function
+            const response = await fetchWithAuth(url, {
+                method: 'POST',
+                body: JSON.stringify(data)
+            });
+            const responseData = await response.json();
+            return responseData;
+        }
+    } catch (error) {
+        console.error('API POST request failed:', error);
+        throw error;
+    }
+}
+
+// Named export for the 'patch' function
+export async function patch(endpoint, data) {
     const url = `${API_BASE}/${endpoint}`;
 
     try {
         const response = await fetchWithAuth(url, {
-            method: 'POST',
+            method: 'PATCH',
             body: JSON.stringify(data)
         });
         const responseData = await response.json();
         return responseData;
     } catch (error) {
-        console.error('API POST request failed:', error);
+        console.error('API PATCH request failed:', error);
         throw error;
     }
 }
