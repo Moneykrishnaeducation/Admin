@@ -1,19 +1,20 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { RefreshCw, Info } from "lucide-react";
+import { useTheme } from "../context/ThemeContext";
 
 
 /* ---------------- BADGE ---------------- */
 
 
-function Badge({ label, alias, isActive, isDemo }) {
+function Badge({ label, alias, isActive, isDemo, isDarkMode }) {
   const baseClass =
     "inline-block px-2.5 py-1 mr-1 mb-1 rounded text-xs font-medium select-text whitespace-nowrap";
 
   const activeClass = isActive
     ? isDemo
-      ? "bg-sky-200 text-sky-800 font-semibold" // Demo default 
+      ? "bg-sky-200 text-sky-800 font-semibold" // Demo default
       : "bg-green-200 text-green-900 font-semibold" // Real default
-    : "bg-gray-600 text-gray-200";
+    : isDarkMode ? "bg-gray-600 text-gray-200" : "bg-gray-300 text-gray-700";
 
   return (
     <span className={`${baseClass} ${activeClass}`} title={label}>
@@ -30,9 +31,10 @@ function GroupItem({
   onAliasChange,
   selectedDefault,
   selectedDemoDefault,
+  isDarkMode,
 }) {
   return (
-    <div className="flex items-center mb-3 border-b border-gray-700 pb-2 text-gray-200 text-sm">
+    <div className={`flex items-center mb-3 border-b pb-2 text-sm ${isDarkMode ? 'border-gray-700 text-gray-200' : 'border-gray-300 text-black'}`}>
       <div className="flex-1 font-bold">
         {group.id}{" "}
         <span className="bg-sky-500 text-white rounded px-1 text-[10px] ml-2">
@@ -124,17 +126,15 @@ function GroupItem({
     onChange={(e) => onAliasChange(group.id, e.target.value)}
     disabled={group.aliasLocked}     // ⬅ DISABLE HERE
     className={`
-      ml-1 
-      bg-gray-800 
-      text-white 
-      border 
-      border-gray-600 
-      rounded 
-      px-2 
-      py-0.5 
+      ml-1
+      ${isDarkMode ? 'bg-gray-800 text-white border-gray-600' : 'bg-white text-black border-gray-300'}
+      border
+      rounded
+      px-2
+      py-0.5
       w-36
-      outline-none 
-      transition-all 
+      outline-none
+      transition-all
       duration-200
       ${group.aliasLocked ? "opacity-50 cursor-not-allowed" : "focus:border-yellow-400 focus:shadow-[0_0_8px_rgba(250,204,21,0.6)]"}
     `}
@@ -195,6 +195,7 @@ function GroupConfigurationGuideToggle() {
 
 /* ---------------- MAIN COMPONENT ---------------- */
 export default function GroupConfiguration() {
+  const { isDarkMode } = useTheme();
   const [groups, setGroups] = useState([]);
   const [selectedDefault, setSelectedDefault] = useState(null);
   const [selectedDemoDefault, setSelectedDemoDefault] = useState(null);
@@ -427,63 +428,56 @@ const changeDefault = (id, type) => {
     setGroups((prev) => prev.map((g) => ({ ...g, enabled: !selectAll })));
 
   if (loading)
-    return <div className="text-white">Loading group configuration...</div>;
+    return <div className={`${isDarkMode ? 'text-white' : 'text-black'}`}>Loading group configuration...</div>;
 
   return (
-    <div className="font-sans bg-gray-900 text-gray-200 p-5 max-w-[1050px] mx-auto rounded-lg">
-      {/* ACTIVE CONFIG */}
+    <div className={`font-sans ${isDarkMode ? 'bg-gray-900 text-gray-200' : 'bg-white text-black'} p-5 max-w-[1050px] mx-auto rounded-lg`}>
+      
+      
+      
 {/* ACTIVE CONFIG */}
+
  <section className="mb-8">
-       <h1
-          className="flex items-center gap-2 text-[#f7d774] drop-shadow-[0_0_6px_rgba(255,215,0,0.6)] text-2xl mb-3 cursor-pointer"
-          onClick={() => setShowActiveConfig(!showActiveConfig)}
-        >
-           <Info size={18} />
-            <strong>Current Active Configuration</strong>
-          </h1>
+  <h1
+    className="flex items-center gap-2 text-[#f7d774] drop-shadow-[0_0_6px_rgba(255,215,0,0.6)] text-2xl mb-3 cursor-pointer"
+    onClick={() => setShowActiveConfig(!showActiveConfig)}
+  >
+    <Info size={18} />
+    <strong>Current Active Configuration</strong>
+  </h1>
 
+  {showActiveConfig && (
+    <>
+      <div className="flex flex-col sm:flex-row sm:justify-between mb-2 gap-2 sm:gap-6">
+        <strong>
+          Default Group:{" "}
+          <span className="text-green-400 font-bold">{selectedDefault}</span>
+        </strong>
+        <strong>
+          Demo Group:{" "}
+          <span className="text-sky-300 font-bold">{selectedDemoDefault}</span>
+        </strong>
+      </div>
 
+      <div className={`${isDarkMode ? "bg-gray-800" : "bg-gray-200"} p-2 rounded flex flex-wrap max-h-[500px] overflow-y-auto`}>
+        {groups.map((g) => (
+          <Badge
+            key={g.id}
+            label={g.id}
+            isActive={g.id === selectedDefault || g.id === selectedDemoDefault}
+            isDemo={g.type === "demo"}
+            isVIP={g.label.includes("(VIP)")}
+            isDarkMode={isDarkMode}
+          />
+        ))}
+      </div>
 
-        {showActiveConfig && (
-          <>
-            
-
-            <div className="flex mb-2">
-              <strong className="mr-40">
-                Default Group:{" "}
-                <span className="text-green-400 font-bold">
-                  {selectedDefault}
-                </span>
-              </strong>
-              <strong>
-                Demo Group:{" "}
-                <span className="text-sky-300 font-bold">
-                  {selectedDemoDefault}
-                </span>
-              </strong>
-            </div>
-
-            <div className="bg-gray-800 p-2 rounded flex flex-wrap max-h-[500px] overflow-y-auto">
-              {groups.map((g) => (
-                <Badge
-                  key={g.id}
-                  label={g.id}
-                  isActive={
-                    g.id === selectedDefault ||
-                    g.id === selectedDemoDefault
-                  }
-                  isDemo={g.type === "demo"}
-                  isVIP={g.label.includes("(VIP)")}
-                />
-              ))}
-            </div>
-
-            <div className="mt-2 text-xs text-gray-400">
-              Last Updated: {lastUpdated}
-            </div>
-          </>
-        )}
-      </section>
+      <div className="mt-2 text-xs text-gray-400">
+        Last Updated: {lastUpdated}
+      </div>
+    </>
+  )}
+</section>
 
 
 
@@ -493,31 +487,26 @@ const changeDefault = (id, type) => {
 
       {/* GROUP OPTIONS */}
 <section
-  className="
-    bg-gray-900 
-    rounded-xl 
-    p-6 
-    mt-6 
-    shadow-lg 
-    border-2 
-    border-yellow-400/50 
-    focus-within:border-yellow-400 
-    focus-within:shadow-[0_0_12px_rgba(250,204,21,0.6)] 
-    transition-all 
+  className={`
+    ${isDarkMode ? "bg-gray-900" : "bg-white"}
+    rounded-xl
+    p-6
+    mt-6
+    shadow-lg
+    border-2 border-yellow-400/50
+    focus-within:border-yellow-400
+    focus-within:shadow-[0_0_12px_rgba(250,204,21,0.6)]
+    transition-all
     duration-300
-  "
-  tabIndex={0} // Needed to make focus-within work on the section
+  `}
+  tabIndex={0}
 >
- <h1
-  className="flex items-center gap-2 text-[#f7d774] drop-shadow-[0_0_6px_rgba(255,215,0,0.6)] text-2xl mb-3 font-extrabold cursor-pointer"
->
-  <Info size={18} />
-  <strong>Group Options</strong>
-</h1>
+  <h1 className="flex items-center gap-2 text-[#f7d774] drop-shadow-[0_0_6px_rgba(255,215,0,0.6)] text-2xl mb-3 font-extrabold cursor-pointer">
+    <Info size={18} />
+    <strong>Group Options</strong>
+  </h1>
 
-
-  {/* Select All */}
-  <label className="flex items-center mb-4 text-gray-300 font-medium hover:text-yellow-300 transition-colors duration-200">
+  <label className={`flex items-center mb-4 font-medium hover:text-yellow-300 transition-colors duration-200 ${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>
     <input
       type="checkbox"
       checked={selectAll}
@@ -526,30 +515,27 @@ const changeDefault = (id, type) => {
     />
     Select All Groups
   </label>
-  
- {/* Scrollable Group List */}
-<div className="max-h-[420px] overflow-y-auto pr-3 space-y-3">
+
+  <div className="max-h-[420px] overflow-y-auto pr-3 flex flex-wrap gap-3">
   {groups.map((group) => (
     <div
       key={group.id}
-      className="
-        bg-gray-800 
-        rounded-lg 
-        p-3 
-        border-2
-        border-transparent 
-        ml-2.5 
-        mr-2.5
-        hover:border-yellow-400 
-        hover:shadow-[0_0_8px_rgba(250,204,21,0.5)] 
-        hover:bg-gray-700 
-        transform 
-        hover:scale-[1.01] 
+      className={`
+        ${isDarkMode ? "bg-gray-800 hover:bg-gray-700" : "bg-gray-100 hover:bg-gray-200"}
+        rounded-lg
+        overflow-auto
+        p-3
+        border-2 border-transparent
+        hover:border-yellow-400
+        hover:shadow-[0_0_8px_rgba(250,204,21,0.5)]
+        transform
+        hover:scale-[1.01]
         hover:translate-x-1
-        transition-all 
-        duration-500 
+        transition-all
+        duration-500
         cursor-pointer
-      "
+        w-full   <!-- responsive width -->
+      `}
     >
       <GroupItem
         group={group}
@@ -558,13 +544,13 @@ const changeDefault = (id, type) => {
         onAliasChange={updateAlias}
         selectedDefault={selectedDefault}
         selectedDemoDefault={selectedDemoDefault}
+        isDarkMode={isDarkMode}
       />
     </div>
   ))}
 </div>
-
-
 </section>
+
       
 <div className="flex justify-center mt-5">
   <button
