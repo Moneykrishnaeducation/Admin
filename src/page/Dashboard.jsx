@@ -4,8 +4,6 @@ import Navbar from "../commonComponent/Navbar";
 import { Download } from "lucide-react";
 import { get } from "../utils/api-config";
 import { useTheme } from "../context/ThemeContext";
-
-
 const Dashboard = () => {
   const { isDarkMode } = useTheme();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -50,6 +48,8 @@ const Dashboard = () => {
     loadDashboardData();
   }, []);
 
+
+
   // Map API data to cards + route links
   const stats = statsData
     ? [
@@ -59,12 +59,13 @@ const Dashboard = () => {
         { label: "Total Manager", value: formatValue(statsData.total_managers), to: "/admin" },
         { label: "Total IBs", value: formatValue(statsData.total_ibs), to: "/partnership" },
         { label: "Active MAM Accounts", value: formatValue(statsData.active_mam_accounts), to: "/mamaccount" },
-        { label: "MAM Investor Account", value: formatValue(statsData.mam_investor_accounts), to: "/mamaccount" },
+        { label: "MAM Investor Account", value: formatValue(statsData.mam_investor_accounts), to: "/mamaccount?tab=investor" },
         { label: "Total Prop Accounts", value: formatValue(statsData.total_prop_accounts), to: "/propfirm" },
         { label: "Pending Transactions", value: formatValue(statsData.pending_transactions), to: "/transactions" },
         { label: "Pending Tickets", value: formatValue(statsData.pending_tickets), to: "/tickets" },
         { label: "Pending Requests", value: formatValue(statsData.pending_requests), to: "/pendingrequest" },
-        { label: "Pending Prop Requests", value: 0, to: "/propfirm" },
+        { label: "Pending Prop Requests", value: 0, to: "/propfirm?tab=requests" },
+
       ]
     : [];
 

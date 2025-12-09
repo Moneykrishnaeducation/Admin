@@ -1,4 +1,5 @@
-import React, { useState, useMemo, useCallback } from "react";
+import React, { useState, useMemo, useCallback, useEffect } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import TableStructure from "../commonComponent/TableStructure";
 const sampleMamAccounts = [
   {
@@ -55,6 +56,8 @@ import DisableModal from "../Modals/DisableModal";
 import HistoryModal from "../Modals/HistoryModal";
 
 const MamAccount = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("mam"); // "mam" or "investor"
   const [expandedRows, setExpandedRows] = useState(new Set());
   const [modalAccountId, setModalAccountId] = useState("");
@@ -70,6 +73,14 @@ const MamAccount = () => {
   const [creditOutModalOpen, setCreditOutModalOpen] = useState(false);
   const [disableModalOpen, setDisableModalOpen] = useState(false);
   const [historyModalOpen, setHistoryModalOpen] = useState(false);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const tab = params.get("tab");
+    if (tab && (tab === "mam" || tab === "investor")) {
+      setActiveTab(tab);
+    }
+  }, [location.search]);
 
   const toggleRowExpanded = (row) => {
     setExpandedRows((prev) => {
@@ -200,10 +211,6 @@ const MamAccount = () => {
     { Header: "Amount Invested", accessor: "amountInvested" },
     { Header: "Profit", accessor: "profit" },
   ];
-
-  const data = useMemo(() => {
-    return activeTab === "mam" ? sampleMamAccounts : sampleInvestorAccounts;
-  }, [activeTab]);
 
   const columns = activeTab === "mam" ? columnsMam : columnsInvestor;
 
@@ -344,7 +351,12 @@ const MamAccount = () => {
               ? "bg-yellow-400 text-black"
               : "bg-gray-700 text-yellow-300"
           }`}
-          onClick={() => setActiveTab("mam")}
+          onClick={() => {
+            setActiveTab("mam");
+            const params = new URLSearchParams(location.search);
+            params.set("tab", "mam");
+            navigate(`/mamaccount?${params.toString()}`, { replace: true });
+          }}
         >
           MAM Account
         </button>
@@ -354,7 +366,12 @@ const MamAccount = () => {
               ? "bg-yellow-400 text-black"
               : "bg-gray-700 text-yellow-300"
           }`}
-          onClick={() => setActiveTab("investor")}
+          onClick={() => {
+            setActiveTab("investor");
+            const params = new URLSearchParams(location.search);
+            params.set("tab", "investor");
+            navigate(`/mamaccount?${params.toString()}`, { replace: true });
+          }}
         >
           Investor Account
         </button>
