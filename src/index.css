@@ -1,1 +1,13 @@
 @import "tailwindcss";
+
+/* Animated Gradient Border */
+@keyframes gradientShift {
+  0% { border-color: #ff007f; }    /* Pink */
+  33% { border-color: #ff8c00; }   /* Orange */
+  66% { border-color: #ffea00; }   /* Yellow */
+  100% { border-color: #ff007f; }  /* Pink */
+}
+
+.border-animate {
+  animation: gradientShift 3s infinite linear;
+}
