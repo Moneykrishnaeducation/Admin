@@ -136,7 +136,7 @@ const MailForm = () => {
   }, []);
 
   return (
-    <div className=" p-6 sm:p-8 rounded-2xl shadow-[0px_0px_10px_rgba(255,255,255,0.2),0px_0px_15px_rgba(255,255,0,0.15)] max-w-full sm:max-w-3xl mx-auto mt-8 hover:shadow-[0px_0px_15px_rgba(255,255,255,0.35),0px_0px_20px_rgba(255,215,0,0.25)] transition-shadow duration-300">
+    <div className=" p-6 sm:p-8 rounded-2xl shadow-[0px_0px_10px_rgba(255,255,255,0.2),0px_0px_15px_rgba(255,255,0,0.15)] max-w-5xl w-full sm:max-w-3xl mx-auto mt-8 hover:shadow-[0px_0px_15px_rgba(255,255,255,0.35),0px_0px_20px_rgba(255,215,0,0.25)] transition-shadow duration-300">
       <h2 className={`text-2xl sm:text-3xl font-bold  mb-6 text-center ${
           isDarkMode && "text-yellow-300"
         }`}>Send Email</h2>

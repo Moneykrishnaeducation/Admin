@@ -15,6 +15,7 @@ const PendingDepositModal = ({ visible, onClose, depositData, onApprove, onRejec
     status,
     description,
     fileUrl,
+    source,
   } = depositData;
 
   const footer = (
@@ -68,6 +69,7 @@ const PendingDepositModal = ({ visible, onClose, depositData, onApprove, onRejec
             <Info label="Trading Account ID" value={trading_account_id} />
             <Info label="Amount (USD)" value={`$${amount}`} />
             <Info label="Transaction Type" value={transaction_type} />
+            <Info label="Source" value={source} />
 
             <div className="flex flex-col">
               <span className="text-gray-500 dark:text-gray-400 text-sm">Status</span>

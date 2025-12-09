@@ -289,7 +289,7 @@ const DemoAccount = () => {
   };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="p-6 max-w-9xl mx-auto">
       <TableStructure
         key={refreshKey} /* force remount when refreshKey changes */
         columns={columns}

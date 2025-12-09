@@ -331,7 +331,7 @@ const MamAccount = () => {
   }, [activeTab]);
 
   return (
-    <div className="p-6 max-w-7xl mx-auto relative">
+    <div className="p-6 max-w-9xl mx-auto relative">
       {/* Background blur for table when modal is open */}
       {(depositModalOpen || withdrawModalOpen || creditInModalOpen || creditOutModalOpen || disableModalOpen || historyModalOpen) && (
         <div className="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm z-40"></div>

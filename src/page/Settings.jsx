@@ -155,7 +155,7 @@ const Settings = () => {
 
       <form
         onSubmit={handleSubmit}
-        className="bg-black p-4 sm:p-6 md:p-8 rounded-2xl shadow-[0px_0px_10px_rgba(255,255,255,0.2),0px_0px_15px_rgba(255,0,0,0.15)] w-full max-w-md sm:max-w-lg hover:shadow-[0px_0px_15px_rgba(255,255,255,0.35),0px_0px_20px_rgba(255,215,0,0.25)] transition-shadow duration-300"
+        className="bg-black p-4 sm:p-6 md:p-8 rounded-2xl shadow-[0px_0px_10px_rgba(255,255,255,0.2),0px_0px_15px_rgba(255,0,0,0.15)] w-full max-w-8xl sm:max-w-lg hover:shadow-[0px_0px_15px_rgba(255,255,255,0.35),0px_0px_20px_rgba(255,215,0,0.25)] transition-shadow duration-300"
       >
         {loading ? (
           <div className="text-yellow-300">Loading server settings...</div>

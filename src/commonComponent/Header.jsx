@@ -168,13 +168,14 @@ const Header = ({ isSidebarOpen, setIsSidebarOpen }) => {
         isDarkMode ? "text-white" : "text-black"
       }`}
     /> */}
-    <span
-      className={`text-xs md:text-lg mt-1 ${
-        isDarkMode ? "text-white" : "text-black"
-      }`}
-    >
-      {userName}
-    </span>
+   <span
+  className={`text-base md:text-xl mt-1 ${
+    isDarkMode ? "text-white" : "text-black"
+  }`}
+>
+  {userName}
+</span>
+
   </div>
 </div>
 
