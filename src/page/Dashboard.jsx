@@ -157,7 +157,7 @@ const Dashboard = () => {
                 className="
                   p-4 sm:p-6 rounded-xl text-center
                   bg-gray-300
-                  border-l-4 border-animate
+                  border-l-6 border-animate
                   shadow-[0px_0px_6px_rgba(0,0,0,0.2)]
                   hover:shadow-[0px_0px_10px_rgba(255,215,0,0.25)]
                   transition-all duration-300
