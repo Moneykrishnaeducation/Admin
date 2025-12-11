@@ -23,7 +23,8 @@ const Login = () => {
 
     // Make API request to the Django backend
     try {
-      const response = await axios.post('http://admin.localhost:8000/api/login/', {
+      const apiBaseUrl = `${window.location.protocol}//${window.location.host}`;
+      const response = await axios.post(`${apiBaseUrl}/api/login/`, {
         email,
         password,
       });
