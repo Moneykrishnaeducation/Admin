@@ -147,7 +147,7 @@ const AdminManagerList = () => {
         Admin Management Panel
       </h1>
 
-      <marquee className="px-6 py-2 text-yellow-400 font-semibold" direction="left">
+      <marquee className={`px-6 py-2 font-semibold ${isDarkMode ? 'text-yellow-400' : 'text-black-300'}`} direction="left">
         Click the "Create" button to add an Admin or Manager
       </marquee>
 
@@ -214,14 +214,14 @@ const AdminManagerList = () => {
                 <td className={`p-3 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{item.email}</td>
                 <td className="p-3">
                   <span
-                    className={`px-3 py-1 rounded-md text-sm font-bold ${
+                    className={`px-3 py-1 text-sm font-bold ${
                       item.role === "Admin"
                         ? isDarkMode
-                          ? "bg-blue-500 text-white"
-                          : "bg-blue-600 text-white"
+                          ? "text-blue-400"
+                          : "text-blue-600"
                         : isDarkMode
-                        ? "bg-green-500 text-white"
-                        : "bg-green-600 text-white"
+                        ? "text-green-400"
+                        : "text-green-600"
                     }`}
                   >
                     {item.role}

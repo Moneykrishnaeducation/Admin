@@ -145,13 +145,13 @@ function GroupItem({
 }
 
 /* ---------------- GUIDE TOGGLE ---------------- */
-function GroupConfigurationGuideToggle() {
+function GroupConfigurationGuideToggle({ isDarkMode }) {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
     <section className="mt-5">
       <h1
-        className="flex items-center gap-2 font-bold cursor-pointer text-2xl 
+        className="flex items-center gap-2 font-bold cursor-pointer text-2xl
              text-[#f7d774] drop-shadow-[0_0_6px_rgba(255,215,0,0.6)]"
         onClick={() => setIsOpen(!isOpen)}
       >
@@ -163,28 +163,28 @@ function GroupConfigurationGuideToggle() {
 
       {isOpen && (
         <div className="mt-3">
-          <ol className="ml-5 list-decimal text-yellow-400 font-normal">
-            <li className="text-white">
-              <strong className="text-yellow-400">Alias Field:</strong>{" "}
+          <ol className={`ml-5 list-decimal font-normal ${isDarkMode ? 'text-yellow-400' : 'text-yellow-600'}`}>
+            <li className={isDarkMode ? 'text-white' : 'text-black'}>
+              <strong className={isDarkMode ? 'text-yellow-400' : 'text-yellow-400'}>Alias Field:</strong>{" "}
               Optional display name for group selection.
             </li>
-            <li className="text-white">
-              <strong className="text-yellow-400">Default Group:</strong> Select
+            <li className={isDarkMode ? 'text-white' : 'text-black'}>
+              <strong className={isDarkMode ? 'text-yellow-400' : 'text-yellow-400'}>Default Group:</strong> Select
               one group as default for real/live accounts.
             </li>
-            <li className="text-white">
-              <strong className="text-yellow-400">Demo Default Group:</strong>{" "}
+            <li className={isDarkMode ? 'text-white' : 'text-black'}>
+              <strong className={isDarkMode ? 'text-yellow-400' : 'text-yellow-400'}>Demo Default Group:</strong>{" "}
               Select one group as default for demo accounts.
             </li>
-            <li className="text-white">
-              <strong className="text-yellow-400">Save Configuration:</strong>{" "}
+            <li className={isDarkMode ? 'text-white' : 'text-black'}>
+              <strong className={isDarkMode ? 'text-yellow-400' : 'text-yellow-400'}>Save Configuration:</strong>{" "}
               Click "Save Configuration" to apply all changes.
             </li>
           </ol>
-          <p className="mt-4 italic text-white">
-            Note: The <strong className="text-yellow-400">"Default"</strong>{" "}
+          <p className={`mt-4 italic ${isDarkMode ? 'text-white' : 'text-black'}`}>
+            Note: The <strong className={isDarkMode ? 'text-yellow-400' : 'text-yellow-400'}>"Default"</strong>{" "}
             group will be used for real accounts, while{" "}
-            <strong className="text-yellow-400">"Demo Default"</strong> will be
+            <strong className={isDarkMode ? 'text-yellow-400' : 'text-yellow-600'}>"Demo Default"</strong> will be
             used for demo accounts.
           </p>
         </div>
@@ -482,7 +482,7 @@ const changeDefault = (id, type) => {
 
 
       {/* GUIDE */}
-      <GroupConfigurationGuideToggle />
+      <GroupConfigurationGuideToggle isDarkMode={isDarkMode} />
 
 
       {/* GROUP OPTIONS */}

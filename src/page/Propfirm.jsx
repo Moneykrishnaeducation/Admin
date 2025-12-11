@@ -1,8 +1,22 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import TableStructure from "../commonComponent/TableStructure";
+import { useLocation, useNavigate } from "react-router-dom";
 
-const TabsPage = () => {
-  const [activeTab, setActiveTab] = useState("Packages");
+const PropFirm = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // Initialize activeTab based on URL parameter
+  const getInitialTab = () => {
+    const params = new URLSearchParams(location.search);
+    const tab = params.get("tab");
+    if (tab && ["packages", "prop traders", "requests"].includes(tab.toLowerCase())) {
+      return tab.charAt(0).toUpperCase() + tab.slice(1).toLowerCase();
+    }
+    return "Packages";
+  };
+
+  const [activeTab, setActiveTab] = useState(getInitialTab);
   const [expandedRows, setExpandedRows] = useState(new Set());
   const [toggledStatuses, setToggledStatuses] = useState(new Set());
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -81,6 +95,21 @@ const TabsPage = () => {
     { id: 3, user: "Charlie", email: "charlie@example.com", package: "Gold Challenge", status: "Pending", createdAt: "Jan 3, 2025, 07:00 AM" },
   ];
 
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const tab = params.get("tab");
+    if (tab && ["packages", "prop traders", "requests"].includes(tab.toLowerCase())) {
+      const formattedTab = tab.charAt(0).toUpperCase() + tab.slice(1).toLowerCase();
+      setActiveTab(formattedTab);
+    }
+  }, [location.search]);
+
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    const tabParam = tab.toLowerCase().replace(" ", "");
+    navigate(`/propfirm?tab=${tabParam}`, { replace: true });
+  };
+
   const toggleExpand = (id) => {
     const newExpanded = new Set(expandedRows);
     if (newExpanded.has(id)) {
@@ -102,10 +131,6 @@ const TabsPage = () => {
       return newSet;
     });
   };
-
-
-
-  // Removed all local filtering, pagination, and search input handlers since TableStructure does that internally now
 
   const handleViewRequest = (req) => {
     setSelectedRequest(req);
@@ -163,31 +188,31 @@ const TabsPage = () => {
     handleCloseModal();
   };
 
-    // Define columns for each tab to pass to TableStructure
-    const columnsPackages = [
-      { Header: "Package Name", accessor: "name" },
-      { Header: "Price", accessor: "price" },
-      { Header: "Bonus Fund", accessor: "bonusFund" },
-      { Header: "Tradable Fund", accessor: "tradableFund" },
-      { Header: "Leverage", accessor: "leverage" },
-      {
-        Header: "Status",
-        accessor: "status",
-        Cell: (cellValue) => cellValue ? "Active" : "Inactive",
-      },
-      {
-        Header: "Actions",
-        accessor: "actions",
-        Cell: (cellValue, row) => (
-          <button
-            onClick={() => toggleExpand(row.id)}
-            className="text-yellow-400 hover:text-yellow-300"
-          >
-            {expandedRows.has(row.id) ? "▼" : "▶"}
-          </button>
-        )
-      }
-    ];
+  // Define columns for each tab to pass to TableStructure
+  const columnsPackages = [
+    { Header: "Package Name", accessor: "name" },
+    { Header: "Price", accessor: "price" },
+    { Header: "Bonus Fund", accessor: "bonusFund" },
+    { Header: "Tradable Fund", accessor: "tradableFund" },
+    { Header: "Leverage", accessor: "leverage" },
+    {
+      Header: "Status",
+      accessor: "status",
+      Cell: (cellValue) => cellValue ? "Active" : "Inactive",
+    },
+    {
+      Header: "Actions",
+      accessor: "actions",
+      Cell: (cellValue, row) => (
+        <button
+          onClick={() => toggleExpand(row.id)}
+          className="text-yellow-400 hover:text-yellow-300"
+        >
+          {expandedRows.has(row.id) ? "▼" : "▶"}
+        </button>
+      )
+    }
+  ];
 
   const columnsPropTraders = [
     { Header: "ID", accessor: "id" },
@@ -302,7 +327,7 @@ const TabsPage = () => {
           {["Packages", "Prop Traders", "Requests"].map((tab) => (
             <button
               key={tab}
-              onClick={() => setActiveTab(tab)}
+              onClick={() => handleTabChange(tab)}
               className={`px-6 py-3 rounded-md transition-all ${
                 activeTab === tab
                   ? "bg-yellow-500 text-black shadow-lg"
@@ -486,4 +511,4 @@ const TabsPage = () => {
   );
 };
 
-export default TabsPage;
+export default PropFirm;
