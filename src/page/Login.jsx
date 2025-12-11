@@ -4,6 +4,15 @@ import axios from 'axios';
 import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 
+// Ensure axios sends cookies for CSRF-protected endpoints
+axios.defaults.withCredentials = true;
+
+// Small helper to read a cookie value (used for CSRF token)
+function getCookie(name) {
+  const match = document.cookie.match(new RegExp('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)'));
+  return match ? decodeURIComponent(match.pop()) : '';
+}
+
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -46,10 +55,11 @@ const Login = () => {
 
       try {
         const apiBaseUrl = `${window.location.protocol}//${window.location.host}`;
-        const response = await axios.post(`${apiBaseUrl}/api/login/`, {
-          email,
-          password,
-        });
+        const response = await axios.post(
+          `${apiBaseUrl}/api/login/`,
+          { email, password },
+          { headers: { 'X-CSRFToken': getCookie('csrftoken') }, withCredentials: true }
+        );
 
         if (response.data.verification_required) {
           setVerificationRequired(true);
@@ -79,12 +89,37 @@ const Login = () => {
         setLoading(true);
         setVerificationError('');
         const apiBaseUrl = `${window.location.protocol}//${window.location.host}`;
-        await axios.post(`${apiBaseUrl}/api/verify-login-otp/`, {
-          email: signInEmail,
-          code: verificationCode,
-        });
+        const response = await axios.post(
+          `${apiBaseUrl}/api/verify-login-otp/`,
+          { email: signInEmail, code: verificationCode },
+          { headers: { 'X-CSRFToken': getCookie('csrftoken') }, withCredentials: true }
+        );
+
+        if (response.data?.access && response.data?.refresh) {
+          localStorage.setItem('access_token', response.data.access);
+          localStorage.setItem('refresh_token', response.data.refresh);
+          localStorage.setItem('user', JSON.stringify(response.data.user || {}));
+          setShowVerificationModal(false);
+          const userData = response.data.user || JSON.parse(localStorage.getItem('user') || '{}');
+          const role = userData?.role || 'manager';
+          if (role === 'admin') navigate('/dashboard');
+          else navigate('/manager/dashboard');
+          return;
+        }
+
+        // Fallback: try logging in using stored password
+        const loginResp = await axios.post(
+          `${apiBaseUrl}/api/login/`,
+          { email: signInEmail, password },
+          { headers: { 'X-CSRFToken': getCookie('csrftoken') }, withCredentials: true }
+        );
+        localStorage.setItem('access_token', loginResp.data.access);
+        localStorage.setItem('refresh_token', loginResp.data.refresh);
+        localStorage.setItem('user', JSON.stringify(loginResp.data.user || {}));
         setShowVerificationModal(false);
-        // TODO: after verification, trigger login refresh or redirect as needed
+        const role = loginResp.data.user?.role || 'manager';
+        if (role === 'admin') navigate('/dashboard');
+        else navigate('/manager/dashboard');
       } catch (err) {
         setVerificationError(err.response?.data?.error || 'OTP verification failed');
       } finally {
@@ -96,7 +131,11 @@ const Login = () => {
       try {
         setLoading(true);
         const apiBaseUrl = `${window.location.protocol}//${window.location.host}`;
-        await axios.post(`${apiBaseUrl}/api/resend-login-otp/`, { email: signInEmail });
+        await axios.post(
+          `${apiBaseUrl}/api/resend-login-otp/`,
+          { email: signInEmail },
+          { headers: { 'X-CSRFToken': getCookie('csrftoken') }, withCredentials: true }
+        );
         setResendCooldown(60);
         const interval = setInterval(() => {
           setResendCooldown((c) => {
@@ -180,33 +219,78 @@ const Login = () => {
           </div>
 
           {showVerificationModal && (
-            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-              <div className="bg-black/90 rounded-2xl p-6 w-full max-w-md mx-4 border border-[#D4AF37]">
-                <div className="text-center">
-                  <h2 className="text-2xl font-bold text-[#D4AF37] mb-4">Verify Your Email</h2>
-                  <p className="text-[#bfb38a] mb-4">Enter the OTP sent to {signInEmail}</p>
+            <div
+              role="dialog"
+              aria-modal="true"
+              style={{
+                position: 'fixed',
+                left: 0,
+                top: 0,
+                right: 0,
+                bottom: 0,
+                background: 'rgba(0,0,0,0.65)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                zIndex: 9999,
+                padding: 16,
+              }}
+            >
+              <div
+                style={{
+                  width: '100%',
+                  maxWidth: 520,
+                  background: '#0b0b0c',
+                  borderRadius: 14,
+                  padding: 20,
+                  border: '1px solid rgba(212,175,55,0.5)',
+                  boxShadow: '0 10px 40px rgba(0,0,0,0.6)',
+                }}
+              >
+                <div style={{ textAlign: 'center' }}>
+                  <h2 style={{ color: '#D4AF37', margin: '0 0 8px', letterSpacing: '0.12em' }}>Verify Your Email</h2>
+                  <p style={{ color: '#bfb38a', margin: '0 0 14px' }}>Enter the OTP sent to {signInEmail}</p>
 
                   <input
                     type="text"
                     placeholder="Enter OTP"
                     value={verificationCode}
                     onChange={(e) => setVerificationCode(e.target.value)}
-                    className="w-full rounded-2xl bg-white/5 text-[#f6f4f0] px-4 py-2 outline-none border text-center tracking-widest mb-4"
+                    style={{
+                      width: '100%',
+                      borderRadius: 20,
+                      background: 'rgba(255,255,255,0.04)',
+                      color: '#fff',
+                      padding: '12px 16px',
+                      textAlign: 'center',
+                      marginBottom: 12,
+                      border: '1px solid rgba(255,255,255,0.04)'
+                    }}
                     maxLength={6}
                   />
 
-                  {verificationError && <p className="text-red-400 text-sm mb-4">{verificationError}</p>}
+                  {verificationError && (
+                    <p style={{ color: '#ff8a8a', fontSize: 13, margin: '6px 0 10px' }}>{verificationError}</p>
+                  )}
 
-                  <div className="text-sm text-[#bfb38a] mb-4">
+                  <div style={{ color: '#bfb38a', fontSize: 13, marginBottom: 12 }}>
                     OTP expires in: {Math.floor(otpExpiry / 60)}:{(otpExpiry % 60).toString().padStart(2, '0')}
                   </div>
 
-                  <div className="flex justify-center mb-4">
+                  <div style={{ display: 'flex', justifyContent: 'center', gap: 12, marginBottom: 8 }}>
                     <button
                       onClick={handleVerifyLoginOtp}
                       disabled={loading || verificationCode.length < 6}
-                      className="rounded-full bg-gradient-to-b from-[#ffd66b] to-[#d4af37] text-black font-bold px-6 py-2 disabled:opacity-50"
                       type="button"
+                      style={{
+                        borderRadius: 28,
+                        background: 'linear-gradient(180deg,#ffd66b,#d4af37)',
+                        color: '#000',
+                        fontWeight: 700,
+                        padding: '10px 28px',
+                        border: 'none',
+                        cursor: loading || verificationCode.length < 6 ? 'not-allowed' : 'pointer'
+                      }}
                     >
                       {loading ? 'Verifying...' : 'Verify'}
                     </button>
@@ -216,7 +300,13 @@ const Login = () => {
                     onClick={handleResendLoginOtp}
                     disabled={resendCooldown > 0 || loading}
                     type="button"
-                    className="text-[#D4AF37] hover:underline disabled:opacity-50"
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      color: '#D4AF37',
+                      textDecoration: 'underline',
+                      cursor: resendCooldown > 0 || loading ? 'not-allowed' : 'pointer'
+                    }}
                   >
                     {resendCooldown > 0 ? `Resend OTP in ${resendCooldown}s` : 'Resend OTP'}
                   </button>
