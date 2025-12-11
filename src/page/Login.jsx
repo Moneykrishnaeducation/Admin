@@ -13,6 +13,31 @@ function getCookie(name) {
   return match ? decodeURIComponent(match.pop()) : '';
 }
 
+// Ensure a CSRF cookie is present. Try a set of common endpoints to trigger the server
+// to set a `csrftoken` cookie. This is best-effort — if your backend exposes a
+// dedicated csrf endpoint (e.g. `/api/get-csrf/`) prefer that and update the list.
+async function ensureCsrf(baseUrl) {
+  if (getCookie('csrftoken')) return;
+  const endpoints = [
+    '/api/get-csrf/',
+    '/api/get_csrf/',
+    '/api/csrf/',
+    '/csrf/',
+    '/api/auth/csrf/',
+    '/'
+  ];
+
+  for (const ep of endpoints) {
+    try {
+      // send a GET to attempt to receive a Set-Cookie: csrftoken
+      await axios.get(`${baseUrl}${ep}`, { withCredentials: true });
+    } catch (e) {
+      // ignore errors — some endpoints may 404
+    }
+    if (getCookie('csrftoken')) return;
+  }
+}
+
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -55,6 +80,7 @@ const Login = () => {
 
       try {
         const apiBaseUrl = `${window.location.protocol}//${window.location.host}`;
+        await ensureCsrf(apiBaseUrl);
         const response = await axios.post(
           `${apiBaseUrl}/api/login/`,
           { email, password },
@@ -89,6 +115,7 @@ const Login = () => {
         setLoading(true);
         setVerificationError('');
         const apiBaseUrl = `${window.location.protocol}//${window.location.host}`;
+        await ensureCsrf(apiBaseUrl);
         const response = await axios.post(
           `${apiBaseUrl}/api/verify-login-otp/`,
           { email: signInEmail, code: verificationCode },
@@ -131,6 +158,7 @@ const Login = () => {
       try {
         setLoading(true);
         const apiBaseUrl = `${window.location.protocol}//${window.location.host}`;
+        await ensureCsrf(apiBaseUrl);
         await axios.post(
           `${apiBaseUrl}/api/resend-login-otp/`,
           { email: signInEmail },
