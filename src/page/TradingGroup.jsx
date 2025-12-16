@@ -29,6 +29,7 @@ function GroupItem({
   onChange,
   onRadioChange,
   onAliasChange,
+  onAliasLock,
   selectedDefault,
   selectedDemoDefault,
   isDarkMode,
@@ -67,15 +68,15 @@ function GroupItem({
 
 
      
-    {/* Default */}
+{/* Default */}
 <div className="ml-3">
   <input
     type="radio"
-  checked={selectedDefault === group.id}
-  onChange={() => onRadioChange(group.id, "default")}
-  name="defaultGroup"
-  id={`default_${group.id}`}
-    className="peer cursor-pointer accent-yellow-400 checked:shadow-[0_0_6px_#facc15]"
+    checked={selectedDefault === group.id}
+    onChange={() => onRadioChange(group.id, "default")}
+    name="defaultGroup"
+    id={`default_${group.id}`}
+    className="peer cursor-pointer accent-yellow-400 checked:shadow-[0_0_6px_rgba(250,204,21,1)]"
   />
   <label
     htmlFor={`default_${group.id}`}
@@ -89,11 +90,11 @@ function GroupItem({
 <div className="ml-3">
   <input
     type="radio"
-  checked={selectedDemoDefault === group.id}
-  onChange={() => onRadioChange(group.id, "demoDefault")}
-  name="demoDefaultGroup"
-  id={`demoDefault_${group.id}`}
-    className="peer cursor-pointer accent-yellow-400 checked:shadow-[0_0_6px_#facc15]"
+    checked={selectedDemoDefault === group.id}
+    onChange={() => onRadioChange(group.id, "demoDefault")}
+    name="demoDefaultGroup"
+    id={`demoDefault_${group.id}`}
+    className="peer cursor-pointer accent-yellow-400 checked:shadow-[0_0_6px_rgba(250,204,21,1)]"
   />
   <label
     htmlFor={`demoDefault_${group.id}`}
@@ -123,8 +124,9 @@ function GroupItem({
     type="text"
     value={group.alias}
     placeholder="Alias"
+    disabled={group.aliasLocked}
     onChange={(e) => onAliasChange(group.id, e.target.value)}
-    disabled={group.aliasLocked}     // ⬅ DISABLE HERE
+    onBlur={() => onAliasLock(group.id)}   // 🔒 LOCK WHEN LEAVING INPUT
     className={`
       ml-1
       ${isDarkMode ? 'bg-gray-800 text-white border-gray-600' : 'bg-white text-black border-gray-300'}
@@ -136,10 +138,15 @@ function GroupItem({
       outline-none
       transition-all
       duration-200
-      ${group.aliasLocked ? "opacity-50 cursor-not-allowed" : "focus:border-yellow-400 focus:shadow-[0_0_8px_rgba(250,204,21,0.6)]"}
+      ${
+        group.aliasLocked
+          ? "opacity-50 cursor-not-allowed"
+          : "focus:border-yellow-400 focus:shadow-[0_0_8px_rgba(250,204,21,0.6)]"
+      }
     `}
   />
 </div>
+
     </div>
   );
 }
@@ -234,6 +241,7 @@ export default function GroupConfiguration() {
           type: "real",
           enabled: true,
           alias: g.alias || "",
+          aliasLocked: false,
         }));
 
         const demoGroups = config.demo_groups.map((g) => ({
@@ -242,6 +250,7 @@ export default function GroupConfiguration() {
           type: "demo",
           enabled: true,
           alias: g.alias || "",
+          aliasLocked: false,
         }));
 
         setGroups([...realGroups, ...demoGroups]);
@@ -264,56 +273,7 @@ export default function GroupConfiguration() {
     fetchCurrentGroups();
   }, [fetchCurrentGroups]);
 
-  /* ---------------- FETCH AVAILABLE GROUPS FOR EDITING ---------------- */
-  const fetchAvailableGroups = useCallback(async () => {
-    const endpoint = "/api/available-groups/";
-    try {
-      const token =
-        typeof window !== "undefined"
-          ? localStorage.getItem("jwt_token") ||
-            localStorage.getItem("access_token")
-          : null;
 
-      const headers = {
-        "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      };
-
-      const res = await fetch(endpoint, { credentials: "include", headers });
-      if (!res.ok)
-        throw new Error(`Failed to fetch ${endpoint}: ${res.status}`);
-
-      const data = await res.json();
-
-      if (data.success && data.groups) {
-        
-     setGroups(
-          data.groups.map((g) => ({
-            id: g.id,
-            label: g.label,
-            type: g.is_demo ? "demo" : "real",
-            enabled: g.enabled,
-            alias: g.alias || "",
-            is_default: g.is_default,
-            is_demo_default: g.is_demo_default,
-          }))
-        );
-
-
-        setSelectedDefault(
-          data.groups.find((g) => g.is_default)?.id || null
-        );
-        setSelectedDemoDefault(
-          data.groups.find((g) => g.is_demo_default)?.id || null
-        );
-        setLastUpdated(new Date().toLocaleString());
-      }
-    } catch (err) {
-      console.error("Failed to fetch groups:", err);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
 
 
 
@@ -397,10 +357,7 @@ const payloadGroups = groups.map((g) => ({
 
 
 
-  /* Load editable groups after current active configuration */
-  useEffect(() => {
-    fetchAvailableGroups();
-  }, [fetchAvailableGroups]);
+
 
   /* ---------------- HANDLERS ---------------- */
   const toggleEnable = (id) =>
@@ -421,6 +378,18 @@ const changeDefault = (id, type) => {
     setGroups((prev) =>
       prev.map((g) => (g.id === id ? { ...g, alias } : g))
     );
+
+ const onAliasLock = (groupId) => {
+  setGroups((prev) =>
+    prev.map((g) =>
+      g.id === groupId
+        ? { ...g, aliasLocked: true }
+        : g
+    )
+  );
+};
+
+
 
 
   const selectAll = groups.every((g) => g.enabled);
@@ -534,7 +503,7 @@ const changeDefault = (id, type) => {
         transition-all
         duration-500
         cursor-pointer
-        w-full   <!-- responsive width -->
+        w-full
       `}
     >
       <GroupItem
@@ -542,6 +511,7 @@ const changeDefault = (id, type) => {
         onChange={toggleEnable}
         onRadioChange={changeDefault}
         onAliasChange={updateAlias}
+        onAliasLock={onAliasLock}
         selectedDefault={selectedDefault}
         selectedDemoDefault={selectedDemoDefault}
         isDarkMode={isDarkMode}
