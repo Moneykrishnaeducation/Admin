@@ -12,6 +12,7 @@ import {
   Repeat,
   Calendar,
   Headphones,
+  X,
 } from "lucide-react";
 
 const Navbar = ({ isSidebarOpen, setIsSidebarOpen }) => {
@@ -19,27 +20,29 @@ const Navbar = ({ isSidebarOpen, setIsSidebarOpen }) => {
   const location = useLocation();
   const [isMobileView, setIsMobileView] = React.useState(false);
 
-  // Get user role from localStorage
+  // User role
   const userData = JSON.parse(localStorage.getItem("user"));
   const role = userData?.role || "manager";
 
+  // Detect screen size
   React.useEffect(() => {
-    // Function to check window size
     const handleResize = () => {
-      setIsMobileView(window.innerWidth < 900); // Tailwind mobile breakpoint md is 768px
+      const isMobile = window.innerWidth < 1024;
+      setIsMobileView(isMobile);
+
+      // Auto-open sidebar on desktop
+      if (!isMobile) {
+        setIsSidebarOpen(true);
+      }
     };
 
-    // Initial check
     handleResize();
-
-    // Add resize listener
     window.addEventListener("resize", handleResize);
-
-    // Cleanup listener on unmount
     return () => window.removeEventListener("resize", handleResize);
-  }, []);
+  }, [setIsSidebarOpen]);
 
-  // Define menu items for admin (all items)
+  /* ---------------- Menu Definitions ---------------- */
+
   const adminMenuItems = [
     { path: "/dashboard", icon: Home, label: "Dashboard" },
     { path: "/user", icon: Users, label: "User" },
@@ -57,7 +60,6 @@ const Navbar = ({ isSidebarOpen, setIsSidebarOpen }) => {
     { path: "/settings", icon: CreditCard, label: "Settings" },
   ];
 
-  // Define menu items for manager (subset)
   const managerMenuItems = [
     { path: "/dashboard", icon: Home, label: "Dashboard" },
     { path: "/user", icon: Users, label: "User" },
@@ -68,61 +70,82 @@ const Navbar = ({ isSidebarOpen, setIsSidebarOpen }) => {
     { path: "/activities", icon: Calendar, label: "Activities" },
   ];
 
-  // Select menu items based on role and adjust paths for manager
   const basePath = role === "manager" ? "/manager" : "";
-  const menuItems = (role === "admin" ? adminMenuItems : managerMenuItems).map(item => ({
-    ...item,
-    path: basePath + item.path
-  }));
+  const menuItems = (role === "admin" ? adminMenuItems : managerMenuItems).map(
+    (item) => ({
+      ...item,
+      path: basePath + item.path,
+    })
+  );
+
+  /* ---------------- Render ---------------- */
 
   return (
-    <nav
-      className={`fixed top-0 left-0 h-screen w-[60vw] md:w-[40vw] lg:w-[16vw] ${
-        isDarkMode ? "bg-black text-white" : "bg-white text-black"
-      } px-3 py-3 z-50 shadow-md overflow-y-auto ${
-        isSidebarOpen ? "translate-x-0" : "-translate-x-full"
-      }`}
-    >
-      {/* Logo */}
-      <div id="logo" className="mb-4">
-        <Link to="/dashboard" onClick={() => setIsSidebarOpen(true)}>
-          <img
-            className="h-10 object-contain mx-auto cursor-pointer hover:scale-105 transition-transform duration-300"
-            src="https://vtindex.com/img/logo/logo.svg"
-            alt="Logo"
-          />
-        </Link>
-      </div>
+    <>
+      {/* Mobile Overlay */}
+      {isMobileView && isSidebarOpen && (
+        <div
+          onClick={() => setIsSidebarOpen(false)}
+          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+        />
+      )}
 
-      {/* Navigation Links */}
-      <div id="nav-content" className="flex flex-col gap-2">
-        {menuItems.map((item) => {
-          const isActive = location.pathname === item.path;
-          const Icon = item.icon;
+      <nav
+        className={`nav-1 fixed top-0 left-0 h-screen z-50 overflow-y-auto transition-transform duration-300
+          ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"}
+          w-[70vw] sm:w-[50vw] md:w-[40vw] lg:w-[18vw]
+          ${isDarkMode ? "bg-black text-white" : "bg-white text-black"}
+          shadow-lg px-3 py-3`}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between mb-4">
+          <Link to="/dashboard">
+            <img
+              className="h-10 object-contain cursor-pointer"
+              src="https://vtindex.com/img/logo/logo.svg"
+              alt="Logo"
+            />
+          </Link>
 
-          return (
-            <Link
-              key={item.path}
-              to={item.path}
-              onClick={isMobileView ? () => setIsSidebarOpen(false) : undefined}
-              className={`flex items-center gap-2.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-300 relative border
-                ${
-                  isActive
-                    ? "bg-yellow-600 text-black shadow-[0_0_8px_#FFD700]"
-                    : "border-transparent hover:bg-yellow-500 hover:text-black hover:border-white"
-                } `}
-            >
-              <Icon
-                className={`text-lg relative z-10 ${
-                  isActive ? "text-black" : "text-yellow-400"
-                } transition-all duration-300`}
-              />
-              <span className="relative z-10">{item.label}</span>
-            </Link>
-          );
-        })}
-      </div>
-    </nav>
+          {/* Close button (mobile only) */}
+          {isMobileView && (
+            <button onClick={() => setIsSidebarOpen(false)}>
+              <X />
+            </button>
+          )}
+        </div>
+
+        {/* Navigation */}
+        <div className="flex flex-col gap-2">
+          {menuItems.map((item) => {
+            const isActive = location.pathname.startsWith(item.path);
+            const Icon = item.icon;
+
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                onClick={isMobileView ? () => setIsSidebarOpen(false) : undefined}
+                className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition
+                  ${
+                    isActive
+                      ? "bg-yellow-500 text-black shadow-md"
+                      : "hover:bg-yellow-500 hover:text-black"
+                  }`}
+              >
+                <Icon
+                  className={`${
+                    isActive ? "text-black" : "text-yellow-400"
+                  }`}
+                  size={18}
+                />
+                {item.label}
+              </Link>
+            );
+          })}
+        </div>
+      </nav>
+    </>
   );
 };
 

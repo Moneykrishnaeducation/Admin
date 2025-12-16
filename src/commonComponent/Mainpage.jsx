@@ -5,20 +5,49 @@ import ChatBot from './ChatBox';
 
 const Main = ({ isSidebarOpen, setIsSidebarOpen, children }) => {
   const { isDarkMode } = useTheme();
-  const [isMobile, setIsMobile] = useState(false);
+  const [isMobileView, setIsMobileView] = useState(false);
 
   useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768);
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
+    const handleResize = () => {
+      const isMobile = window.innerWidth < 1024;
+      setIsMobileView(isMobile);
+
+      // Auto open sidebar on desktop
+      if (!isMobile) {
+        setIsSidebarOpen(true);
+      }
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [setIsSidebarOpen]);
 
   return (
-    <div className={`w-full ${isSidebarOpen ? 'lg:ml-[16vw]' : ''}`}>
-      <Header isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} />
-      <ChatBot/>
-      <div onClick={isMobile ? () => setIsSidebarOpen(false) : undefined} className={`overflow-auto h-[90vh] ${isDarkMode ? 'bg-black' : 'bg-white'} transition-all duration-300 ease-in-out `}>{children}</div>
+    <div
+      className={`w-full transition-all duration-300
+        ${!isMobileView && isSidebarOpen ? 'lg:ml-[18vw]' : 'ml-0'}
+      `}
+    >
+      {/* Header */}
+      <Header
+        isSidebarOpen={isSidebarOpen}
+        setIsSidebarOpen={setIsSidebarOpen}
+      />
+
+      {/* ChatBot */}
+      <ChatBot />
+
+      {/* Main Content */}
+      <div
+        onClick={isMobileView ? () => setIsSidebarOpen(false) : undefined}
+        className={`overflow-auto h-[calc(100vh-4rem)]
+          ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'}
+          transition-all duration-300 ease-in-out
+        `}
+      >
+        {children}
+      </div>
     </div>
   );
 };

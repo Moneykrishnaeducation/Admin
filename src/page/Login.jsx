@@ -78,6 +78,37 @@ const Login = () => {
       return () => clearInterval(t);
     }, [showVerificationModal]);
 
+    // Ensure CSRF cookie is present on mount and attach a request interceptor
+    useEffect(() => {
+      const apiBaseUrl = `${window.location.protocol}//${window.location.host}`;
+      // set base URL and ensure cookies are sent
+      axios.defaults.withCredentials = true;
+      axios.defaults.baseURL = apiBaseUrl;
+
+      // Interceptor adds X-CSRFToken header for state-changing requests
+      const interceptor = axios.interceptors.request.use(
+        (config) => {
+          const method = (config.method || '').toLowerCase();
+          if (['post', 'put', 'patch', 'delete'].includes(method)) {
+            const token = getCookie(axios.defaults.xsrfCookieName || 'csrftoken');
+            if (token) {
+              config.headers = { ...(config.headers || {}), [axios.defaults.xsrfHeaderName || 'X-CSRFToken']: token };
+            } else {
+              // Try to obtain a csrf cookie if missing
+              ensureCsrf(apiBaseUrl).catch(() => {});
+            }
+          }
+          return config;
+        },
+        (err) => Promise.reject(err)
+      );
+
+      // Prime CSRF cookie once on mount
+      ensureCsrf(apiBaseUrl).catch(() => {});
+
+      return () => axios.interceptors.request.eject(interceptor);
+    }, []);
+
     const handleSubmit = async (e) => {
       e.preventDefault();
       setIsLoading(true);
@@ -103,9 +134,10 @@ const Login = () => {
         } else {
           localStorage.setItem('access_token', response.data.access);
           localStorage.setItem('refresh_token', response.data.refresh);
-          localStorage.setItem('user', JSON.stringify(response.data.user));
+          const respUser = { ...(response.data.user || {}), role: response.data.role || (response.data.user && response.data.user.role) };
+          localStorage.setItem('user', JSON.stringify(respUser));
 
-          const userData = JSON.parse(localStorage.getItem('user'));
+          const userData = respUser;
           const role = userData?.role || 'manager';
           if (role === 'admin') navigate('/dashboard');
           else navigate('/manager/dashboard');
@@ -127,17 +159,18 @@ const Login = () => {
         console.debug('[verify] csrftoken cookie=', getCookie('csrftoken'));
         console.debug('[verify] sending X-CSRFToken=', getCookie('csrftoken'));
         const response = await axios.post(
-          `${apiBaseUrl}/api/verify-login-otp/`,
-          { email: signInEmail, code: verificationCode },
+          `${apiBaseUrl}/api/verify-otp/`,
+          { email: signInEmail, otp: verificationCode },
           { headers: { 'X-CSRFToken': getCookie('csrftoken') }, withCredentials: true }
         );
 
         if (response.data?.access && response.data?.refresh) {
           localStorage.setItem('access_token', response.data.access);
           localStorage.setItem('refresh_token', response.data.refresh);
-          localStorage.setItem('user', JSON.stringify(response.data.user || {}));
+          const respUser2 = { ...(response.data.user || {}), role: response.data.role || (response.data.user && response.data.user.role) };
+          localStorage.setItem('user', JSON.stringify(respUser2));
           setShowVerificationModal(false);
-          const userData = response.data.user || JSON.parse(localStorage.getItem('user') || '{}');
+          const userData = respUser2;
           const role = userData?.role || 'manager';
           if (role === 'admin') navigate('/dashboard');
           else navigate('/manager/dashboard');
@@ -158,6 +191,9 @@ const Login = () => {
         if (role === 'admin') navigate('/dashboard');
         else navigate('/manager/dashboard');
       } catch (err) {
+        console.debug('[verify] document.cookie=', document.cookie);
+        console.debug('[verify] response headers=', err.response?.headers);
+        console.debug('[verify] response data=', err.response?.data);
         setVerificationError(err.response?.data?.error || 'OTP verification failed');
       } finally {
         setLoading(false);
@@ -170,6 +206,7 @@ const Login = () => {
         const apiBaseUrl = `${window.location.protocol}//${window.location.host}`;
         await ensureCsrf(apiBaseUrl);
         console.debug('[resend] csrftoken cookie=', getCookie('csrftoken'));
+        console.debug('[resend] document.cookie=', document.cookie);
         await axios.post(
           `${apiBaseUrl}/api/resend-login-otp/`,
           { email: signInEmail },
@@ -186,6 +223,8 @@ const Login = () => {
           });
         }, 1000);
       } catch (err) {
+        console.debug('[resend] response headers=', err.response?.headers);
+        console.debug('[resend] response data=', err.response?.data);
         setVerificationError(err.response?.data?.error || 'Failed to resend OTP');
       } finally {
         setLoading(false);
