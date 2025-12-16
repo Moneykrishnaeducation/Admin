@@ -344,7 +344,7 @@ const MamAccount = () => {
         <div className="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm z-40"></div>
       )}
 
-      <div className="flex gap-4 mb-4 z-50 relative">
+      <div className="flex gap-4 mb-4  relative">
         <button
           className={`px-5 py-2 rounded-full font-semibold ${
             activeTab === "mam"
