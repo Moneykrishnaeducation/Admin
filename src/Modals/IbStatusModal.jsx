@@ -2,35 +2,51 @@ import React, { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import { AdminAuthenticatedFetch } from "../utils/fetch-utils.js";
 
-const apiClient = new AdminAuthenticatedFetch('/api');
-const client = new AdminAuthenticatedFetch('');
+/**
+ * IMPORTANT:
+ * IB endpoints live under /api
+ * Using root ("") will return React index.html
+ */
+const apiClient = new AdminAuthenticatedFetch("/api");
 
-export default function IbStatusModal({ visible, onClose, userRow, isDarkMode }) {
+export default function IbStatusModal({
+  visible,
+  onClose,
+  userRow,
+  isDarkMode = false,
+}) {
   if (!visible || !userRow) return null;
 
   const userId = userRow.userId || userRow.id;
 
-  // STATES
+  /* ===================== STATES ===================== */
   const [loading, setLoading] = useState(true);
   const [profiles, setProfiles] = useState([]);
   const [status, setStatus] = useState({
     enabled: false,
     profile_id: null,
-    profile_name: "",
+    profile_name: "None",
     commission: 0,
   });
 
- // ========= API HELPERS ==========
+  /* ===================== API HELPERS ===================== */
   const fetchGET = async (url) => {
-    return await client.get(url);
+    return await apiClient.get(url);
   };
 
   const fetchPATCH = async (payload) => {
-    return await client.patch(`/ib-user/${userId}/ib-status/`, payload);
+    return await apiClient.patch(
+      `/ib-user/${userId}/ib-status/`,
+      payload
+    );
   };
-  // ========= FETCH DATA ON OPEN ==========
+
+  /* ===================== LOAD DATA ===================== */
   useEffect(() => {
     if (!visible) return;
+
+    let cancelled = false;
+
     (async () => {
       try {
         setLoading(true);
@@ -40,68 +56,83 @@ export default function IbStatusModal({ visible, onClose, userRow, isDarkMode })
           fetchGET(`/ib-user/${userId}/ib-status/`),
         ]);
 
-        setProfiles(profilesRes || []);
+        if (cancelled) return;
+
+        setProfiles(Array.isArray(profilesRes) ? profilesRes : []);
 
         setStatus({
-          enabled: statusRes?.is_ib || false,
+          enabled: Boolean(statusRes?.is_ib),
           profile_id: statusRes?.ib_profile?.id || null,
           profile_name: statusRes?.ib_profile?.name || "None",
           commission: statusRes?.ib_profile?.commission || 0,
         });
-
-      } catch (e) {
-        console.error(e);
+      } catch (err) {
+        console.error("IB status load error:", err);
         alert("Error loading IB status");
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [visible, userId]);
 
-  // ========= ACTIONS ==========
+  /* ===================== ACTIONS ===================== */
   const toggleStatus = async () => {
     try {
       const newStatus = !status.enabled;
-      await fetchPATCH({ enabled: newStatus, profile_id: status.profile_id });
 
-      setStatus((p) => ({ ...p, enabled: newStatus }));
-      alert(`IB ${newStatus ? "Enabled" : "Disabled"}`);
-    } catch (e) {
-      alert(e.message);
-    }
-  };
-
-  const selectProfile = async (profile) => {
-    try {
-      const userData = await fetchGET(`/users/${userId}/`);
+      await fetchPATCH({
+        enabled: newStatus,
+        profile_id: status.profile_id,
+      });
 
       setStatus((prev) => ({
         ...prev,
-        enabled: userData.IB_status,
-        profile_id: profile.id,
-        profile_name: profile.name,
-        commission: profile.commission,
+        enabled: newStatus,
       }));
 
-    } catch (e) {
-      alert("Update failed");
+      alert(`IB ${newStatus ? "Enabled" : "Disabled"}`);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to update IB status");
     }
   };
 
+  const selectProfile = (profile) => {
+    setStatus((prev) => ({
+      ...prev,
+      profile_id: profile.id,
+      profile_name: profile.name,
+      commission: profile.commission,
+    }));
+  };
+
+  /* ===================== STYLES ===================== */
   const modalBg = isDarkMode
     ? "bg-gray-900 text-yellow-300"
     : "bg-white text-black";
 
+  /* ===================== RENDER ===================== */
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50">
-      {/* overlay */}
-      <div className="absolute inset-0 bg-black bg-opacity-50" onClick={onClose} />
+      {/* OVERLAY */}
+      <div
+        className="absolute inset-0 bg-black bg-opacity-50"
+        onClick={onClose}
+      />
 
-      {/* modal */}
-      <div className={`relative w-full max-w-xl rounded-lg shadow-xl p-6 ${modalBg}`}>
-        
-        {/* close */}
-        <button className="absolute top-3 right-3" onClick={onClose}>
+      {/* MODAL */}
+      <div
+        className={`relative w-full max-w-xl rounded-lg shadow-xl p-6 ${modalBg}`}
+      >
+        {/* CLOSE */}
+        <button
+          className="absolute top-3 right-3"
+          onClick={onClose}
+        >
           <X />
         </button>
 
@@ -116,33 +147,51 @@ export default function IbStatusModal({ visible, onClose, userRow, isDarkMode })
             {/* STATUS */}
             <div className="mb-3 flex justify-between">
               <span className="font-semibold">Current Status:</span>
-              <span className={`${status.enabled ? "text-green-400" : "text-red-400"} font-semibold`}>
+              <span
+                className={`font-semibold ${
+                  status.enabled
+                    ? "text-green-400"
+                    : "text-red-400"
+                }`}
+              >
                 {status.enabled ? "Enabled" : "Disabled"}
               </span>
             </div>
 
-            {/* CURRENT PROFILE */}
+            {/* PROFILE */}
             <div className="mb-3 flex justify-between">
-              <span className="font-semibold">Commission Profile:</span>
-              <span className="font-semibold">{status.profile_name}</span>
+              <span className="font-semibold">
+                Commission Profile:
+              </span>
+              <span className="font-semibold">
+                {status.profile_name}
+              </span>
             </div>
 
-            <div className="mt-4 mb-2 font-semibold">Select Profile:</div>
+            <div className="mt-4 mb-2 font-semibold">
+              Select Profile:
+            </div>
 
             {/* PROFILES TABLE */}
-            <div className="overflow-auto max-h-60">
-              <table className="w-full border">
+            <div className="overflow-auto max-h-60 border rounded">
+              <table className="w-full">
                 <thead>
-                  <tr className={`${isDarkMode ? "bg-gray-700" : "bg-gray-200"}`}>
+                  <tr
+                    className={
+                      isDarkMode ? "bg-gray-700" : "bg-gray-200"
+                    }
+                  >
                     <th className="p-2 text-left">Profile</th>
                     <th className="p-2 text-left">Commission</th>
                   </tr>
                 </thead>
-
                 <tbody>
                   {profiles.length === 0 ? (
                     <tr>
-                      <td colSpan={2} className="text-center p-3">
+                      <td
+                        colSpan={2}
+                        className="text-center p-3"
+                      >
                         No Profiles Found
                       </td>
                     </tr>
@@ -151,12 +200,16 @@ export default function IbStatusModal({ visible, onClose, userRow, isDarkMode })
                       <tr
                         key={p.id}
                         className={`cursor-pointer hover:bg-yellow-600 hover:text-black ${
-                          status.profile_id === p.id ? "bg-yellow-500 text-black" : ""
+                          status.profile_id === p.id
+                            ? "bg-yellow-500 text-black"
+                            : ""
                         }`}
                         onClick={() => selectProfile(p)}
                       >
                         <td className="p-2">{p.name}</td>
-                        <td className="p-2">{p.commission}%</td>
+                        <td className="p-2">
+                          {p.commission}%
+                        </td>
                       </tr>
                     ))
                   )}
@@ -168,7 +221,9 @@ export default function IbStatusModal({ visible, onClose, userRow, isDarkMode })
             <button
               onClick={toggleStatus}
               className={`w-full mt-5 py-2 rounded font-semibold ${
-                status.enabled ? "bg-red-500" : "bg-green-500"
+                status.enabled
+                  ? "bg-red-500"
+                  : "bg-green-500"
               }`}
             >
               {status.enabled ? "Disable IB" : "Enable IB"}

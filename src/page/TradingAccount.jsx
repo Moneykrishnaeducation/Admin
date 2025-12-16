@@ -346,6 +346,7 @@ const TradingAccountPage = () => {
 
       <ChangeLeverageModal
         visible={leverageModalOpen}
+        accountId={selectedAccountId}
         onClose={() => setLeverageModalOpen(false)}
         currentLeverage={selectedLeverage}
         leverageOptions={["1:50", "1:100", "1:200", "1:300", "1:500"]}

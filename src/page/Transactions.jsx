@@ -1,9 +1,5 @@
-// Updated Transactions Component with Status Filter Functionality
-// (Design & logic unchanged – ONLY responsive improvements added)
-
 import React, { useState, useCallback } from "react";
 import TableStructure from "../commonComponent/TableStructure";
-import { jsPDF } from "jspdf";
 import { Download, FileText } from "lucide-react";
 
 /* -------------------- Error Boundary -------------------- */
@@ -18,37 +14,19 @@ class ErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error, info) {
-    console.error("Error caught by ErrorBoundary:", error, info);
+    console.error("ErrorBoundary:", error, info);
   }
 
   render() {
     if (this.state.hasError) {
       return (
         <div className="p-4 bg-red-100 text-red-700 rounded">
-          Something went wrong while displaying the table.
+          Something went wrong while displaying transactions.
         </div>
       );
     }
-
     return this.props.children;
   }
-}
-
-/* -------------------- CSV Helper -------------------- */
-function convertToCSV(data, columns) {
-  const header = columns.map((c) => c.Header).join(",");
-  const rows = data.map((row) =>
-    columns
-      .map((c) => {
-        const cell = row[c.accessor];
-        if (typeof cell === "string") {
-          return `"${cell.replace(/"/g, '""')}"`;
-        }
-        return cell ?? "";
-      })
-      .join(",")
-  );
-  return [header, ...rows].join("\r\n");
 }
 
 /* -------------------- Component -------------------- */
@@ -90,31 +68,33 @@ export default function Transactions() {
         if (statusFilter !== "all") params.append("status", statusFilter);
         if (query) params.append("search", query);
 
-        let url = "";
-        if (typeFilter === "Deposit") url = "/api/admin/deposit/?" + params;
-        else if (typeFilter === "Withdrawal") url = "/api/admin/withdraw/?" + params;
-        else url = "/api/admin/internal-transfer/?" + params;
+        let url;
+        if (typeFilter === "Deposit") {
+          url = `/api/admin/deposit/?${params}`;
+        } else if (typeFilter === "Withdrawal") {
+          url = `/api/admin/withdraw/?${params}`;
+        } else {
+          url = `/api/admin/internal-transfer/?${params}`;
+        }
 
         const res = await fetch(url, {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         });
 
         if (!res.ok) throw new Error("Network error");
-        const data = await res.json();
 
-        let results = Array.isArray(data.results)
+        const data = await res.json();
+        const results = Array.isArray(data.results)
           ? data.results
           : Array.isArray(data)
           ? data
           : [];
 
         const total = data.total ?? results.length;
-        results = applyStatusFilter(results, statusFilter);
 
-        const start = (p - 1) * ps;
-        const sliced = results.slice(start, start + ps);
-
-        const mapped = sliced.map((item) =>
+        const mapped = results.map((item) =>
           typeFilter === "Internal Transfer"
             ? {
                 id: item.id,
@@ -146,7 +126,7 @@ export default function Transactions() {
 
         return { data: mapped, total };
       } catch (e) {
-        console.error(e);
+        console.error("Transactions fetch error:", e);
         setTokenMissing(true);
         return { data: [], total: 0 };
       }
@@ -165,12 +145,11 @@ export default function Transactions() {
 
     const s = status?.toLowerCase() || "unknown";
     return (
-      <button
-        onClick={() => setStatusFilter(s)}
-        className={`px-2 py-1 rounded text-[10px] sm:text-xs font-semibold whitespace-nowrap ${styles[s] || ""}`}
+      <span
+        className={`px-2 py-1 rounded text-xs font-semibold ${styles[s] || ""}`}
       >
         {s.toUpperCase()}
-      </button>
+      </span>
     );
   };
 
@@ -179,8 +158,8 @@ export default function Transactions() {
     typeFilter === "Internal Transfer"
       ? [
           { Header: "Date/Time", accessor: "dateTime" },
-          { Header: "From Account ID", accessor: "fromAccountId" },
-          { Header: "To Account ID", accessor: "toAccountId" },
+          { Header: "From Account", accessor: "fromAccountId" },
+          { Header: "To Account", accessor: "toAccountId" },
           { Header: "Account Holder", accessor: "accountHolder" },
           { Header: "Amount (USD)", accessor: "amountUSD" },
           { Header: "Status", accessor: "status", Cell: getStatusBadge },
@@ -204,77 +183,17 @@ export default function Transactions() {
 
   /* -------------------- UI -------------------- */
   return (
-    <div className="flex flex-col min-h-screen w-full bg-black text-yellow-400 p-3 sm:p-4 md:p-6">
+    <div className="flex flex-col min-h-screen bg-black text-yellow-400 p-4">
       <h1 className="text-2xl font-bold mb-4">Transactions</h1>
 
-      {/* Filters */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-4 mb-6 p-4 bg-black shadow-inner rounded-lg max-w-[1400px] mx-auto w-full">
-        <div className="flex flex-col md:col-span-3">
-          <label className="text-xs font-semibold">Type</label>
-          <select
-            className="px-4 py-2 rounded border border-yellow-400 bg-black"
-            value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value)}
-          >
-            <option>Deposit</option>
-            <option>Withdrawal</option>
-            <option>Internal Transfer</option>
-          </select>
-        </div>
-
-        <div className="flex flex-col md:col-span-3">
-          <label className="text-xs font-semibold">Status</label>
-          <select
-            className="px-4 py-2 rounded border border-yellow-400 bg-black"
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-          >
-            <option value="all">All</option>
-            <option value="pending">Pending</option>
-            <option value="failed">Failed</option>
-            <option value="approved">Approved</option>
-          </select>
-        </div>
-
-        <div className="flex flex-col md:col-span-2">
-          <label className="text-xs font-semibold">From</label>
-          <input
-            type="date"
-            className="px-4 py-2 rounded border border-yellow-400 bg-black"
-            value={fromDate}
-            onChange={(e) => setFromDate(e.target.value)}
-          />
-        </div>
-
-        <div className="flex flex-col md:col-span-2">
-          <label className="text-xs font-semibold">To</label>
-          <input
-            type="date"
-            className="px-4 py-2 rounded border border-yellow-400 bg-black"
-            value={toDate}
-            onChange={(e) => setToDate(e.target.value)}
-          />
-        </div>
-
-        <div className="flex flex-col sm:flex-row gap-2 md:col-span-2 md:justify-end">
-          <button className="bg-yellow-500 text-black px-4 py-2 rounded flex items-center gap-1">
-            <Download size={16} /> CSV
-          </button>
-          <button className="bg-yellow-500 text-black px-4 py-2 rounded flex items-center gap-1">
-            <FileText size={16} /> PDF
-          </button>
-        </div>
-      </div>
-
       {tokenMissing && (
-        <div className="bg-red-600 text-white p-3 rounded mb-4 max-w-[1400px] mx-auto w-full">
+        <div className="bg-red-600 text-white p-3 rounded mb-4">
           Authentication token missing. Please login.
         </div>
       )}
 
-      {/* Table */}
       <ErrorBoundary>
-        <div className="flex-1 mx-auto w-full h-[60vh] md:h-[70vh] overflow-auto">
+        <div className="flex-1 overflow-auto">
           <TableStructure
             columns={columns}
             serverSide
@@ -286,10 +205,4 @@ export default function Transactions() {
       </ErrorBoundary>
     </div>
   );
-}
-
-/* -------------------- Status Filter -------------------- */
-function applyStatusFilter(results, status) {
-  if (status === "all") return results;
-  return results.filter((r) => r.status?.toLowerCase() === status);
 }
