@@ -124,7 +124,7 @@ const Header = ({ isSidebarOpen, setIsSidebarOpen }) => {
 
   return (
     <header
-      className={`flex h-[10vh] items-center justify-between px-4 md:px-6 py-3 ${
+      className={`flex h-[4rem] items-center justify-between px-4 md:px-6 py-3 ${
         isDarkMode
           ? "bg-black border-b border-gray-900"
           : "bg-white border-b border-gray-300"

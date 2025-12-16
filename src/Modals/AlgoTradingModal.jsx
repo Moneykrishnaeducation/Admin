@@ -18,63 +18,131 @@ const AlgoTradingModal = ({ visible, onClose, accountId, onProceed }) => {
   };
 
   const handleConfirm = () => {
-    onProceed(action); // pass enable/disable to parent
+    onProceed(action);
     onClose();
   };
 
   if (!visible) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-      <div ref={modalRef} className="bg-white rounded-lg shadow-lg p-5 w-full max-w-md">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-3">
+      <div
+        ref={modalRef}
+        className="
+          w-full max-w-md
+          bg-white rounded-xl shadow-2xl
+          max-h-[90vh] overflow-y-auto
+          transition-all
+        "
+      >
+        {/* HEADER */}
+        <div className="flex items-center justify-between px-5 py-4 border-b">
+          <h3 className="text-base sm:text-lg font-semibold text-gray-900">
+            {step === 1 ? "Algo Trading Settings" : "Confirm Action"}
+          </h3>
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-800 text-xl leading-none"
+          >
+            ×
+          </button>
+        </div>
 
-        {/* Step 1 */}
-        {step === 1 && (
-          <>
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="font-semibold text-lg">Enable/Disable Algo for Account {accountId}</h3>
-              <button onClick={onClose}>×</button>
-            </div>
+        {/* BODY */}
+        <div className="px-5 py-6 space-y-5">
+          {/* STEP 1 */}
+          {step === 1 && (
+            <>
+              <p className="text-sm text-gray-600">
+                Manage algo trading for account
+                <span className="font-medium text-gray-900"> #{accountId}</span>
+              </p>
 
-            <select
-              value={action}
-              onChange={(e) => setAction(e.target.value)}
-              className="border p-2 rounded w-full mb-4"
-            >
-              <option value="" disabled>Select Action</option>
-              <option value="enable">Enable Algo</option>
-              <option value="disable">Disable Algo</option>
-            </select>
+              <select
+                value={action}
+                onChange={(e) => setAction(e.target.value)}
+                className="
+                  w-full rounded-lg border border-gray-300
+                  px-3 py-2 text-sm
+                  focus:outline-none focus:ring-2 focus:ring-indigo-500
+                "
+              >
+                <option value="" disabled>
+                  Select Action
+                </option>
+                <option value="enable">Enable Algo</option>
+                <option value="disable">Disable Algo</option>
+              </select>
 
-            <div className="flex justify-end gap-3">
-              <button className="px-4 py-2 bg-gray-300 rounded" onClick={onClose}>Close</button>
-              <button className="px-4 py-2 bg-yellow-500 rounded" onClick={handleProceed}>Proceed</button>
-            </div>
-          </>
-        )}
+              <div className="flex flex-col sm:flex-row justify-end gap-3 pt-2">
+                <button
+                  onClick={onClose}
+                  className="
+                    px-4 py-2 rounded-lg text-sm
+                    bg-gray-200 text-gray-700
+                    hover:bg-gray-300 transition
+                  "
+                >
+                  Close
+                </button>
 
-        {/* Step 2 */}
-        {step === 2 && (
-          <>
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="font-semibold text-lg">Confirm Action</h3>
-              <button onClick={onClose}>×</button>
-            </div>
+                <button
+                  onClick={handleProceed}
+                  className="
+                    px-4 py-2 rounded-lg text-sm
+                    bg-indigo-600 text-white
+                    hover:bg-indigo-500 transition
+                  "
+                >
+                  Proceed
+                </button>
+              </div>
+            </>
+          )}
 
-            <p className="mb-4 text-center">
-              Are you sure you want to <strong>{action}</strong> algo for account <strong>{accountId}</strong>?
-            </p>
+          {/* STEP 2 */}
+          {step === 2 && (
+            <>
+              <div className="text-center space-y-3">
+                <p className="text-sm text-gray-700">
+                  Are you sure you want to
+                </p>
 
-            <div className="flex justify-center gap-3">
-              <button className="px-4 py-2 bg-red-500 text-white rounded" onClick={handleConfirm}>
-                Confirm
-              </button>
-              <button className="px-4 py-2 bg-gray-300 rounded" onClick={() => setStep(1)}>
-                Cancel
-              </button>
-            </div>
-          </>
-        )}
+                <p className="text-base font-semibold text-gray-900">
+                  {action.toUpperCase()} Algo Trading
+                </p>
+
+                <p className="text-sm text-gray-600">
+                  for account <span className="font-medium">#{accountId}</span>?
+                </p>
+              </div>
+
+              <div className="flex flex-col sm:flex-row justify-center gap-3 pt-4">
+                <button
+                  onClick={handleConfirm}
+                  className="
+                    px-4 py-2 rounded-lg text-sm
+                    bg-red-600 text-white
+                    hover:bg-red-500 transition
+                  "
+                >
+                  Confirm
+                </button>
+
+                <button
+                  onClick={() => setStep(1)}
+                  className="
+                    px-4 py-2 rounded-lg text-sm
+                    bg-gray-200 text-gray-700
+                    hover:bg-gray-300 transition
+                  "
+                >
+                  Cancel
+                </button>
+              </div>
+            </>
+          )}
+        </div>
       </div>
     </div>
   );

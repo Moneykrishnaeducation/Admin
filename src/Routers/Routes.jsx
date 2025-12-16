@@ -1,12 +1,19 @@
 import '../utils/auth-utils.js';
 
 import React, { useState, useEffect } from "react";
-import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  useLocation,
+} from "react-router-dom";
 import { ThemeProvider } from "../context/ThemeContext";
 
 import Navbar from "../commonComponent/Navbar";
 import Main from "../commonComponent/Mainpage";
 import Login from "../page/Login";
+
+// Admin pages
 import Dashboard from "../page/Dashboard";
 import Mail from "../page/Mail";
 import Settings from "../page/Settings";
@@ -22,28 +29,48 @@ import Transactions from "../page/Transactions";
 import Partnership from "../page/Partnership";
 import AdminManagerList from "../page/Admin";
 import GroupConfiguration from "../page/TradingGroup";
+
+// Manager pages
 import Dash from "../ManagerComponent/ManagerDashboard";
 import ManagerUser from "../ManagerComponent/ManagerUser";
-import ManagerTradingaccount from '../ManagerComponent/ManagerTradingaccount.jsx';
-import ManagerDemo from '../ManagerComponent/ManagerDemo.jsx';
-import ManagerTickets from '../ManagerComponent/ManagerTickets.jsx';
-import ManagerActivities from '../ManagerComponent/MangerActivities.jsx';
-import ManagerTransactions from '../ManagerComponent/ManagerTransActions.jsx';
+import ManagerTradingaccount from '../ManagerComponent/ManagerTradingaccount';
+import ManagerDemo from '../ManagerComponent/ManagerDemo';
+import ManagerTickets from '../ManagerComponent/ManagerTickets';
+import ManagerActivities from '../ManagerComponent/MangerActivities';
+import ManagerTransactions from '../ManagerComponent/ManagerTransActions';
+
+/* -------------------------------------------------- */
+/* APP ROUTES */
+/* -------------------------------------------------- */
 
 const AppRoutes = ({ role }) => {
   const location = useLocation();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
+  /* ---------------- Responsive sidebar ---------------- */
+  useEffect(() => {
+    const handleResize = () => {
+      const isDesktop = window.innerWidth >= 1024;
+      setIsSidebarOpen(isDesktop);
+    };
+
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  /* ---------------- Persist current page ---------------- */
   useEffect(() => {
     localStorage.setItem("current_page", location.pathname);
   }, [location.pathname]);
 
-  // --------------------------
-  // ADMIN ROUTES
-  // --------------------------
+  const isLoginPage =
+    location.pathname === "/" || location.pathname === "/login";
+
+  /* ---------------- Routes ---------------- */
+
   const adminRoutes = [
     { path: "/dashboard", element: <Dashboard /> },
-    { path: "/tradingaccount", element: <TradingAccount /> },
     { path: "/tradingaccounts", element: <TradingAccount /> },
     { path: "/settings", element: <Settings /> },
     { path: "/propfirm", element: <Propfirm /> },
@@ -60,32 +87,25 @@ const AppRoutes = ({ role }) => {
     { path: "/trading-group", element: <GroupConfiguration /> },
   ];
 
-  // --------------------------
-// MANAGER ROUTES
-// --------------------------
   const managerRoutes = [
-    { path: "/manager/dashboard", element: <Dash/> },
+    { path: "/manager/dashboard", element: <Dash /> },
     { path: "/manager/user", element: <ManagerUser /> },
-    { path: "/manager/tradingaccount", element: <ManagerTradingaccount /> },
     { path: "/manager/tradingaccounts", element: <ManagerTradingaccount /> },
     { path: "/manager/demo", element: <ManagerDemo /> },
     { path: "/manager/transactions", element: <ManagerTransactions /> },
     { path: "/manager/tickets", element: <ManagerTickets /> },
     { path: "/manager/activities", element: <ManagerActivities /> },
-
   ];
 
   const allowedRoutes = role === "admin" ? adminRoutes : managerRoutes;
-
-  const isLoginPage = location.pathname === "/" || location.pathname === "/login";
+  const fallbackRoute = role === "admin" ? <Dashboard /> : <Dash />;
 
   return (
-    <div className="w-screen flex">
+    <div className="flex min-h-screen w-full overflow-x-hidden">
       {!isLoginPage && (
         <Navbar
           isSidebarOpen={isSidebarOpen}
           setIsSidebarOpen={setIsSidebarOpen}
-          role={role}
         />
       )}
 
@@ -96,12 +116,15 @@ const AppRoutes = ({ role }) => {
           <Route path="*" element={<Login />} />
         </Routes>
       ) : (
-        <Main isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen}>
+        <Main
+          isSidebarOpen={isSidebarOpen}
+          setIsSidebarOpen={setIsSidebarOpen}
+        >
           <Routes>
             {allowedRoutes.map((r, i) => (
               <Route key={i} path={r.path} element={r.element} />
             ))}
-            <Route path="*" element={role === "admin" ? <Dashboard /> : <Dash />} />
+            <Route path="*" element={fallbackRoute} />
           </Routes>
         </Main>
       )}
@@ -109,29 +132,30 @@ const AppRoutes = ({ role }) => {
   );
 };
 
+/* -------------------------------------------------- */
+/* ROOT ROUTER */
+/* -------------------------------------------------- */
+
 const Routers = () => {
-  // -----------------------------------
-  // GET ROLE FROM LOCAL STORAGE
-  // -----------------------------------
   const [role, setRole] = useState(() => {
     const userData = JSON.parse(localStorage.getItem("user"));
     return userData?.role || "admin";
   });
 
   useEffect(() => {
-    const checkRole = () => {
+    const syncRole = () => {
       const userData = JSON.parse(localStorage.getItem("user"));
-      const newRole = userData?.role || "admin";
-      setRole(newRole);
+      setRole(userData?.role || "admin");
     };
 
-    // Check on mount
-    checkRole();
+    syncRole();
+    window.addEventListener("focus", syncRole);
+    window.addEventListener("storage", syncRole);
 
-    // Check on window focus (after login)
-    window.addEventListener("focus", checkRole);
-
-    return () => window.removeEventListener("focus", checkRole);
+    return () => {
+      window.removeEventListener("focus", syncRole);
+      window.removeEventListener("storage", syncRole);
+    };
   }, []);
 
   return (
