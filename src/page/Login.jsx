@@ -63,6 +63,42 @@ const Login = () => {
 
   const navigate = useNavigate();
 
+    // Helper to persist auth payloads with flexible keys
+    function saveAuthData(data) {
+      if (!data || typeof window === 'undefined') return;
+      // access tokens (support multiple key names)
+      if (data.access) localStorage.setItem('access_token', data.access);
+      if (data.accessToken) localStorage.setItem('access_token', data.accessToken);
+      if (data.jwt_token) localStorage.setItem('jwt_token', data.jwt_token);
+      // keep legacy names if present
+      if (data.accessToken) localStorage.setItem('accessToken', data.accessToken);
+
+      // refresh tokens
+      if (data.refresh) localStorage.setItem('refresh_token', data.refresh);
+      if (data.refreshToken) localStorage.setItem('refresh_token', data.refreshToken);
+      if (data.refreshToken) localStorage.setItem('refreshToken', data.refreshToken);
+
+      // optional theme and misc
+      if (data.themeMode) localStorage.setItem('themeMode', data.themeMode);
+
+      // user fields
+      const respUser = { ...(data.user || {}) };
+      // merge role if provided at top-level or alternate keys
+      respUser.role = respUser.role || data.role || data.userRole || data.user_role;
+      if (data.name && !respUser.name) respUser.name = data.name;
+      if (data.email && !respUser.email) respUser.email = data.email;
+
+      localStorage.setItem('user', JSON.stringify(respUser));
+
+      // store some alternate flat keys for older code paths
+      if (respUser.email) localStorage.setItem('userEmail', respUser.email);
+      if (respUser.name) localStorage.setItem('userName', respUser.name);
+      if (respUser.role) {
+        localStorage.setItem('userRole', respUser.role);
+        localStorage.setItem('user_role', respUser.role);
+      }
+    }
+
     useEffect(() => {
       if (!showVerificationModal) return;
       setOtpExpiry(60);
@@ -132,12 +168,8 @@ const Login = () => {
           setSignInEmail(email);
           setShowVerificationModal(true);
         } else {
-          localStorage.setItem('access_token', response.data.access);
-          localStorage.setItem('refresh_token', response.data.refresh);
-          const respUser = { ...(response.data.user || {}), role: response.data.role || (response.data.user && response.data.user.role) };
-          localStorage.setItem('user', JSON.stringify(respUser));
-
-          const userData = respUser;
+          saveAuthData(response.data);
+          const userData = JSON.parse(localStorage.getItem('user') || '{}');
           const role = userData?.role || 'manager';
           if (role === 'admin') navigate('/dashboard');
           else navigate('/manager/dashboard');
@@ -165,12 +197,9 @@ const Login = () => {
         );
 
         if (response.data?.access && response.data?.refresh) {
-          localStorage.setItem('access_token', response.data.access);
-          localStorage.setItem('refresh_token', response.data.refresh);
-          const respUser2 = { ...(response.data.user || {}), role: response.data.role || (response.data.user && response.data.user.role) };
-          localStorage.setItem('user', JSON.stringify(respUser2));
+          saveAuthData(response.data);
           setShowVerificationModal(false);
-          const userData = respUser2;
+          const userData = JSON.parse(localStorage.getItem('user') || '{}');
           const role = userData?.role || 'manager';
           if (role === 'admin') navigate('/dashboard');
           else navigate('/manager/dashboard');
@@ -183,11 +212,9 @@ const Login = () => {
           { email: signInEmail, password },
           { headers: { 'X-CSRFToken': getCookie('csrftoken') }, withCredentials: true }
         );
-        localStorage.setItem('access_token', loginResp.data.access);
-        localStorage.setItem('refresh_token', loginResp.data.refresh);
-        localStorage.setItem('user', JSON.stringify(loginResp.data.user || {}));
+        saveAuthData(loginResp.data);
         setShowVerificationModal(false);
-        const role = loginResp.data.user?.role || 'manager';
+        const role = JSON.parse(localStorage.getItem('user') || '{}')?.role || 'manager';
         if (role === 'admin') navigate('/dashboard');
         else navigate('/manager/dashboard');
       } catch (err) {

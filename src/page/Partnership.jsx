@@ -81,8 +81,8 @@ const Partnership = () => {
     { Header: "E-Mail", accessor: "email" },
     { Header: "Trading Account ID", accessor: "tradingAccountId" },
     { Header: "Amount", accessor: "amount" },
-    { 
-      Header: "Status", 
+    {
+      Header: "Status",
       accessor: "status",
       Cell: (value) => (
         <span className={value === "approved" ? "text-green-500 font-semibold" : "text-red-500 font-semibold"}>
@@ -95,33 +95,33 @@ const Partnership = () => {
     { Header: "Approved By", accessor: "approvedBy" },
   ];
 
- const withdrawalRequestActions = (row) => {
-  const id = row.transactionId ?? row._raw?.transactionId ?? row.id;
-  const approving = !!actionLoading[id];
-  return (
-    <div className="flex gap-2">
-      <button
-        onClick={() => {
-          if (window.confirm("Approve this withdrawal?")) handleApprove(row);
-        }}
-        disabled={approving}
-        className={`bg-green-500 text-white px-3 py-1 rounded-md text-sm hover:bg-green-600 transition ${approving ? "opacity-60 cursor-not-allowed" : ""}`}
-      >
-        {approving ? "Approving..." : "Approve"}
-      </button>
+  const withdrawalRequestActions = (row) => {
+    const id = row.transactionId ?? row._raw?.transactionId ?? row.id;
+    const approving = !!actionLoading[id];
+    return (
+      <div className="flex gap-2">
+        <button
+          onClick={() => {
+            if (window.confirm("Approve this withdrawal?")) handleApprove(row);
+          }}
+          disabled={approving}
+          className={`bg-green-500 text-white px-3 py-1 rounded-md text-sm hover:bg-green-600 transition ${approving ? "opacity-60 cursor-not-allowed" : ""}`}
+        >
+          {approving ? "Approving..." : "Approve"}
+        </button>
 
-      <button
-        onClick={() => {
-          if (window.confirm("Reject this withdrawal?")) handleReject(row);
-        }}
-        disabled={approving}
-        className={`bg-red-500 text-white px-3 py-1 rounded-md text-sm hover:bg-red-600 transition ${approving ? "opacity-60 cursor-not-allowed" : ""}`}
-      >
-        {approving ? "Processing..." : "Reject"}
-      </button>
-    </div>
-  );
- };
+        <button
+          onClick={() => {
+            if (window.confirm("Reject this withdrawal?")) handleReject(row);
+          }}
+          disabled={approving}
+          className={`bg-red-500 text-white px-3 py-1 rounded-md text-sm hover:bg-red-600 transition ${approving ? "opacity-60 cursor-not-allowed" : ""}`}
+        >
+          {approving ? "Processing..." : "Reject"}
+        </button>
+      </div>
+    );
+  };
 
 
   const withdrawalPendingColumns = [
@@ -282,7 +282,7 @@ const Partnership = () => {
     setActionLoading((s) => ({ ...s, [id]: true }));
     setError(null);
     try {
-      const token = window.localStorage.getItem("accessToken") || window.localStorage.getItem("token");
+      const token = window.localStorage.getItem("access_token") || window.localStorage.getItem("token");
       // Build URL with id (backend expects /api/admin/transaction/<id>/reject/)
       const url = `${API_ENDPOINTS.withdrawalReject}${id}/reject/`;
       const res = await fetch(url, {
@@ -966,7 +966,7 @@ const Partnership = () => {
     if (!endpoint) return;
     setError(null);
     try {
-      const token = window.localStorage.getItem("accessToken") || window.localStorage.getItem("token");
+      const token = window.localStorage.getItem("access_token") || window.localStorage.getItem("token");
       const res = await fetch(endpoint, {
         method: "GET",
         headers: { Accept: "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
@@ -984,10 +984,10 @@ const Partnership = () => {
         const groupsArray = Array.isArray(p.approvedGroups)
           ? p.approvedGroups
           : Array.isArray(p.approved_groups)
-          ? p.approved_groups
-          : Array.isArray(p.groups)
-          ? p.groups
-          : [];
+            ? p.approved_groups
+            : Array.isArray(p.groups)
+              ? p.groups
+              : [];
         return ({
           id: p.id ?? p.profileId ?? p.profile_id ?? String(p.id ?? Math.random()),
           profileName: p.profileName ?? p.name ?? p.profile_name ?? p.commission_profile_name ?? "",
@@ -1011,7 +1011,7 @@ const Partnership = () => {
     setModalLoading(true);
     setError(null);
     try {
-      const token = window.localStorage.getItem("accessToken") || window.localStorage.getItem("token");
+      const token = window.localStorage.getItem("access_token") || window.localStorage.getItem("token");
       const res = await fetch(endpoint, {
         method: "GET",
         headers: { Accept: "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
@@ -1240,25 +1240,22 @@ const Partnership = () => {
     <div className="p-4">
       <div className="flex gap-4 mb-4">
         <button
-          className={`px-4 py-2 rounded-md font-semibold ${
-            activeTab === "partnerList" ? "bg-yellow-400 text-black" : "bg-gray-200"
-          }`}
+          className={`px-4 py-2 rounded-md font-semibold ${activeTab === "partnerList" ? "bg-yellow-400 text-black" : "bg-gray-200"
+            }`}
           onClick={() => setActiveTab("partnerList")}
         >
           Partner List
         </button>
         <button
-          className={`px-4 py-2 rounded-md font-semibold ${
-            activeTab === "withdrawalRequest" ? "bg-yellow-400 text-black" : "bg-gray-200"
-          }`}
+          className={`px-4 py-2 rounded-md font-semibold ${activeTab === "withdrawalRequest" ? "bg-yellow-400 text-black" : "bg-gray-200"
+            }`}
           onClick={() => setActiveTab("withdrawalRequest")}
         >
           Withdrawal History
         </button>
         <button
-          className={`px-4 py-2 rounded-md font-semibold ${
-            activeTab === "withdrawalPending" ? "bg-yellow-400 text-black" : "bg-gray-200"
-          }`}
+          className={`px-4 py-2 rounded-md font-semibold ${activeTab === "withdrawalPending" ? "bg-yellow-400 text-black" : "bg-gray-200"
+            }`}
           onClick={() => setActiveTab("withdrawalPending")}
         >
           Withdrawal Pending
