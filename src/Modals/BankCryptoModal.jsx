@@ -7,7 +7,7 @@ import { AdminAuthenticatedFetch } from "../utils/fetch-utils.js";
  * IB endpoints are under /api
  * Root ("") returns React index.html
  */
-const apiClient = new AdminAuthenticatedFetch("/api");
+const apiClient = new AdminAuthenticatedFetch("");
 
 const BankCryptoModal = ({
   visible,

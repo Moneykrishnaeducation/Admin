@@ -7,7 +7,7 @@ import { AdminAuthenticatedFetch } from "../utils/fetch-utils.js";
  * IB endpoints live under /api
  * Using root ("") will return React index.html
  */
-const apiClient = new AdminAuthenticatedFetch("/api");
+const apiClient = new AdminAuthenticatedFetch("");
 
 export default function IbStatusModal({
   visible,
