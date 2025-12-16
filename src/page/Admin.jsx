@@ -274,78 +274,104 @@ const AdminManagerList = () => {
       </div>
 
       {/* CREATE MODAL */}
-      {showCreateModal && (
-        <div className={`fixed inset-0 ${isDarkMode ? 'bg-black/70' : 'bg-gray-900/70'} flex items-center justify-center z-50`}>
-          <div className={`p-8 rounded-xl w-[30%] border shadow-xl relative ${isDarkMode ? 'bg-gray-900 border-yellow-500' : 'bg-white border-yellow-600'}`}>
-            <button
-              className={`absolute top-3 right-3 ${isDarkMode ? 'text-white' : 'text-black'}`}
-              onClick={() => setShowCreateModal(false)}
-            >
-              <X size={26} />
-            </button>
+{showCreateModal && (
+  <div
+  className={`fixed inset-0 flex items-center justify-center px-3 ${
+    isDarkMode ? "bg-black/70" : "bg-gray-900/70"
+  }`}
+>
+  <div
+    className={`relative w-[90%] sm:w-full max-w-md rounded-xl
+    shadow-[0_0_25px_rgba(234,179,8,0.25)]
+    hover:shadow-[0_0_40px_rgba(234,179,8,0.45)]
+    transition-shadow duration-300
+    ${isDarkMode ? "bg-gray-900" : "bg-white"}
+    px-4 py-6 sm:p-8`}
+  >
 
-            <h2 className="text-2xl font-bold text-yellow-400 mb-6 text-center">
-              Add Admin/Manager
-            </h2>
 
-            <div className="flex flex-col gap-4">
-              <input
-                className={`p-3 rounded-md border outline-none ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-100 border-gray-300'}`}
-                placeholder="First Name"
-                value={form.firstName}
-                onChange={(e) => setForm({ ...form, firstName: e.target.value })}
-              />
+      {/* Close Button */}
+      <button
+        className={`absolute top-3 right-3 ${
+          isDarkMode ? "text-white" : "text-black"
+        }`}
+        onClick={() => setShowCreateModal(false)}
+      >
+        <X size={24} />
+      </button>
 
-              <input
-                className={`p-3 rounded-md border outline-none ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-100 border-gray-300'}`}
-                placeholder="Last Name"
-                value={form.lastName}
-                onChange={(e) => setForm({ ...form, lastName: e.target.value })}
-              />
+      {/* Title */}
+      <h2 className="text-xl sm:text-2xl font-bold text-yellow-400 mb-6 text-center">
+        Add Admin/Manager
+      </h2>
 
-              <input
-                className={`p-3 rounded-md border outline-none ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-100 border-gray-300'}`}
-                placeholder="Email"
-                value={form.email}
-                onChange={(e) => setForm({ ...form, email: e.target.value })}
-              />
+      {/* Form */}
+      <div className="flex flex-col gap-4">
+        <input
+          className={`w-full p-3 rounded-md border outline-none
+          ${isDarkMode ? "bg-gray-800 border-gray-700" : "bg-gray-100 border-gray-300"}`}
+          placeholder="First Name"
+          value={form.firstName}
+          onChange={(e) => setForm({ ...form, firstName: e.target.value })}
+        />
 
-              <input
-                className={`p-3 rounded-md border outline-none ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-100 border-gray-300'}`}
-                placeholder="Phone Number"
-                value={form.phone}
-                onChange={(e) => setForm({ ...form, phone: e.target.value })}
-              />
+        <input
+          className={`w-full p-3 rounded-md border outline-none
+          ${isDarkMode ? "bg-gray-800 border-gray-700" : "bg-gray-100 border-gray-300"}`}
+          placeholder="Last Name"
+          value={form.lastName}
+          onChange={(e) => setForm({ ...form, lastName: e.target.value })}
+        />
 
-              <textarea
-                rows="2"
-                className={`p-3 rounded-md border outline-none ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-100 border-gray-300'}`}
-                placeholder="Address"
-                value={form.address}
-                onChange={(e) => setForm({ ...form, address: e.target.value })}
-              />
+        <input
+          className={`w-full p-3 rounded-md border outline-none
+          ${isDarkMode ? "bg-gray-800 border-gray-700" : "bg-gray-100 border-gray-300"}`}
+          placeholder="Email"
+          value={form.email}
+          onChange={(e) => setForm({ ...form, email: e.target.value })}
+        />
 
-              <select
-                className={`p-3 rounded-md border outline-none ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-100 border-gray-300'}`}
-                value={form.role}
-                onChange={(e) => setForm({ ...form, role: e.target.value })}
-              >
-                <option>Admin</option>
-                <option>Manager</option>
-              </select>
-            </div>
+        <input
+          className={`w-full p-3 rounded-md border outline-none
+          ${isDarkMode ? "bg-gray-800 border-gray-700" : "bg-gray-100 border-gray-300"}`}
+          placeholder="Phone Number"
+          value={form.phone}
+          onChange={(e) => setForm({ ...form, phone: e.target.value })}
+        />
 
-            <div className="flex justify-center mt-6">
-              <button
-                onClick={handleAdd}
-                className="px-4 py-2 bg-yellow-500 text-black rounded-md"
-              >
-                Create
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+        <textarea
+          rows={3}
+          className={`w-full p-3 rounded-md border outline-none resize-none
+          ${isDarkMode ? "bg-gray-800 border-gray-700" : "bg-gray-100 border-gray-300"}`}
+          placeholder="Address"
+          value={form.address}
+          onChange={(e) => setForm({ ...form, address: e.target.value })}
+        />
+
+        <select
+          className={`w-full p-3 rounded-md border outline-none
+          ${isDarkMode ? "bg-gray-800 border-gray-700" : "bg-gray-100 border-gray-300"}`}
+          value={form.role}
+          onChange={(e) => setForm({ ...form, role: e.target.value })}
+        >
+          <option value="Admin">Admin</option>
+          <option value="Manager">Manager</option>
+        </select>
+      </div>
+
+      {/* Action Button */}
+      <div className="mt-6">
+        <button
+          onClick={handleAdd}
+          className="w-full py-2.5 bg-yellow-500 hover:bg-yellow-400 text-black font-semibold rounded-md transition"
+        >
+          Create
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
     </div>
   );
 };
