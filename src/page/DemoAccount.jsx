@@ -290,7 +290,7 @@ const DemoAccount = () => {
               transition: 'max-height 0.25s ease, opacity 0.25s ease',
               opacity: isExpanded ? 1 : 0,
             }}
-            className="bg-gray-800 text-yellow-400 rounded p-2 flex gap-4 flex-wrap"
+            className=" text-yellow-400 rounded p-2 flex gap-4 flex-wrap"
           >
             <SubRowButtons actionItems={actionItems} />
           </div>
