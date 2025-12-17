@@ -77,8 +77,8 @@ const PartnershipModals = ({
   return (
     <>
       {showCommissionModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-black via-gray-900 to-black bg-opacity-80 backdrop-blur-sm animate-fadeIn p-4">
-          <div className="bg-gradient-to-br from-gray-900 via-black to-gray-800 text-white rounded-2xl shadow-2xl w-full max-w-4xl p-8 relative border border-yellow-400/20 transform transition-all duration-300 hover:scale-105 overflow-auto p-6 h-[80vh]">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black-50 backdrop-blur-sm animate-fadeIn p-4">
+          <div className="bg-gradient-to-br from-gray-900 via-black to-gray-800 text-white rounded-2xl shadow-2xl w-full max-w-4xl p-8 relative border border-yellow-400/20 transform transition-all duration-300 overflow-auto p-6 h-[80vh]">
 
             <div className="flex items-center mb-6">
               <IconWrapper>
