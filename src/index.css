@@ -3,12 +3,13 @@
 /* Animated Gradient Border */
 @keyframes gradientShift {
   0% { border-color: #f7b5d6; }    /* Pink */
-  23% { border-color: #f1ba77; }   /* Orange */
-  66% { border-color: #f8e943; }   /* Yellow */
+  23% { border-color: #dd7d07; }   /* Orange */
+  66% { border-color: #fce705; }   /* Yellow */
   100% { border-color:  #EFBF04 }   /* Yellow */
   }
 
-.border-animate {
+.border-d-animate {
+  border-left: 5px solid;
   animation: gradientShift 3s infinite linear;
 }
 
