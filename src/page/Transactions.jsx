@@ -34,7 +34,7 @@ export default function Transactions() {
   const rowsPerPage = 10; // 10 rows per page
 
   const [statusFilter, setStatusFilter] = useState("all");
-  const [typeFilter, setTypeFilter] = useState("Deposit");
+  const [typeFilter, setTypeFilter] = useState("all");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const [tokenMissing, setTokenMissing] = useState(false);
@@ -70,61 +70,158 @@ export default function Transactions() {
         if (statusFilter !== "all") params.append("status", statusFilter);
         if (query) params.append("search", query);
 
-        let url;
-        if (typeFilter === "Deposit") {
-          url = `/api/admin/deposit/?${params}`;
-        } else if (typeFilter === "Withdrawal") {
-          url = `/api/admin/withdraw/?${params}`;
+        let results = [];
+        let total = 0;
+
+        if (typeFilter === "all") {
+          // Fetch all data from all endpoints (set large pageSize to get all)
+          const allParams = new URLSearchParams(params);
+          allParams.set("pageSize", "10000"); // Fetch up to 10000 records
+          allParams.set("page", "1");
+
+          const endpoints = [
+            `/api/admin/deposit/?${allParams}`,
+            `/api/admin/withdraw/?${allParams}`,
+            `/api/admin/internal-transfer/?${allParams}`,
+          ];
+
+          const responses = await Promise.all(
+            endpoints.map((url) =>
+              fetch(url, {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                },
+              }).then((res) => res.json())
+            )
+          );
+
+          responses.forEach((data) => {
+            const resResults = Array.isArray(data.results)
+              ? data.results
+              : Array.isArray(data)
+              ? data
+              : [];
+            results = results.concat(resResults);
+            total += data.total ?? resResults.length;
+          });
+
+          // Sort by created_at descending
+          results.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+          // Apply client-side search filtering
+          if (query) {
+            const lowerQuery = query.toLowerCase();
+            results = results.filter((item) => {
+              const isInternalTransfer = item.from_account || item.to_account;
+              if (isInternalTransfer) {
+                return (
+                  (item.from_account || "").toLowerCase().includes(lowerQuery) ||
+                  (item.to_account || "").toLowerCase().includes(lowerQuery) ||
+                  (item.it_username || "").toLowerCase().includes(lowerQuery)
+                );
+              } else {
+                return (
+                  (item.trading_account_id || "").toLowerCase().includes(lowerQuery) ||
+                  (item.trading_account_name || "").toLowerCase().includes(lowerQuery) ||
+                  (item.email || "").toLowerCase().includes(lowerQuery)
+                );
+              }
+            });
+            total = results.length; // Update total after filtering
+          }
+
+          // Apply client-side pagination
+          const startIndex = (p - 1) * ps;
+          const endIndex = startIndex + ps;
+          results = results.slice(startIndex, endIndex);
         } else {
-          url = `/api/admin/internal-transfer/?${params}`;
+          let url;
+          if (typeFilter === "Deposit") {
+            url = `/api/admin/deposit/?${params}`;
+          } else if (typeFilter === "Withdrawal") {
+            url = `/api/admin/withdraw/?${params}`;
+          } else {
+            url = `/api/admin/internal-transfer/?${params}`;
+          }
+
+          const res = await fetch(url, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+
+          if (!res.ok) throw new Error("Network error");
+
+          const data = await res.json();
+          results = Array.isArray(data.results)
+            ? data.results
+            : Array.isArray(data)
+            ? data
+            : [];
+
+          total = data.total ?? results.length;
         }
 
-        const res = await fetch(url, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+        const mapped = results.map((item) => {
+          if (typeFilter === "all") {
+            const isInternalTransfer = item.from_account || item.to_account;
+            return isInternalTransfer
+              ? {
+                  id: item.id,
+                  dateTime: new Date(item.created_at).toLocaleString(),
+                  fromAccountId: item.from_account || "",
+                  toAccountId: item.to_account || "",
+                  accountHolder: item.it_username || "",
+                  amountUSD: Number(item.amount || 0),
+                  status: item.status || "",
+                  source: item.source || "",
+                  approvedBy: item.approved_by_username || "",
+                  adminComment: item.admin_comment || "",
+                  description: item.description || "",
+                }
+              : {
+                  id: item.id,
+                  dateTime: new Date(item.created_at).toLocaleString(),
+                  accountId: item.trading_account_id || "",
+                  accountName: item.trading_account_name || "",
+                  email: item.email || "",
+                  amountUSD: Number(item.amount || 0),
+                  status: item.status || "",
+                  source: item.source || "",
+                  approvedBy: item.approved_by_username || "",
+                  adminComment: item.admin_comment || "",
+                  description: item.description || "",
+                };
+          } else {
+            return typeFilter === "Internal Transfer"
+              ? {
+                  id: item.id,
+                  dateTime: new Date(item.created_at).toLocaleString(),
+                  fromAccountId: item.from_account || "",
+                  toAccountId: item.to_account || "",
+                  accountHolder: item.it_username || "",
+                  amountUSD: Number(item.amount || 0),
+                  status: item.status || "",
+                  source: item.source || "",
+                  approvedBy: item.approved_by_username || "",
+                  adminComment: item.admin_comment || "",
+                  description: item.description || "",
+                }
+              : {
+                  id: item.id,
+                  dateTime: new Date(item.created_at).toLocaleString(),
+                  accountId: item.trading_account_id || "",
+                  accountName: item.trading_account_name || "",
+                  email: item.email || "",
+                  amountUSD: Number(item.amount || 0),
+                  status: item.status || "",
+                  source: item.source || "",
+                  approvedBy: item.approved_by_username || "",
+                  adminComment: item.admin_comment || "",
+                  description: item.description || "",
+                };
+          }
         });
-
-        if (!res.ok) throw new Error("Network error");
-
-        const data = await res.json();
-        const results = Array.isArray(data.results)
-          ? data.results
-          : Array.isArray(data)
-          ? data
-          : [];
-
-        const total = data.total ?? results.length;
-
-        const mapped = results.map((item) =>
-          typeFilter === "Internal Transfer"
-            ? {
-                id: item.id,
-                dateTime: new Date(item.created_at).toLocaleString(),
-                fromAccountId: item.from_account || "",
-                toAccountId: item.to_account || "",
-                accountHolder: item.it_username || "",
-                amountUSD: Number(item.amount || 0),
-                status: item.status || "",
-                source: item.source || "",
-                approvedBy: item.approved_by_username || "",
-                adminComment: item.admin_comment || "",
-                description: item.description || "",
-              }
-            : {
-                id: item.id,
-                dateTime: new Date(item.created_at).toLocaleString(),
-                accountId: item.trading_account_id || "",
-                accountName: item.trading_account_name || "",
-                email: item.email || "",
-                amountUSD: Number(item.amount || 0),
-                status: item.status || "",
-                source: item.source || "",
-                approvedBy: item.approved_by_username || "",
-                adminComment: item.admin_comment || "",
-                description: item.description || "",
-              }
-        );
 
         return { data: mapped, total };
       } catch (e) {
@@ -157,7 +254,20 @@ export default function Transactions() {
 
   /* -------------------- Columns -------------------- */
   const columns =
-    typeFilter === "Internal Transfer"
+    typeFilter === "all"
+      ? [
+          { Header: "Date/Time", accessor: "dateTime" },
+          { Header: "Account ID", accessor: "accountId" },
+          { Header: "Account Name", accessor: "accountName" },
+          { Header: "Email", accessor: "email" },
+          { Header: "Amount (USD)", accessor: "amountUSD" },
+          { Header: "Status", accessor: "status", Cell: getStatusBadge },
+          { Header: "Source", accessor: "source" },
+          { Header: "Approved By", accessor: "approvedBy" },
+          { Header: "Admin Comment", accessor: "adminComment" },
+          { Header: "Description", accessor: "description" },
+        ]
+      : typeFilter === "Internal Transfer"
       ? [
           { Header: "Date/Time", accessor: "dateTime" },
           { Header: "From Account", accessor: "fromAccountId" },
@@ -185,7 +295,7 @@ export default function Transactions() {
 
   /* -------------------- UI -------------------- */
   return (
-    <div className="flex flex-col min-h-screen bg-black text-yellow-400 p-4">
+    <div className="flex flex-col min-h-screen  text-yellow-400 p-4">
       <h1 className="text-2xl font-bold mb-4">Transactions</h1>
 
       {tokenMissing && (
@@ -203,6 +313,7 @@ export default function Transactions() {
             onChange={(e) => setTypeFilter(e.target.value)}
             className="bg-gray-800 text-white px-3 py-2 rounded border border-yellow-400"
           >
+            <option value="all">All</option>
             <option value="Deposit">Deposit</option>
             <option value="Withdrawal">Withdrawal</option>
             <option value="Internal Transfer">Internal Transfer</option>
