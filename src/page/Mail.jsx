@@ -13,9 +13,10 @@ const MailForm = () => {
   const [error, setError] = useState(null);
   const [toast, setToast] = useState(null);
   const [activeUsersCount, setActiveUsersCount] = useState(null);
+  const [broadcastLoading, setBroadcastLoading] = useState(false);
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+  const handleChange = (_e) => {
+    setFormData({ ...formData, [_e.target.name]: _e.target.value });
   };
 
   const sendSingleEmail = async (payload) => {
@@ -62,7 +63,7 @@ const MailForm = () => {
       setError('Subject and message are required for broadcast');
       return;
     }
-    setLoading(true);
+    setBroadcastLoading(true);
     try {
       // First, fetch active user count to provide feedback
       let count = null;
@@ -91,7 +92,7 @@ const MailForm = () => {
     } catch (err) {
       setError(err.message || String(err));
     } finally {
-      setLoading(false);
+      setBroadcastLoading(false);
     }
   };
 
@@ -154,9 +155,11 @@ const MailForm = () => {
             value={formData.email}
             onChange={handleChange}
             placeholder="Enter email address separated by commas"
-            className="p-3 sm:p-4 rounded-lg border border-yellow-400/30   focus:outline-none focus:border-yellow-500 text-sm sm:text-base"
-          />
-          <small className="">Leave empty and use 'Send to All Users' to broadcast to all active users.</small>
+            className="p-3 sm:p-4 rounded-lg border border-yellow-400/30 
+             focus:outline-none focus:border-yellow-500 
+             text-sm sm:text-base 
+             placeholder-gray-400"/>
+          <small className="text-gray-600">Leave empty and use 'Send to All Users' to broadcast to all active users.</small>
         </div>
 
         <div className="flex flex-col gap-1">
@@ -167,8 +170,11 @@ const MailForm = () => {
             value={formData.subject}
             onChange={handleChange}
             placeholder="Enter subject"
-            className="p-3 sm:p-4 rounded-lg border border-yellow-400/30   focus:outline-none focus:border-yellow-500 text-sm sm:text-base"
-            required
+            className="p-3 sm:p-4 rounded-lg border border-yellow-400/30 
+             focus:outline-none focus:border-yellow-500 
+             text-sm sm:text-base 
+             placeholder-gray-400"
+             required
           />
         </div>
 
@@ -180,22 +186,45 @@ const MailForm = () => {
             onChange={handleChange}
             placeholder="Write your message"
             rows="6"
-            className="p-3 sm:p-4 rounded-lg border border-yellow-400/30   focus:outline-none focus:border-yellow-500 text-sm sm:text-base"
-            required
+            className="p-3 sm:p-4 rounded-lg border border-yellow-400/30 
+             focus:outline-none focus:border-yellow-500 
+             text-sm sm:text-base 
+             placeholder-gray-400"
+             required
           />
         </div>
 
-        {/* Active users count will be retrieved automatically when broadcasting */}
+       <div className="flex flex-col sm:flex-row justify-between gap-3">
 
-        <div className="flex flex-col sm:flex-row justify-between gap-3">
-          <button type="submit" disabled={loading} className="flex-1 bg-yellow-500  py-3 rounded-md hover:bg-yellow-600 transition-all text-sm sm:text-base">
-            {loading ? 'Sending...' : 'Send Email'}
-          </button>
+  {/* Send Email */}
+  <button
+    type="submit"
+    disabled={loading}
+    className="flex-1 bg-yellow-500 py-3 rounded-md
+               hover:bg-yellow-300 transition-all
+               text-gray-700 text-sm sm:text-base
+               disabled:opacity-60 disabled:cursor-not-allowed"
+  >
+    {loading ? "Sending..." : "Send Email"}
+  </button>
 
-          <button type="button" onClick={sendBroadcast} disabled={loading} className="flex-1 bg-yellow-500  py-3 rounded-md hover:bg-yellow-600 transition-all text-sm sm:text-base">
-            {loading ? 'Sending...' : `Send to All Users (${activeUsersCount ?? '--'})`}
-          </button>
-        </div>
+  {/* Send to All Users */}
+  <button
+    type="button"
+    onClick={sendBroadcast}
+    disabled={broadcastLoading}
+    className="flex-1 bg-yellow-500 py-3 rounded-md
+               hover:bg-yellow-300 transition-all
+               text-gray-700 text-sm sm:text-base
+               disabled:opacity-60 disabled:cursor-not-allowed"
+  >
+    {broadcastLoading
+      ? "Sending..."
+      : `Send to All Users (${activeUsersCount ?? "--"})`}
+  </button>
+
+</div>
+
       </form>
 
       {/* Toast notification */}
