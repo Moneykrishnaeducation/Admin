@@ -116,68 +116,77 @@ const TableStructure = ({
         <div className="flex items-center gap-2">&nbsp;</div>
       </div>
 
-      <div className="w-full overflow-auto rounded-lg">
-        <table className={`w-full text-left text-sm md:text-base ${tableBg}`}>
-          <thead>
-            <tr className="border-b-2 border-yellow-400">
-              {columns.map((col) => (
-                <th key={col.accessor} className="p-3 text-yellow-400 font-semibold">
-                  {col.Header}
-                </th>
-              ))}
-              {actionsColumn && (
-                <th className="p-3 text-yellow-400 font-semibold">Action</th>
-              )}
-            </tr>
-          </thead>
+<div className="w-full rounded-lg overflow-x-auto lg:overflow-x-visible">
+  <table
+    className={`w-full min-w-[1100px] lg:min-w-full 
+    table-auto lg:table-fixed 
+    text-left text-sm md:text-base ${tableBg}`}
+  >
+    <thead>
+      <tr className="border-b-2 border-yellow-400">
+        {columns.map((col) => (
+          <th
+            key={col.accessor}
+            className="p-3 text-yellow-400 font-semibold break-words"
+          >
+            {col.Header}
+          </th>
+        ))}
+        {actionsColumn && (
+          <th className="p-3 text-yellow-400 font-semibold">
+            Action
+          </th>
+        )}
+      </tr>
+    </thead>
 
-          <tbody>
-            {loading ? (
-              <tr>
-                <td className="p-4 text-center text-yellow-400" colSpan={columns.length + (actionsColumn ? 1 : 0)}>
-                  Loading...
-                </td>
-              </tr>
-            ) : paginatedData.length > 0 ? (
-              paginatedData.map((row, rowIndex) => (
-                <React.Fragment key={row.id || startIndex + rowIndex}>
-                  <tr
-                    className={`border-b ${borderClass} ${rowHover} transition cursor-pointer`}
-                    onClick={() => {
-                      if (renderRowSubComponent) {
-                        setExpandedRow(expandedRow === (row.id || startIndex + rowIndex) ? null : (row.id || startIndex + rowIndex));
-                      }
-                      if (onRowClick) onRowClick(row);
-                    }}
-                  >
-                    {columns.map((col) => {
-                      const cellValue = row[col.accessor];
-                      return (
-                        <td key={col.accessor} className={`p-3 ${tdText}`}>
-                          {col.Cell ? col.Cell(cellValue, row) : cellValue}
-                        </td>
-                      );
-                    })}
-                    {actionsColumn && (
-                      <td className="p-3">{actionsColumn(row)}</td>
-                    )}
-                  </tr>
-                  {renderRowSubComponent && expandedRow === (row.id || startIndex + rowIndex) && renderRowSubComponent(row, startIndex + rowIndex)}
-                </React.Fragment>
-              ))
-            ) : (
-              <tr>
-                <td
-                  className="p-4 text-center text-yellow-400"
-                  colSpan={columns.length + (actionsColumn ? 1 : 0)}
-                >
-                  No data available.
-                </td>
-              </tr>
+    <tbody>
+      {loading ? (
+        <tr>
+          <td
+            colSpan={columns.length + (actionsColumn ? 1 : 0)}
+            className="p-4 text-center text-yellow-400"
+          >
+            Loading...
+          </td>
+        </tr>
+      ) : paginatedData.length > 0 ? (
+        paginatedData.map((row, rowIndex) => (
+          <tr
+            key={row.id || rowIndex}
+            className={`border-b ${borderClass} ${rowHover}`}
+          >
+            {columns.map((col) => (
+              <td
+                key={col.accessor}
+                className={`p-3 ${tdText} break-all`}
+              >
+                {col.Cell
+                  ? col.Cell(row[col.accessor], row)
+                  : row[col.accessor]}
+              </td>
+            ))}
+            {actionsColumn && (
+              <td className="p-3">
+                {actionsColumn(row)}
+              </td>
             )}
-          </tbody>
-        </table>
-      </div>
+          </tr>
+        ))
+      ) : (
+        <tr>
+          <td
+            colSpan={columns.length + (actionsColumn ? 1 : 0)}
+            className="p-4 text-center text-yellow-400"
+          >
+            No data available.
+          </td>
+        </tr>
+      )}
+    </tbody>
+  </table>
+</div>
+
 
       <div className={`mt-3 flex items-center justify-between text-sm ${pageTextClass}`}>
         <div>
