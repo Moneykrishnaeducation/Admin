@@ -31,6 +31,8 @@ class ErrorBoundary extends React.Component {
 
 /* -------------------- Component -------------------- */
 export default function Transactions() {
+  const rowsPerPage = 10; // 10 rows per page
+
   const [statusFilter, setStatusFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("Deposit");
   const [fromDate, setFromDate] = useState("");
@@ -41,7 +43,7 @@ export default function Transactions() {
 
   /* -------------------- Fetch -------------------- */
   const onFetch = useCallback(
-    async ({ page: p = 1, pageSize: ps = 10, query = "" } = {}) => {
+    async ({ page: p = 1, pageSize: ps = rowsPerPage, query = "" } = {}) => {
       try {
         setPage(p);
         setPageSize(ps);
@@ -192,6 +194,54 @@ export default function Transactions() {
         </div>
       )}
 
+      {/* Filters */}
+      <div className="flex flex-wrap gap-4 mb-4">
+        <div>
+          <label className="block text-sm font-medium mb-1">Type</label>
+          <select
+            value={typeFilter}
+            onChange={(e) => setTypeFilter(e.target.value)}
+            className="bg-gray-800 text-white px-3 py-2 rounded border border-yellow-400"
+          >
+            <option value="Deposit">Deposit</option>
+            <option value="Withdrawal">Withdrawal</option>
+            <option value="Internal Transfer">Internal Transfer</option>
+          </select>
+        </div>
+        <div>
+          <label className="block text-sm font-medium mb-1">Status</label>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="bg-gray-800 text-white px-3 py-2 rounded border border-yellow-400"
+          >
+            <option value="all">All</option>
+            <option value="pending">Pending</option>
+            <option value="approved">Approved</option>
+            <option value="completed">Completed</option>
+            <option value="failed">Failed</option>
+          </select>
+        </div>
+        <div>
+          <label className="block text-sm font-medium mb-1">From Date</label>
+          <input
+            type="date"
+            value={fromDate}
+            onChange={(e) => setFromDate(e.target.value)}
+            className="bg-gray-800 text-white px-3 py-2 rounded border border-yellow-400"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium mb-1">To Date</label>
+          <input
+            type="date"
+            value={toDate}
+            onChange={(e) => setToDate(e.target.value)}
+            className="bg-gray-800 text-white px-3 py-2 rounded border border-yellow-400"
+          />
+        </div>
+      </div>
+
       <ErrorBoundary>
         <div className="flex-1 overflow-auto">
           <TableStructure
@@ -200,6 +250,8 @@ export default function Transactions() {
             onFetch={onFetch}
             page={page}
             pageSize={pageSize}
+            initialPageSize={10}
+            pageSizeOptions={[10]} // Fixed to 10 rows per page
           />
         </div>
       </ErrorBoundary>
