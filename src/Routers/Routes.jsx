@@ -22,7 +22,7 @@ import User from "../page/User";
 import Tickets from "../page/Tickets";
 import Activities from "../page/Activities";
 import MamAccount from "../page/MamAccount";
-import TradingAccount from "../page/tradingaccount";
+import TradingAccount from "../page/TradingAccount";
 import Pendingrequest from "../page/Pendingrequest";
 import DemoAccount from "../page/DemoAccount";
 import Transactions from "../page/Transactions";
