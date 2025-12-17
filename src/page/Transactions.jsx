@@ -132,6 +132,15 @@ export default function Transactions() {
             total = results.length; // Update total after filtering
           }
 
+          // Apply client-side status filtering
+          if (statusFilter !== "all") {
+            results = results.filter((item) => {
+              const itemStatus = (item.status || "").toLowerCase();
+              return itemStatus === statusFilter.toLowerCase();
+            });
+            total = results.length; // Update total after filtering
+          }
+
           // Apply client-side pagination
           const startIndex = (p - 1) * ps;
           const endIndex = startIndex + ps;

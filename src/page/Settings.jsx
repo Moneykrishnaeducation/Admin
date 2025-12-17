@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
+import { useTheme } from "../context/ThemeContext";
 
 const Settings = () => {
+  const { isDarkMode } = useTheme();
   const [serverData, setServerData] = useState({
     serverIP: "",
     loginID: "",
@@ -150,71 +152,71 @@ const Settings = () => {
   };
 
   return (
-    <div className="min-h-screen bg-transparent text-yellow-400 flex flex-col items-center p-4 sm:p-6 md:p-8">
-      <h2 className="text-2xl sm:text-3xl font-bold mb-6 text-center">Server Configuration</h2>
+    <div className={`min-h-screen bg-transparent ${isDarkMode ? 'text-yellow-400' : 'text-gray-900'} flex flex-col items-center p-4 sm:p-6 md:p-8`}>
+      <h2 className={`text-2xl sm:text-3xl font-bold mb-6 text-center ${isDarkMode ? 'text-yellow-400' : 'text-gray-900'}`}>Server Configuration</h2>
 
       <form
         onSubmit={handleSubmit}
-        className="bg-black p-4 sm:p-6 md:p-8 rounded-2xl shadow-[0px_0px_10px_rgba(255,255,255,0.2),0px_0px_15px_rgba(255,0,0,0.15)] w-full max-w-8xl sm:max-w-lg hover:shadow-[0px_0px_15px_rgba(255,255,255,0.35),0px_0px_20px_rgba(255,215,0,0.25)] transition-shadow duration-300"
+        className={`${isDarkMode ? 'bg-black' : 'bg-white'} p-4 sm:p-6 md:p-8 rounded-2xl shadow-[0px_0px_10px_rgba(255,255,255,0.2),0px_0px_15px_rgba(255,0,0,0.15)] w-full max-w-8xl sm:max-w-lg hover:shadow-[0px_0px_15px_rgba(255,255,255,0.35),0px_0px_20px_rgba(255,215,0,0.25)] transition-shadow duration-300`}
       >
         {loading ? (
-          <div className="text-yellow-300">Loading server settings...</div>
+          <div className={isDarkMode ? "text-yellow-300" : "text-gray-600"}>Loading server settings...</div>
         ) : (
           <>
             {error && <div className="text-red-400 mb-3">{error}</div>}
 
             <div className="flex flex-col gap-1">
-              <label className="text-yellow-400 font-medium text-sm sm:text-base">Server IP Address*</label>
+              <label className={`${isDarkMode ? 'text-yellow-400' : 'text-gray-900'} font-medium text-sm sm:text-base`}>Server IP Address*</label>
               <input
                 type="text"
                 name="serverIP"
                 value={serverData.serverIP}
                 onChange={handleChange}
                 disabled={!isEditing || saving}
-                className={`p-3 sm:p-4 rounded-lg border border-yellow-400/30 bg-black text-yellow-400 focus:outline-none focus:border-yellow-500 text-sm sm:text-base ${
-                  isEditing ? "bg-black" : "bg-black/50 cursor-not-allowed"
+                className={`p-3 sm:p-4 rounded-lg border ${isDarkMode ? 'border-yellow-400/30 bg-black text-yellow-400 focus:border-yellow-500' : 'border-gray-300 bg-white text-gray-900 focus:border-blue-500'} text-sm sm:text-base ${
+                  isEditing ? (isDarkMode ? "bg-black" : "bg-white") : (isDarkMode ? "bg-black/50 cursor-not-allowed" : "bg-gray-100 cursor-not-allowed")
                 }`}
               />
             </div>
 
             <div className="flex flex-col gap-1">
-              <label className="text-yellow-400 font-medium text-sm sm:text-base">Account Login ID*</label>
+              <label className={`${isDarkMode ? 'text-yellow-400' : 'text-gray-900'} font-medium text-sm sm:text-base`}>Account Login ID*</label>
               <input
                 type="text"
                 name="loginID"
                 value={serverData.loginID}
                 onChange={handleChange}
                 disabled={!isEditing || saving}
-                className={`p-3 sm:p-4 rounded-lg border border-yellow-400/30 bg-black text-yellow-400 focus:outline-none focus:border-yellow-500 text-sm sm:text-base ${
-                  isEditing ? "bg-black" : "bg-black/50 cursor-not-allowed"
+                className={`p-3 sm:p-4 rounded-lg border ${isDarkMode ? 'border-yellow-400/30 bg-black text-yellow-400 focus:border-yellow-500' : 'border-gray-300 bg-white text-gray-900 focus:border-blue-500'} text-sm sm:text-base ${
+                  isEditing ? (isDarkMode ? "bg-black" : "bg-white") : (isDarkMode ? "bg-black/50 cursor-not-allowed" : "bg-gray-100 cursor-not-allowed")
                 }`}
               />
             </div>
 
             <div className="flex flex-col gap-1">
-              <label className="text-yellow-400 font-medium text-sm sm:text-base">Account Password*</label>
+              <label className={`${isDarkMode ? 'text-yellow-400' : 'text-gray-900'} font-medium text-sm sm:text-base`}>Account Password*</label>
               <input
                 type="password"
                 name="password"
                 value={serverData.password}
                 onChange={handleChange}
                 disabled={!isEditing || saving}
-                className={`p-3 sm:p-4 rounded-lg border border-yellow-400/30 bg-black text-yellow-400 focus:outline-none focus:border-yellow-500 text-sm sm:text-base ${
-                  isEditing ? "bg-black" : "bg-black/50 cursor-not-allowed"
+                className={`p-3 sm:p-4 rounded-lg border ${isDarkMode ? 'border-yellow-400/30 bg-black text-yellow-400 focus:border-yellow-500' : 'border-gray-300 bg-white text-gray-900 focus:border-blue-500'} text-sm sm:text-base ${
+                  isEditing ? (isDarkMode ? "bg-black" : "bg-white") : (isDarkMode ? "bg-black/50 cursor-not-allowed" : "bg-gray-100 cursor-not-allowed")
                 }`}
               />
             </div>
 
             <div className="flex flex-col gap-1">
-              <label className="text-yellow-400 font-medium text-sm sm:text-base">Server Name*</label>
+              <label className={`${isDarkMode ? 'text-yellow-400' : 'text-gray-900'} font-medium text-sm sm:text-base`}>Server Name*</label>
               <input
                 type="text"
                 name="serverName"
                 value={serverData.serverName}
                 onChange={handleChange}
                 disabled={!isEditing || saving}
-                className={`p-3 sm:p-4 rounded-lg border border-yellow-400/30 bg-black text-yellow-400 focus:outline-none focus:border-yellow-500 text-sm sm:text-base ${
-                  isEditing ? "bg-black" : "bg-black/50 cursor-not-allowed"
+                className={`p-3 sm:p-4 rounded-lg border ${isDarkMode ? 'border-yellow-400/30 bg-black text-yellow-400 focus:border-yellow-500' : 'border-gray-300 bg-white text-gray-900 focus:border-blue-500'} text-sm sm:text-base ${
+                  isEditing ? (isDarkMode ? "bg-black" : "bg-white") : (isDarkMode ? "bg-black/50 cursor-not-allowed" : "bg-gray-100 cursor-not-allowed")
                 }`}
               />
             </div>
