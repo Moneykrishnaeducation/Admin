@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from "react";
 import TableStructure from "../commonComponent/TableStructure";
 import { Download, FileText } from "lucide-react";
+import { useTheme } from "../context/ThemeContext";
 
 /* -------------------- Error Boundary -------------------- */
 class ErrorBoundary extends React.Component {
@@ -31,6 +32,7 @@ class ErrorBoundary extends React.Component {
 
 /* -------------------- Component -------------------- */
 export default function Transactions() {
+  const { isDarkMode } = useTheme();
   const rowsPerPage = 10; // 10 rows per page
 
   const [statusFilter, setStatusFilter] = useState("all");
@@ -307,11 +309,11 @@ export default function Transactions() {
       {/* Filters */}
       <div className="flex flex-wrap gap-4 mb-4">
         <div>
-          <label className="block text-sm font-medium mb-1">Type</label>
+          <label className={`block text-sm font-medium mb-1 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Type</label>
           <select
             value={typeFilter}
             onChange={(e) => setTypeFilter(e.target.value)}
-            className="bg-gray-800 text-white px-3 py-2 rounded border border-yellow-400"
+            className={`px-3 py-2 rounded border ${isDarkMode ? 'bg-gray-800 text-white border-yellow-400' : 'bg-white text-gray-900 border-gray-300'}`}
           >
             <option value="all">All</option>
             <option value="Deposit">Deposit</option>
@@ -320,11 +322,11 @@ export default function Transactions() {
           </select>
         </div>
         <div>
-          <label className="block text-sm font-medium mb-1">Status</label>
+          <label className={`block text-sm font-medium mb-1 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Status</label>
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="bg-gray-800 text-white px-3 py-2 rounded border border-yellow-400"
+            className={`px-3 py-2 rounded border ${isDarkMode ? 'bg-gray-800 text-white border-yellow-400' : 'bg-white text-gray-900 border-gray-300'}`}
           >
             <option value="all">All</option>
             <option value="pending">Pending</option>
@@ -334,21 +336,21 @@ export default function Transactions() {
           </select>
         </div>
         <div>
-          <label className="block text-sm font-medium mb-1">From Date</label>
+          <label className={`block text-sm font-medium mb-1 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>From Date</label>
           <input
             type="date"
             value={fromDate}
             onChange={(e) => setFromDate(e.target.value)}
-            className="bg-gray-800 text-white px-3 py-2 rounded border border-yellow-400"
+            className={`px-3 py-2 rounded border ${isDarkMode ? 'bg-gray-800 text-white border-yellow-400' : 'bg-white text-gray-900 border-gray-300'}`}
           />
         </div>
         <div>
-          <label className="block text-sm font-medium mb-1">To Date</label>
+          <label className={`block text-sm font-medium mb-1 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>To Date</label>
           <input
             type="date"
             value={toDate}
             onChange={(e) => setToDate(e.target.value)}
-            className="bg-gray-800 text-white px-3 py-2 rounded border border-yellow-400"
+            className={`px-3 py-2 rounded border ${isDarkMode ? 'bg-gray-800 text-white border-yellow-400' : 'bg-white text-gray-900 border-gray-300'}`}
           />
         </div>
       </div>
