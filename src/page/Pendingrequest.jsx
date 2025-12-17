@@ -44,7 +44,7 @@ const PendingRequest = () => {
     "Commission Withdrawals": "admin/transaction",
   };
 
-  const [activeTab, setActiveTab] = useState("");
+  const [activeTab, setActiveTab] = useState("IB Requests");
   const [tableData, setTableData] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -73,6 +73,13 @@ const PendingRequest = () => {
       console.error("Failed to fetch profiles:", error);
     }
   };
+
+  useEffect(() => {
+  if (activeTab) {
+    loadTabData(activeTab);
+  }
+}, []); 
+
 
   // Run once on page load
   useEffect(() => {

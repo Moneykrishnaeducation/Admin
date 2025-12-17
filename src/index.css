@@ -11,3 +11,28 @@
 .border-animate {
   animation: gradientShift 3s infinite linear;
 }
+
+:root {
+  --scrollbar-track: #111;
+  --scrollbar-border: #111;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #ffff00;
+  border-radius: 10px;
+  border: 2px solid var(--scrollbar-border);
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #ffff00 var(--scrollbar-track);
+}

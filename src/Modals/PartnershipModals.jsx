@@ -77,22 +77,35 @@ const PartnershipModals = ({
   return (
     <>
       {showCommissionModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-black via-gray-900 to-black bg-opacity-80 backdrop-blur-sm animate-fadeIn">
-          <div className="bg-gradient-to-br from-gray-900 via-black to-gray-800 text-white rounded-2xl shadow-2xl w-11/12 max-w-4xl p-8 relative border border-yellow-400/20 transform transition-all duration-300 hover:scale-105">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-black via-gray-900 to-black bg-opacity-80 backdrop-blur-sm animate-fadeIn p-4">
+          <div className="bg-gradient-to-br from-gray-900 via-black to-gray-800 text-white rounded-2xl shadow-2xl w-full max-w-4xl p-8 relative border border-yellow-400/20 transform transition-all duration-300 hover:scale-105 overflow-auto p-6 h-[80vh]">
+
             <div className="flex items-center mb-6">
               <IconWrapper>
                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </IconWrapper>
-              <h2 className="text-2xl font-bold bg-gradient-to-r from-yellow-400 to-yellow-600 bg-clip-text text-transparent">Commission Profiles</h2>
+              <h2 className="text-2xl font-bold bg-gradient-to-r from-yellow-400 to-yellow-600 bg-clip-text text-transparent">
+                Commission Profiles
+              </h2>
             </div>
+            <button
+              onClick={() => {
+                setShowCommissionModal(false);
+                setIsCreateMode(false);
+              }}
+              className="absolute top-3 right-3 text-white hover:text-gray-300 font-bold text-2xl"
+              aria-label="Close modal"
+            >
+              &times;
+            </button>
             {isCreateMode ? (
               <form
                 onSubmit={handleCreateProfile}
-                className="space-y-4"
-                style={{ maxHeight: "500px", overflowY: "auto" }}
+                className="h-full"
               >
+                {/* Profile Name */}
                 <div className="py-2 px-3 bg-black text-white rounded shadow-sm">
                   <label className="block font-semibold mb-1">Profile Name</label>
                   <input
@@ -103,6 +116,8 @@ const PartnershipModals = ({
                     required
                   />
                 </div>
+
+                {/* Commission Type */}
                 <div className="py-2 px-3 bg-black text-white rounded shadow-sm mt-3">
                   <label className="block font-semibold mb-1">Commission Type</label>
                   <div className="flex gap-4 mt-1">
@@ -128,6 +143,8 @@ const PartnershipModals = ({
                     </label>
                   </div>
                 </div>
+
+                {/* Conditional Inputs */}
                 {newProfile.isPercentageBased ? (
                   <div className="py-2 px-3 bg-black text-white rounded shadow-sm mt-3">
                     <label className="block font-semibold mb-1">Level Percentages (e.g., 50,20,20,10)</label>
@@ -152,9 +169,11 @@ const PartnershipModals = ({
                     />
                   </div>
                 )}
+
+                {/* Select Groups */}
                 <div className="py-2 px-3 bg-black text-white rounded shadow-sm mt-3">
                   <label className="block font-semibold mb-1">Select Groups</label>
-                  <div className="border rounded bg-black text-white p-2" style={{ maxHeight: 180, overflowY: 'auto' }}>
+                  <div className="border rounded bg-black text-white p-2 overflow-auto" style={{ maxHeight: 150 }}>
                     {availableGroups.length > 0 ? (
                       availableGroups.map((g) => {
                         const checked = newProfile.selectedGroups.includes(g);
@@ -181,6 +200,7 @@ const PartnershipModals = ({
                       <div className="text-sm text-gray-400">No groups available</div>
                     )}
                   </div>
+
                   <div className="mt-2">
                     <label className="inline-flex items-center gap-2">
                       <input
@@ -189,10 +209,8 @@ const PartnershipModals = ({
                         checked={availableGroups.length > 0 && newProfile.selectedGroups.length === availableGroups.length}
                         onChange={(e) => {
                           if (e.target.checked) {
-                            // select all groups
                             setNewProfile((prev) => ({ ...prev, selectedGroups: Array.from(availableGroups) }));
                           } else {
-                            // clear selection (backend interprets empty array as 'all groups')
                             setNewProfile((prev) => ({ ...prev, selectedGroups: [] }));
                           }
                         }}
@@ -201,6 +219,8 @@ const PartnershipModals = ({
                     </label>
                   </div>
                 </div>
+
+                {/* Buttons */}
                 <div className="flex gap-4 justify-end mt-4">
                   <button
                     type="button"
@@ -270,7 +290,7 @@ const PartnershipModals = ({
             <div className="flex items-center mb-6">
               <IconWrapper>
                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z"/>
+                  <path d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" />
                 </svg>
               </IconWrapper>
               <h2 className="text-2xl font-bold bg-gradient-to-r from-yellow-400 to-yellow-600 bg-clip-text text-transparent">
@@ -367,7 +387,7 @@ const PartnershipModals = ({
             <div className="flex items-center mb-6">
               <IconWrapper>
                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M8 9a3 3 0 100-6 3 3 0 000 6zM8 11a6 6 0 016 6H2a6 6 0 016-6zM16 7a1 1 0 10-2 0v1h-1a1 1 0 100 2h1v1a1 1 0 102 0v-1h1a1 1 0 100-2h-1V7z"/>
+                  <path d="M8 9a3 3 0 100-6 3 3 0 000 6zM8 11a6 6 0 016 6H2a6 6 0 016-6zM16 7a1 1 0 10-2 0v1h-1a1 1 0 100 2h1v1a1 1 0 102 0v-1h1a1 1 0 100-2h-1V7z" />
                 </svg>
               </IconWrapper>
               <h2 className="text-2xl font-bold bg-gradient-to-r from-yellow-400 to-yellow-600 bg-clip-text text-transparent">
@@ -433,7 +453,7 @@ const PartnershipModals = ({
             <div className="flex items-center mb-6">
               <IconWrapper>
                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M8 9a3 3 0 100-6 3 3 0 000 6zM8 11a6 6 0 016 6H2a6 6 0 016-6zM16 7a1 1 0 10-2 0v1h-1a1 1 0 100 2h1v1a1 1 0 102 0v-1h1a1 1 0 100-2h-1V7z"/>
+                  <path d="M8 9a3 3 0 100-6 3 3 0 000 6zM8 11a6 6 0 016 6H2a6 6 0 016-6zM16 7a1 1 0 10-2 0v1h-1a1 1 0 100 2h1v1a1 1 0 102 0v-1h1a1 1 0 100-2h-1V7z" />
                 </svg>
               </IconWrapper>
               <h2 className="text-2xl font-bold bg-gradient-to-r from-yellow-400 to-yellow-600 bg-clip-text text-transparent">
@@ -512,7 +532,7 @@ const PartnershipModals = ({
             <div className="flex items-center mb-6">
               <IconWrapper>
                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"/>
+                  <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
                 </svg>
               </IconWrapper>
               <h2 className="text-2xl font-bold bg-gradient-to-r from-yellow-400 to-yellow-600 bg-clip-text text-transparent">
@@ -553,7 +573,7 @@ const PartnershipModals = ({
             <div className="flex items-center mb-6">
               <IconWrapper>
                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"/>
+                  <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z" />
                 </svg>
               </IconWrapper>
               <h2 className="text-2xl font-bold bg-gradient-to-r from-yellow-400 to-yellow-600 bg-clip-text text-transparent">
@@ -562,17 +582,15 @@ const PartnershipModals = ({
             </div>
             <div className="flex gap-4 mb-4">
               <button
-                className={`px-4 py-2 rounded-md font-semibold ${
-                  statisticsTab === "summary" ? "bg-yellow-400 text-black" : "bg-gray-600 text-white"
-                }`}
+                className={`px-4 py-2 rounded-md font-semibold ${statisticsTab === "summary" ? "bg-yellow-400 text-black" : "bg-gray-600 text-white"
+                  }`}
                 onClick={() => setStatisticsTab("summary")}
               >
                 Summary
               </button>
               <button
-                className={`px-4 py-2 rounded-md font-semibold ${
-                  statisticsTab === "commissionStats" ? "bg-yellow-400 text-black" : "bg-gray-600 text-white"
-                }`}
+                className={`px-4 py-2 rounded-md font-semibold ${statisticsTab === "commissionStats" ? "bg-yellow-400 text-black" : "bg-gray-600 text-white"
+                  }`}
                 onClick={() => setStatisticsTab("commissionStats")}
               >
                 Commission Stats
@@ -621,7 +639,7 @@ const PartnershipModals = ({
                           </table>
                         </div>
                       ) : (
-                          <p>No client level data available.</p>
+                        <p>No client level data available.</p>
                       )}
                     </div>
                   ) : statisticsTab === "commissionStats" ? (
@@ -714,7 +732,7 @@ const PartnershipModals = ({
             <div className="flex items-center mb-6">
               <IconWrapper>
                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
                 </svg>
               </IconWrapper>
               <h2 className="text-2xl font-bold bg-gradient-to-r from-yellow-400 to-yellow-600 bg-clip-text text-transparent">
@@ -756,7 +774,7 @@ const PartnershipModals = ({
             <div className="flex items-center mb-6">
               <IconWrapper>
                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z"/>
+                  <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" />
                 </svg>
               </IconWrapper>
               <h2 className="text-2xl font-bold bg-gradient-to-r from-yellow-400 to-yellow-600 bg-clip-text text-transparent">
