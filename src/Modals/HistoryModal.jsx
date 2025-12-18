@@ -66,7 +66,7 @@ const HistoryModal = ({ visible, onClose, accountId, activeTab, setActiveTab }) 
     <ModalWrapper title={`Account Summary (ID: ${accountId})`} visible={visible} onClose={onClose}>
 
       {/* Summary Section */}
-      <div className="grid grid-cols-3 gap-6 bg-gray-900 p-4 rounded-lg border border-yellow-500/30 mb-6">
+      <div className="grid grid-cols-3 gap-6 p-4 rounded-lg border border-yellow-500/30 mb-6">
         <div>
           <p className="text-gray-400 text-sm">Balance</p>
           <p className="text-yellow-400 text-lg font-semibold">${historyData?.account_summary?.balance?.toFixed(2) || '0.00'}</p>

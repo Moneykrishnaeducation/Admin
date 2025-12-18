@@ -1,6 +1,5 @@
 import React, { useState, useMemo } from 'react';
 import { X } from 'lucide-react';
-import ModalWrapper from './ModalWrapper';
 
 const TicketsModal = ({ visible, onClose, userName, isDarkMode = false }) => {
   const [activeTab, setActiveTab] = useState('open');

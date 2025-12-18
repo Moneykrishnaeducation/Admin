@@ -1,5 +1,6 @@
 import React from 'react';
 import ModalWrapper from './ModalWrapper';
+import { useTheme } from '../context/ThemeContext';
 
 const PendingWithdrawalModal = ({ visible, onClose, withdrawalData, onApprove, onReject }) => {
   if (!withdrawalData) return null;
@@ -13,6 +14,16 @@ const PendingWithdrawalModal = ({ visible, onClose, withdrawalData, onApprove, o
     amount,
     transaction_type_display,
   } = withdrawalData;
+  
+  const { isDarkMode } = useTheme();
+
+  const cardBg = isDarkMode
+    ? "bg-black border-gray-700 text-white"
+    : "bg-white border-gray-200 text-black";
+
+  const labelText = isDarkMode ? "text-gray-400" : "text-gray-600";
+  const valueText = isDarkMode ? "text-gray-200" : "text-gray-900";
+  const divider = isDarkMode ? "border-gray-700" : "border-gray-300";
 
   const footer = (
     <div className="flex justify-end gap-3 mt-4">
@@ -47,23 +58,23 @@ const PendingWithdrawalModal = ({ visible, onClose, withdrawalData, onApprove, o
       footer={footer}
     >
       <div className="max-h-[470px] overflow-y-auto p-2">
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
+        <div className={`rounded-xl shadow-lg p-6 border ${cardBg}`}>
 
           {/* Header */}
           <div className="mb-5">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{username}</h2>
-            <p className="text-gray-500 dark:text-gray-400 text-sm">{email}</p>
+            <h2 className="text-2xl font-bold">{username}</h2>
+            <p className={`text-sm ${labelText}`}>{email}</p>
           </div>
 
-          <div className="border-t border-gray-300 dark:border-gray-600 my-4"></div>
+            <div className={`border-t my-4 ${divider}`} />
 
           {/* Details Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            <Info label="ID" value={id} />
-            <Info label="Date/Time" value={created_at} />
-            <Info label="Trading Account ID" value={trading_account_id} />
-            <Info label="Amount (USD)" value={`$${amount}`} />
-            <Info label="Payment Method" value={transaction_type_display} />
+            <Info label="ID" value={id} labelText={labelText} valueText={valueText} />
+            <Info label="Date/Time" value={created_at} labelText={labelText} valueText={valueText} />
+            <Info label="Trading Account ID" value={trading_account_id} labelText={labelText} valueText={valueText} />
+            <Info label="Amount (USD)" value={`$${amount}`} labelText={labelText} valueText={valueText} />
+            <Info label="Payment Method" value={transaction_type_display} labelText={labelText} valueText={valueText} />
           </div>
         </div>
       </div>
@@ -71,11 +82,12 @@ const PendingWithdrawalModal = ({ visible, onClose, withdrawalData, onApprove, o
   );
 };
 
-const Info = ({ label, value }) => (
-  <div className="flex flex-col">
-    <span className="text-gray-500 dark:text-gray-400 text-sm">{label}</span>
-    <span className="font-medium text-gray-900 dark:text-gray-200">{value}</span>
+const Info = ({ label, value, labelText, valueText }) => (
+  <div className="flex flex-col break-words">
+    <span className={`text-sm ${labelText}`}>{label}</span>
+    <span className={`font-medium ${valueText}`}>{value}</span>
   </div>
 );
+
 
 export default PendingWithdrawalModal;

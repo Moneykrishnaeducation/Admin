@@ -1,58 +1,63 @@
-import React, { useState } from 'react';
-import ModalWrapper from './ModalWrapper';
+import React, { useState } from "react";
+import ModalWrapper from "./ModalWrapper";
 import { AdminAuthenticatedFetch } from "../utils/fetch-utils.js";
+import { useTheme } from "../context/ThemeContext";
 
-const apiClient = new AdminAuthenticatedFetch('/api');
-const client = new AdminAuthenticatedFetch('');
+const apiClient = new AdminAuthenticatedFetch("/api");
+const client = new AdminAuthenticatedFetch("");
 
 const WithdrawModal = ({ visible, onClose, accountId, onSubmit }) => {
-  const [amount, setAmount] = useState('');
-  const [comment, setComment] = useState('');
+  const { isDarkMode } = useTheme();
+
+  const [amount, setAmount] = useState("");
+  const [comment, setComment] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // --------------------------
-  // HANDLE WITHDRAW SUBMIT
-  // --------------------------
+  /* ---------------- THEME CLASSES ---------------- */
+  const cardBg = isDarkMode
+    ? "bg-black border-gray-700 text-white"
+    : "bg-white border-gray-200 text-black";
+
+  const labelText = isDarkMode ? "text-gray-400" : "text-gray-600";
+  const inputBg = isDarkMode
+    ? "bg-gray-900 border-gray-700 text-white"
+    : "bg-white border-gray-300 text-black";
+
+  const buttonPrimary = "bg-yellow-400 hover:bg-yellow-500 text-black";
+  const buttonSecondary = isDarkMode
+    ? "bg-gray-800 text-white hover:bg-gray-700"
+    : "bg-gray-200 text-black hover:bg-gray-300";
+
+  /* ---------------- SUBMIT HANDLER ---------------- */
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     if (!accountId) return alert("Missing account ID");
-    if (!amount || Number(amount) <= 0) return alert("Enter a valid amount");
+    if (!amount || Number(amount) <= 0) return alert("Enter valid amount");
 
     try {
       setLoading(true);
 
-      // STEP 1 → GET CSRF
-      const csrfRes = await client.get('/api/csrf/');
+      const csrfRes = await client.get("/api/csrf/");
       const csrfToken = csrfRes?.csrfToken;
+      if (!csrfToken) return alert("CSRF failed");
 
-      if (!csrfToken) {
-        alert("Failed to get CSRF token");
-        return;
-      }
-
-      // STEP 2 → CALL WITHDRAW API
       const payload = {
         account_id: accountId,
         amount: Number(amount),
         comment: comment || "",
       };
 
-      const withdrawRes = await apiClient.post('/admin/withdraw/', payload, {
-        headers: {
-          "X-CSRFToken": csrfToken,
-        },
+      const withdrawRes = await apiClient.post("/admin/withdraw/", payload, {
+        headers: { "X-CSRFToken": csrfToken },
       });
 
-      // Return response to parent
-      if (onSubmit) onSubmit(withdrawRes);
-
+      onSubmit?.(withdrawRes);
       alert(`Withdraw Success: $${withdrawRes.amount}`);
 
-      // Reset form & close modal
-      setAmount('');
-      setComment('');
+      setAmount("");
+      setComment("");
       onClose();
-
     } catch (err) {
       console.error("WITHDRAW ERROR:", err);
       alert("Withdrawal failed");
@@ -61,19 +66,20 @@ const WithdrawModal = ({ visible, onClose, accountId, onSubmit }) => {
     }
   };
 
+  /* ---------------- FOOTER ---------------- */
   const footer = (
-    <div className="flex justify-end gap-3">
+    <div className="flex flex-col sm:flex-row justify-end gap-3">
       <button
         disabled={loading}
         onClick={handleSubmit}
-        className="bg-yellow-400 text-white px-4 py-2 rounded shadow hover:opacity-95 disabled:opacity-50"
+        className={`px-4 py-2 rounded shadow disabled:opacity-50 ${buttonPrimary}`}
       >
         {loading ? "Processing..." : "Withdraw"}
       </button>
 
       <button
         onClick={onClose}
-        className="bg-gray-200 px-4 py-2 rounded"
+        className={`px-4 py-2 rounded ${buttonSecondary}`}
       >
         Close
       </button>
@@ -82,26 +88,31 @@ const WithdrawModal = ({ visible, onClose, accountId, onSubmit }) => {
 
   return (
     <ModalWrapper
-      title={`Withdraw from Account ${accountId || ''}`}
+      title={`Withdraw from Account ${accountId || ""}`}
       visible={visible}
       onClose={onClose}
       footer={footer}
+      className={`${cardBg}`}
     >
       <form onSubmit={handleSubmit} className="space-y-4">
 
-        {/* Account Id */}
+        {/* Account ID */}
         <div>
-          <label className="block text-sm font-medium text-gray-700">Account ID</label>
+          <label className={`block text-sm font-medium ${labelText}`}>
+            Account ID
+          </label>
           <input
             readOnly
-            value={accountId || ''}
-            className="mt-1 w-full rounded border px-3 py-2 bg-gray-100"
+            value={accountId || ""}
+            className={`mt-1 w-full rounded px-3 py-2 ${inputBg} opacity-80`}
           />
         </div>
 
         {/* Withdraw Amount */}
         <div>
-          <label className="block text-sm font-medium text-gray-700">* Withdraw Amount ($)</label>
+          <label className={`block text-sm font-medium ${labelText}`}>
+            * Withdraw Amount ($)
+          </label>
           <input
             required
             type="number"
@@ -110,18 +121,21 @@ const WithdrawModal = ({ visible, onClose, accountId, onSubmit }) => {
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
             placeholder="Enter amount"
-            className="mt-1 w-full rounded border px-3 py-2"
+            className={`mt-1 w-full rounded px-3 py-2 ${inputBg}`}
           />
         </div>
 
         {/* Comment */}
         <div>
-          <label className="block text-sm font-medium text-gray-700">Comment</label>
+          <label className={`block text-sm font-medium ${labelText}`}>
+            Comment
+          </label>
           <textarea
+            rows="3"
             value={comment}
             onChange={(e) => setComment(e.target.value)}
             placeholder="Optional comment"
-            className="mt-1 w-full rounded border px-3 py-2"
+            className={`mt-1 w-full rounded px-3 py-2 resize-none ${inputBg}`}
           />
         </div>
 

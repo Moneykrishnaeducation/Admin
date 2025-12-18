@@ -1,34 +1,44 @@
-import React, { useState } from 'react';
-import ModalWrapper from './ModalWrapper';
+import React, { useState } from "react";
+import ModalWrapper from "./ModalWrapper";
 import { AdminAuthenticatedFetch } from "../utils/fetch-utils.js";
 
-const apiClient = new AdminAuthenticatedFetch('/api');
-const client = new AdminAuthenticatedFetch('');
+const apiClient = new AdminAuthenticatedFetch("/api");
+const client = new AdminAuthenticatedFetch("");
 
 const DepositModal = ({ visible, onClose, accountId, onSubmit }) => {
-  const [amount, setAmount] = useState('');
-  const [comment, setComment] = useState('');
+  const [amount, setAmount] = useState("");
+  const [comment, setComment] = useState("");
   const [loading, setLoading] = useState(false);
 
   // -------------------------------
-  // HANDLE SUBMIT
+  // HANDLE DEPOSIT SUBMISSION
   // -------------------------------
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!accountId) return alert("Missing account ID");
+
+    if (!accountId) {
+      alert("Missing account ID");
+      return;
+    }
+
+    if (!amount || Number(amount) <= 0) {
+      alert("Enter a valid deposit amount");
+      return;
+    }
 
     try {
       setLoading(true);
 
-      // STEP 1 → Fetch CSRF Token
-      const csrfRes = await client.get('/api/csrf/');
+      // STEP 1 → FETCH CSRF TOKEN
+      const csrfRes = await client.get("/api/csrf/");
       const csrfToken = csrfRes?.csrfToken;
+
       if (!csrfToken) {
         alert("Failed to get CSRF token");
         return;
       }
 
-      // STEP 2 → Call deposit API
+      // STEP 2 → DEPOSIT API CALL
       const payload = {
         account_id: accountId,
         amount: Number(amount),
@@ -36,41 +46,61 @@ const DepositModal = ({ visible, onClose, accountId, onSubmit }) => {
         transaction_type: "deposit",
       };
 
-      const depositRes = await apiClient.post('/admin/deposit/', payload, {
-        headers: {
-          "X-CSRFToken": csrfToken,
+      const depositRes = await apiClient.post(
+        "/admin/deposit/",
+        payload,
+        {
+          headers: {
+            "X-CSRFToken": csrfToken,
+          },
         }
-      });
+      );
 
-      // emit result to parent
+      // SEND RESULT TO PARENT COMPONENT
       if (onSubmit) onSubmit(depositRes);
 
-      alert(`Deposit Success: $${depositRes.amount}`);
+      alert(`Deposit Successful: $${depositRes?.amount}`);
 
-      // Reset & close
-      setAmount('');
-      setComment('');
+      // RESET FORM
+      setAmount("");
+      setComment("");
       onClose();
-
     } catch (err) {
       console.error("DEPOSIT ERROR:", err);
-      alert("Deposit failed");
+      alert("Deposit failed. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
+  // -------------------------------
+  // MODAL FOOTER
+  // -------------------------------
   const footer = (
     <div className="flex justify-end gap-3">
       <button
+        type="button"
         disabled={loading}
         onClick={handleSubmit}
-        className="bg-yellow-400 text-white px-4 py-2 rounded shadow hover:opacity-95 disabled:opacity-50"
+        className="
+          bg-yellow-400 text-black font-semibold
+          px-5 py-2 rounded-lg shadow
+          hover:opacity-95 transition
+          disabled:opacity-50 disabled:cursor-not-allowed
+        "
       >
         {loading ? "Processing..." : "Deposit"}
       </button>
 
-      <button onClick={onClose} className="bg-gray-200 px-4 py-2 rounded">
+      <button
+        type="button"
+        onClick={onClose}
+        className="
+          bg-gray-200 text-gray-800
+          px-5 py-2 rounded-lg
+          hover:bg-gray-300 transition
+        "
+      >
         Close
       </button>
     </div>
@@ -78,55 +108,71 @@ const DepositModal = ({ visible, onClose, accountId, onSubmit }) => {
 
   return (
     <ModalWrapper
-      title={`Deposit to Account ${accountId || ''}`}
+      title={`Deposit to Account ${accountId || ""}`}
       visible={visible}
       onClose={onClose}
       footer={footer}
     >
-      <form onSubmit={handleSubmit} className="space-y-4">
-        
-        {/* Account ID */}
+      <form onSubmit={handleSubmit} className="space-y-5">
+        {/* ACCOUNT ID */}
         <div>
-          <label className="block text-sm font-medium text-gray-700">
+          <label className="block text-sm font-medium text-gray-300 mb-1">
             Account ID
           </label>
           <input
             readOnly
-            value={accountId || ''}
-            className="mt-1 w-full rounded border px-3 py-2 bg-gray-100"
+            value={accountId || ""}
+            className="
+              w-full rounded-lg px-3 py-2
+              bg-gray-800 text-gray-300
+              border border-gray-700
+              cursor-not-allowed
+            "
           />
         </div>
 
-        {/* Amount */}
+        {/* DEPOSIT AMOUNT */}
         <div>
-          <label className="block text-sm font-medium text-gray-700">
+          <label className="block text-sm font-medium text-gray-300 mb-1">
             * Deposit Amount ($)
           </label>
           <input
             required
             type="number"
-            step="0.01"
             min="0"
+            step="0.01"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
-            placeholder="Enter amount"
-            className="mt-1 w-full rounded border px-3 py-2"
+            placeholder="Enter deposit amount"
+            className="
+              w-full rounded-lg px-3 py-2
+              bg-gray-900 text-white
+              border border-gray-700
+              focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400
+              outline-none transition
+            "
           />
         </div>
 
-        {/* Comment */}
+        {/* COMMENT */}
         <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Comment
+          <label className="block text-sm font-medium text-gray-300 mb-1">
+            Comment (Optional)
           </label>
           <textarea
+            rows={3}
             value={comment}
             onChange={(e) => setComment(e.target.value)}
-            placeholder="Optional comment"
-            className="mt-1 w-full rounded border px-3 py-2"
+            placeholder="Add an optional note for this deposit"
+            className="
+              w-full rounded-lg px-3 py-2
+              bg-gray-900 text-white
+              border border-gray-700
+              focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400
+              outline-none transition resize-none
+            "
           />
         </div>
-
       </form>
     </ModalWrapper>
   );

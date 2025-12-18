@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { AdminAuthenticatedFetch } from "../utils/fetch-utils.js";
+import { useTheme } from "../context/ThemeContext";
 
 const apiClient = new AdminAuthenticatedFetch("");
 
@@ -7,11 +8,12 @@ const ChangeLeverageModal = ({
   visible,
   onClose,
   accountId,
-  currentLeverage,        // e.g. "1:1000"
+  currentLeverage,
   leverageOptions = [],
   onUpdate,
 }) => {
   const modalRef = useRef(null);
+  const { isDarkMode } = useTheme();
 
   const [step, setStep] = useState(1);
   const [newLeverage, setNewLeverage] = useState("");
@@ -25,8 +27,6 @@ const ChangeLeverageModal = ({
   }, [visible, currentLeverage]);
 
   /* ---------------- HELPERS ---------------- */
-
-  // Extract numeric leverage: "1:1000" → 1000
   const extractLeverageValue = (lev) => {
     if (!lev) return null;
     if (typeof lev === "number") return lev;
@@ -36,23 +36,19 @@ const ChangeLeverageModal = ({
     return parseInt(lev, 10);
   };
 
-  /* ---------------- CONFIRM STEP ---------------- */
   const openConfirm = () => {
     if (!newLeverage || newLeverage === currentLeverage) return;
     setStep(2);
   };
 
-  /* ---------------- UPDATE LEVERAGE ---------------- */
   const confirmUpdate = async () => {
     setLoading(true);
     try {
       const leverageValue = extractLeverageValue(newLeverage);
-
       await apiClient.post(
         `/api/demo_accounts/${accountId}/reset_leverage/`,
         { leverage: leverageValue }
       );
-
       onUpdate(newLeverage);
       onClose();
     } catch (error) {
@@ -63,19 +59,14 @@ const ChangeLeverageModal = ({
     }
   };
 
-  /* ---------------- RESET LEVERAGE (FIXED) ---------------- */
   const resetLeverage = async () => {
     setLoading(true);
     try {
       const leverageValue = extractLeverageValue(currentLeverage);
-
       await apiClient.post(
         `/api/demo_accounts/${accountId}/reset_leverage/`,
-        {
-          leverage: leverageValue, // ✅ REQUIRED BY BACKEND
-        }
+        { leverage: leverageValue }
       );
-
       setNewLeverage(currentLeverage);
       onUpdate(currentLeverage);
       onClose();
@@ -89,103 +80,142 @@ const ChangeLeverageModal = ({
 
   if (!visible) return null;
 
+  /* ---------------- THEME CLASSES ---------------- */
+  const modalBg = isDarkMode ? "bg-black" : "bg-white";
+  const textMain = isDarkMode ? "text-white" : "text-black";
+  const textMuted = isDarkMode ? "text-gray-400" : "text-gray-600";
+  const borderCls = isDarkMode ? "border-gray-700" : "border-gray-200";
+
+  const selectCls = `
+    w-full rounded-lg border px-3 py-2 text-sm
+    focus:outline-none focus:ring-2 focus:ring-yellow-400
+    ${isDarkMode
+      ? "bg-black text-white border-yellow-400"
+      : "bg-white text-black border-yellow-400"}
+  `;
+
+  const btnPrimary =
+    "px-4 py-2 rounded-lg bg-yellow-400 text-black font-medium hover:brightness-95 transition";
+  const btnGray =
+    "px-4 py-2 rounded-lg bg-gray-500 text-white hover:bg-gray-600 transition";
+
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 px-2">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-3">
       <div
         ref={modalRef}
-        className="bg-white rounded-lg shadow-lg p-5 w-full max-w-md"
+        className={`
+          w-full max-w-md rounded-2xl shadow-2xl
+          ${modalBg} ${borderCls} border
+          max-h-[90vh] overflow-y-auto
+        `}
       >
-        {/* STEP 1 */}
-        {step === 1 && (
-          <>
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="font-semibold text-lg">Change Leverage</h3>
-              <button onClick={onClose} className="text-xl">×</button>
-            </div>
+        {/* HEADER */}
+        <div className={`flex items-center justify-between px-5 py-4 border-b ${borderCls}`}>
+          <h3 className={`text-base sm:text-lg font-semibold ${textMain}`}>
+            {step === 1 ? "Change Leverage" : "Confirm Leverage Change"}
+          </h3>
+          <button
+            onClick={onClose}
+            className={`text-xl ${textMuted} hover:${textMain}`}
+          >
+            ×
+          </button>
+        </div>
 
-            <p className="mb-3">
-              Current Leverage: <strong>{currentLeverage}</strong>
-            </p>
+        {/* BODY */}
+        <div className="px-5 py-6 space-y-5">
+          {/* STEP 1 */}
+          {step === 1 && (
+            <>
+              <p className={`text-sm ${textMuted}`}>
+                Current Leverage:
+                <span className={`ml-1 font-semibold ${textMain}`}>
+                  {currentLeverage}
+                </span>
+              </p>
 
-            <label className="block mb-1 text-sm font-medium">
-              Select New Leverage
-            </label>
+              <div>
+                <label className={`block mb-1 text-sm font-medium ${textMuted}`}>
+                  Select New Leverage
+                </label>
+                <select
+                  className={selectCls}
+                  value={newLeverage}
+                  onChange={(e) => setNewLeverage(e.target.value)}
+                >
+                  {leverageOptions.map((opt) => (
+                    <option key={opt} value={opt}>
+                      {opt}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-            <select
-              className="border p-2 rounded w-full mb-4"
-              value={newLeverage}
-              onChange={(e) => setNewLeverage(e.target.value)}
-            >
-              {leverageOptions.map((opt) => (
-                <option key={opt} value={opt}>
-                  {opt}
-                </option>
-              ))}
-            </select>
+              <div className="flex flex-wrap justify-end gap-3 pt-2">
+                <button
+                  onClick={resetLeverage}
+                  disabled={loading}
+                  className={btnGray + " disabled:opacity-50"}
+                >
+                  Reset
+                </button>
 
-            <div className="flex flex-wrap justify-end gap-2">
-              <button
-                className="px-4 py-2 bg-gray-300 rounded"
-                onClick={resetLeverage}
-                disabled={loading}
-              >
-                Reset
-              </button>
+                <button
+                  onClick={openConfirm}
+                  disabled={loading}
+                  className={btnPrimary + " disabled:opacity-50"}
+                >
+                  Update
+                </button>
 
-              <button
-                className="px-4 py-2 bg-yellow-500 rounded"
-                onClick={openConfirm}
-                disabled={loading}
-              >
-                Update
-              </button>
+                <button
+                  onClick={onClose}
+                  disabled={loading}
+                  className={btnGray + " disabled:opacity-50"}
+                >
+                  Close
+                </button>
+              </div>
+            </>
+          )}
 
-              <button
-                className="px-4 py-2 bg-gray-300 rounded"
-                onClick={onClose}
-                disabled={loading}
-              >
-                Close
-              </button>
-            </div>
-          </>
-        )}
+          {/* STEP 2 */}
+          {step === 2 && (
+            <>
+              <div className="text-center space-y-3">
+                <p className={`text-sm ${textMuted}`}>
+                  You are about to change leverage
+                </p>
 
-        {/* STEP 2 */}
-        {step === 2 && (
-          <>
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="font-semibold text-lg">
-                Confirm Leverage Change
-              </h3>
-              <button onClick={onClose} className="text-xl">×</button>
-            </div>
+                <p className={`text-base font-semibold ${textMain}`}>
+                  {currentLeverage} → {newLeverage}
+                </p>
 
-            <p className="mb-5 text-center">
-              Change leverage from{" "}
-              <strong>{currentLeverage}</strong> to{" "}
-              <strong>{newLeverage}</strong>?
-            </p>
+                <p className={`text-sm ${textMuted}`}>
+                  Account ID: <span className="font-medium">#{accountId}</span>
+                </p>
+              </div>
 
-            <div className="flex justify-center gap-3">
-              <button
-                className="px-4 py-2 bg-yellow-500 rounded"
-                onClick={confirmUpdate}
-                disabled={loading}
-              >
-                Confirm
-              </button>
+              <div className="flex justify-center gap-4 pt-4">
+                <button
+                  onClick={confirmUpdate}
+                  disabled={loading}
+                  className={btnPrimary + " disabled:opacity-50"}
+                >
+                  Confirm
+                </button>
 
-              <button
-                className="px-4 py-2 bg-gray-300 rounded"
-                onClick={() => setStep(1)}
-                disabled={loading}
-              >
-                Cancel
-              </button>
-            </div>
-          </>
-        )}
+                <button
+                  onClick={() => setStep(1)}
+                  disabled={loading}
+                  className={btnGray + " disabled:opacity-50"}
+                >
+                  Cancel
+                </button>
+              </div>
+            </>
+          )}
+        </div>
       </div>
     </div>
   );

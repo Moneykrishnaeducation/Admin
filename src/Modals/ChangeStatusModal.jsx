@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import ModalWrapper from "./ModalWrapper";
+import { useTheme } from "../context/ThemeContext";
 
 const ChangeStatusModal = ({
   visible,
@@ -10,6 +11,8 @@ const ChangeStatusModal = ({
   onUpdate,
   userRow,
 }) => {
+  const { isDarkMode } = useTheme();
+
   // Accept both visible or isOpen
   const isVisible = visible ?? isOpen;
 
@@ -18,10 +21,16 @@ const ChangeStatusModal = ({
   const [availableRoles, setAvailableRoles] = useState([]);
 
   const displayName =
-    userData?.username || userData?.first_name || userName || userRow?.username || userRow?.name || "";
+    userData?.username ||
+    userData?.first_name ||
+    userName ||
+    userRow?.username ||
+    userRow?.name ||
+    "";
 
   const displayStatus =
-    userData?.role || currentStatus ||
+    userData?.role ||
+    currentStatus ||
     userRow?.manager_admin_status ||
     userRow?.status ||
     userRow?.role ||
@@ -30,7 +39,7 @@ const ChangeStatusModal = ({
   const [status, setStatus] = useState(displayStatus);
   const [loading, setLoading] = useState(false);
 
-  // Fetch user data when modal is opened
+  /* ================= FETCH USER ================= */
   useEffect(() => {
     if (isVisible) {
       const fetchUserData = async () => {
@@ -45,24 +54,18 @@ const ChangeStatusModal = ({
                 localStorage.getItem("access_token")
               : null;
 
-          const res = await fetch(
-            `/api/admin/user-info/${userId}/`,
-            {
-              method: "GET",
-              credentials: "include",
-              headers: {
-                "Content-Type": "application/json",
-                ...(token ? { Authorization: `Bearer ${token}` } : {}),
-              },
-            }
-          );
+          const res = await fetch(`/api/admin/user-info/${userId}/`, {
+            method: "GET",
+            credentials: "include",
+            headers: {
+              "Content-Type": "application/json",
+              ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            },
+          });
 
           if (!res.ok) {
             const errBody = await res.json().catch(() => ({}));
-            throw new Error(
-              errBody?.message ||
-                `Failed with status ${res.status}`
-            );
+            throw new Error(errBody?.message || `Failed with status ${res.status}`);
           }
 
           const data = await res.json();
@@ -81,9 +84,7 @@ const ChangeStatusModal = ({
     }
   }, [isVisible, userRow?.id, userRow?.userId]);
 
-  // ============================
-  // POST Update User Role
-  // ============================
+  /* ================= UPDATE ================= */
   const handleUpdate = async () => {
     if (!userRow?.id && !userRow?.userId) {
       alert("User ID missing");
@@ -100,40 +101,26 @@ const ChangeStatusModal = ({
             localStorage.getItem("access_token")
           : null;
 
-      const res = await fetch(
-        `/api/admin/update-user-status/${userId}/`,
-        {
-          method: "PATCH",
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          },
-          body: JSON.stringify({ role: status }), // <-- FIXED PAYLOAD
-        }
-      );
+      const res = await fetch(`/api/admin/update-user-status/${userId}/`, {
+        method: "PATCH",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ role: status }),
+      });
 
       if (!res.ok) {
         const errBody = await res.json().catch(() => ({}));
-        throw new Error(
-          errBody?.message ||
-            `Failed with status ${res.status}`
-        );
+        throw new Error(errBody?.message || `Failed with status ${res.status}`);
       }
 
-      // Backend sends:
-      // { old_role: "...", new_role: "..." }
       const response = await res.json();
+      onUpdate && onUpdate(response);
 
-      if (onUpdate) {
-        onUpdate(response);
-      }
-
-      alert(
-        `Role updated: ${response.old_role} → ${response.new_role}`
-      );
-
-      if (onClose) onClose();
+      alert(`Role updated: ${response.old_role} → ${response.new_role}`);
+      onClose && onClose();
     } catch (err) {
       console.error("Status update error:", err);
       alert(`Error: ${err.message}`);
@@ -143,12 +130,29 @@ const ChangeStatusModal = ({
     }
   };
 
+  /* ================= THEME CLASSES ================= */
+  const textMain = isDarkMode ? "text-white" : "text-black";
+  const textMuted = isDarkMode ? "text-gray-400" : "text-gray-600";
+  const cardBg = isDarkMode ? "bg-black" : "bg-white";
+  const borderCls = isDarkMode ? "border-gray-700" : "border-gray-200";
+
+  const radioCls = `
+    accent-yellow-400
+    scale-110
+    cursor-pointer
+  `;
+
   const footer = (
     <div className="flex justify-center">
       <button
         onClick={handleUpdate}
         disabled={loading || fetchLoading}
-        className="bg-yellow-500 text-white px-6 py-2 rounded disabled:opacity-50"
+        className="
+          px-6 py-2 rounded-lg
+          bg-yellow-400 text-black font-medium
+          hover:brightness-95 transition
+          disabled:opacity-50
+        "
       >
         {loading ? "Updating..." : fetchLoading ? "Loading..." : "Update Status"}
       </button>
@@ -162,64 +166,78 @@ const ChangeStatusModal = ({
       onClose={onClose}
       footer={footer}
     >
-      <div className="space-y-4">
-        <p className="text-sm text-gray-700">
-          Current Role: <strong>{displayStatus}</strong>
+      <div
+        className={`
+          space-y-4 p-1
+          ${cardBg}
+        `}
+      >
+        <p className={`text-sm ${textMuted}`}>
+          Current Role:
+          <span className={`ml-1 font-semibold ${textMain}`}>
+            {displayStatus}
+          </span>
         </p>
 
-        <p className="text-sm">
-          Select a new role for <strong>{displayName}</strong>
+        <p className={`text-sm ${textMuted}`}>
+          Select a new role for{" "}
+          <span className={`font-medium ${textMain}`}>{displayName}</span>
         </p>
 
-        <div className="flex items-center gap-6 mt-4">
+        <div
+          className={`
+            mt-4 grid grid-cols-1 sm:grid-cols-3 gap-4
+            border ${borderCls} rounded-xl p-4
+          `}
+        >
           {availableRoles.length > 0 ? (
             availableRoles.map((role) => (
-              <label key={role.value} className="inline-flex items-center gap-2">
+              <label
+                key={role.value}
+                className={`
+                  flex items-center gap-3
+                  px-3 py-2 rounded-lg cursor-pointer
+                  ${status === role.value
+                    ? "bg-yellow-400/10 border border-yellow-400"
+                    : "border border-transparent"}
+                `}
+              >
                 <input
                   type="radio"
                   name="role"
                   value={role.value}
                   checked={status === role.value}
                   onChange={() => setStatus(role.value)}
+                  className={radioCls}
                 />
-                <span>{role.label}</span>
+                <span className={textMain}>{role.label}</span>
               </label>
             ))
           ) : (
-            <>
-              <label className="inline-flex items-center gap-2">
+            ["admin", "manager", "client"].map((role) => (
+              <label
+                key={role}
+                className={`
+                  flex items-center gap-3
+                  px-3 py-2 rounded-lg cursor-pointer
+                  ${status === role
+                    ? "bg-yellow-400/10 border border-yellow-400"
+                    : "border border-transparent"}
+                `}
+              >
                 <input
                   type="radio"
                   name="role"
-                  value="admin"
-                  checked={status === "admin"}
-                  onChange={() => setStatus("admin")}
+                  value={role}
+                  checked={status === role}
+                  onChange={() => setStatus(role)}
+                  className={radioCls}
                 />
-                <span>Admin</span>
+                <span className={textMain}>
+                  {role.charAt(0).toUpperCase() + role.slice(1)}
+                </span>
               </label>
-
-              <label className="inline-flex items-center gap-2">
-                <input
-                  type="radio"
-                  name="role"
-                  value="manager"
-                  checked={status === "manager"}
-                  onChange={() => setStatus("manager")}
-                />
-                <span>Manager</span>
-              </label>
-
-              <label className="inline-flex items-center gap-2">
-                <input
-                  type="radio"
-                  name="role"
-                  value="client"
-                  checked={status === "client"}
-                  onChange={() => setStatus("client")}
-                />
-                <span>Client</span>
-              </label>
-            </>
+            ))
           )}
         </div>
       </div>

@@ -1,14 +1,15 @@
 import React, { useEffect, useRef, useState } from "react";
+import { useTheme } from "../context/ThemeContext";
 
 const InternalTransferModal = ({ visible, onClose, accounts = [] }) => {
   const modalRef = useRef(null);
+  const { theme } = useTheme(); // "light" | "dark"
 
   // form state
   const [fromAcc, setFromAcc] = useState("");
   const [toAcc, setToAcc] = useState("");
   const [amount, setAmount] = useState("");
   const [comment, setComment] = useState("");
-
   const [showComment, setShowComment] = useState(false);
 
   // toast state
@@ -31,7 +32,10 @@ const InternalTransferModal = ({ visible, onClose, accounts = [] }) => {
   }, [visible, onClose]);
 
   const handleSubmit = () => {
-    const fromAccount = accounts.find(a => String(a.account_no) === String(fromAcc));
+    const fromAccount = accounts.find(
+      (a) => String(a.account_no) === String(fromAcc)
+    );
+
     if (!fromAccount) {
       return showToast("❌ Please select a valid 'From Account'.", "error");
     }
@@ -43,7 +47,10 @@ const InternalTransferModal = ({ visible, onClose, accounts = [] }) => {
     }
 
     if (Number(amount) > availableBalance) {
-      return showToast(`❌ Insufficient balance. Available: ${availableBalance}`, "error");
+      return showToast(
+        `❌ Insufficient balance. Available: ${availableBalance}`,
+        "error"
+      );
     }
 
     showToast("Processing transfer...", "success");
@@ -59,14 +66,11 @@ const InternalTransferModal = ({ visible, onClose, accounts = [] }) => {
         note: comment,
       }),
     })
-      .then((res) => res.json().then(body => ({ status: res.status, body })))
+      .then((res) => res.json().then((body) => ({ status: res.status, body })))
       .then(({ status, body }) => {
         if (status === 200 && body.success) {
           showToast("✅ Transfer successful!", "success");
-
-          setTimeout(() => {
-            onClose();
-          }, 1500);
+          setTimeout(onClose, 1500);
         } else {
           showToast(body.error || "Transfer failed!", "error");
         }
@@ -76,13 +80,37 @@ const InternalTransferModal = ({ visible, onClose, accounts = [] }) => {
 
   if (!visible) return null;
 
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+  /* ================= THEME CLASSES ================= */
+   const { isDarkMode } = useTheme();
 
+  const overlayBg = "bg-black/50";
+
+  const modalBg = isDarkMode
+    ? "bg-black text-white"
+    : "bg-white text-black";
+
+  const inputBg = isDarkMode
+    ? "bg-gray-900 border-gray-700 text-white"
+    : "bg-white border-gray-300 text-black";
+
+  const labelText = isDarkMode ? "text-gray-300" : "text-gray-700";
+
+  const cancelBtn = isDarkMode
+    ? "bg-gray-700 hover:bg-gray-600 text-white"
+    : "bg-gray-300 hover:bg-gray-400 text-black";
+
+  const actionBtn =
+    "bg-yellow-500 hover:bg-yellow-600 text-black font-semibold";
+
+  /* ================================================= */
+
+  return (
+    <div className={`fixed inset-0 ${overlayBg} flex justify-center items-center z-50`}>
+      
       {/* Toast */}
       {toast && (
         <div
-          className={`fixed top-5 px-4 py-2 rounded-md text-white ${
+          className={`fixed top-5 px-4 py-2 rounded-md text-white shadow-lg ${
             toast.type === "error" ? "bg-red-600" : "bg-green-600"
           }`}
         >
@@ -92,22 +120,27 @@ const InternalTransferModal = ({ visible, onClose, accounts = [] }) => {
 
       <div
         ref={modalRef}
-        className="bg-white rounded-lg w-full max-w-md p-6 shadow-lg"
+        className={`rounded-lg w-full relative max-w-md p-6 shadow-xl ${modalBg}`}
       >
+        <div className="absolute right-5 top-2">
+          <button className={`p-4 ${cancelBtn} bg-transparent text-xl`} onClick={onClose}>
+            &times;
+          </button>
+        </div>
         <h2 className="text-xl font-semibold mb-4">Internal Transfer</h2>
 
         {/* From Account */}
         <div className="mb-3">
-          <label className="block mb-1">From Account</label>
+          <label className={`block mb-1 ${labelText}`}>From Account</label>
           <select
-            className="w-full border px-3 py-2 rounded"
+            className={`w-full px-3 py-2 rounded border ${inputBg}`}
             value={fromAcc}
             onChange={(e) => setFromAcc(e.target.value)}
           >
             <option value="">-- Select --</option>
             {accounts.map((acc) => (
               <option key={acc.account_no} value={acc.account_no}>
-                {acc.account_no} — ${acc.balance}
+                {acc.account_no} — ₹{acc.balance}
               </option>
             ))}
           </select>
@@ -115,16 +148,16 @@ const InternalTransferModal = ({ visible, onClose, accounts = [] }) => {
 
         {/* To Account */}
         <div className="mb-3">
-          <label className="block mb-1">To Account</label>
+          <label className={`block mb-1 ${labelText}`}>To Account</label>
           <select
-            className="w-full border px-3 py-2 rounded"
+            className={`w-full px-3 py-2 rounded border ${inputBg}`}
             value={toAcc}
             onChange={(e) => setToAcc(e.target.value)}
           >
             <option value="">-- Select --</option>
             {accounts.map((acc) => (
               <option key={acc.account_no} value={acc.account_no}>
-                {acc.account_no} — ${acc.balance}
+                {acc.account_no} — ₹{acc.balance}
               </option>
             ))}
           </select>
@@ -132,10 +165,10 @@ const InternalTransferModal = ({ visible, onClose, accounts = [] }) => {
 
         {/* Amount */}
         <div className="mb-3">
-          <label className="block mb-1">Amount</label>
+          <label className={`block mb-1 ${labelText}`}>Amount</label>
           <input
             type="number"
-            className="w-full border px-3 py-2 rounded"
+            className={`w-full px-3 py-2 rounded border ${inputBg}`}
             value={amount}
             onChange={(e) => {
               setAmount(e.target.value);
@@ -144,12 +177,12 @@ const InternalTransferModal = ({ visible, onClose, accounts = [] }) => {
           />
         </div>
 
-        {/* Comment – only visible if amount > 0 */}
+        {/* Comment */}
         {showComment && (
           <div className="mb-3">
-            <label className="block mb-1">Comment</label>
+            <label className={`block mb-1 ${labelText}`}>Comment</label>
             <textarea
-              className="w-full border px-3 py-2 rounded"
+              className={`w-full px-3 py-2 rounded border ${inputBg}`}
               value={comment}
               onChange={(e) => setComment(e.target.value)}
             />
@@ -158,16 +191,10 @@ const InternalTransferModal = ({ visible, onClose, accounts = [] }) => {
 
         {/* Buttons */}
         <div className="flex justify-end gap-2 mt-4">
-          <button
-            className="px-4 py-2 bg-gray-400 rounded text-black"
-            onClick={onClose}
-          >
+          <button className={`px-4 py-2 rounded ${cancelBtn}`} onClick={onClose}>
             Cancel
           </button>
-          <button
-            className="px-4 py-2 bg-yellow-500 rounded text-black font-semibold"
-            onClick={handleSubmit}
-          >
+          <button className={`px-4 py-2 rounded ${actionBtn}`} onClick={handleSubmit}>
             Transfer
           </button>
         </div>

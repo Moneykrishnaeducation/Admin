@@ -2,11 +2,6 @@ import React, { useState, useEffect } from "react";
 import ModalWrapper from "./ModalWrapper";
 import { AdminAuthenticatedFetch } from "../utils/fetch-utils.js";
 
-/**
- * IMPORTANT:
- * IB endpoints are under /api
- * Root ("") returns React index.html
- */
 const apiClient = new AdminAuthenticatedFetch("");
 
 const BankCryptoModal = ({
@@ -30,7 +25,7 @@ const BankCryptoModal = ({
   const [isEditMode, setIsEditMode] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  /* ===================== LOAD DATAETAILS ===================== */
+  /* ================= LOAD DETAILS ================= */
   useEffect(() => {
     if (!visible || !userId) return;
 
@@ -57,8 +52,7 @@ const BankCryptoModal = ({
         setData(newData);
         setOriginalData(newData);
       } catch (e) {
-        console.error("Error fetching bank/crypto details:", e);
-
+        console.error(e);
         const empty = {
           bankName: "",
           accountNumber: "",
@@ -67,7 +61,6 @@ const BankCryptoModal = ({
           walletAddress: "",
           exchangeName: "",
         };
-
         setData(empty);
         setOriginalData(empty);
       } finally {
@@ -76,16 +69,12 @@ const BankCryptoModal = ({
     };
 
     fetchData();
-
-    return () => {
-      cancelled = true;
-    };
+    return () => (cancelled = true);
   }, [visible, userId]);
 
-  /* ===================== HANDLERS ===================== */
-  const handleChange = (field) => (e) => {
+  /* ================= HANDLERS ================= */
+  const handleChange = (field) => (e) =>
     setData((prev) => ({ ...prev, [field]: e.target.value }));
-  };
 
   const handleEdit = () => setIsEditMode(true);
 
@@ -94,27 +83,23 @@ const BankCryptoModal = ({
     setIsEditMode(false);
   };
 
-  /* ===================== SAVE ===================== */
   const handleSave = async () => {
     if (!userId) return;
 
     setLoading(true);
     try {
-      await apiClient.patch(
-        `/ib-user/${userId}/bank-details/`,
-        {
-          bank_name: data.bankName,
-          account_number: data.accountNumber,
-          branch_name: data.branch,
-          ifsc_code: data.ifsc,
-          wallet_address: data.walletAddress,
-          exchange_name: data.exchangeName,
-        }
-      );
+      await apiClient.patch(`/ib-user/${userId}/bank-details/`, {
+        bank_name: data.bankName,
+        account_number: data.accountNumber,
+        branch_name: data.branch,
+        ifsc_code: data.ifsc,
+        wallet_address: data.walletAddress,
+        exchange_name: data.exchangeName,
+      });
 
       setOriginalData(data);
       setIsEditMode(false);
-      onSave && onSave(data);
+      onSave?.(data);
     } catch (e) {
       console.error(e);
       alert("Error saving details");
@@ -123,13 +108,32 @@ const BankCryptoModal = ({
     }
   };
 
-  /* ===================== FOOTER ===================== */
+  /* ================= THEME CLASSES ================= */
+  const cardBg = isDarkMode ? "bg-black" : "bg-white";
+  const borderCls = isDarkMode ? "border-gray-700" : "border-gray-200";
+  const textMain = isDarkMode ? "text-white" : "text-black";
+  const textMuted = isDarkMode ? "text-gray-400" : "text-gray-500";
+
+  const inputBase = `
+    w-full rounded-lg border px-3 py-2 text-sm
+    focus:outline-none focus:ring-2 focus:ring-yellow-400
+  `;
+
+  const inputReadOnly = isDarkMode
+    ? "bg-gray-900 text-gray-400 cursor-not-allowed"
+    : "bg-gray-100 text-gray-600 cursor-not-allowed";
+
+  const inputEditable = isDarkMode
+    ? "bg-black text-white border-yellow-400"
+    : "bg-white text-black border-yellow-400";
+
+  /* ================= FOOTER ================= */
   const footer = (
-    <div className="flex justify-center space-x-4">
+    <div className="flex justify-center gap-4">
       {!isEditMode ? (
         <button
           onClick={handleEdit}
-          className="bg-yellow-400 text-white px-6 py-2 rounded"
+          className="px-6 py-2 rounded-lg bg-yellow-400 text-black font-medium hover:brightness-95 transition"
         >
           Edit Details
         </button>
@@ -137,13 +141,14 @@ const BankCryptoModal = ({
         <>
           <button
             onClick={handleCancel}
-            className="bg-gray-400 text-white px-6 py-2 rounded"
+            className="px-6 py-2 rounded-lg bg-gray-500 text-white hover:bg-gray-600 transition"
           >
             Cancel
           </button>
           <button
             onClick={handleSave}
-            className="bg-yellow-400 text-white px-6 py-2 rounded"
+            disabled={loading}
+            className="px-6 py-2 rounded-lg bg-yellow-400 text-black font-medium hover:brightness-95 transition disabled:opacity-60"
           >
             Save
           </button>
@@ -152,7 +157,7 @@ const BankCryptoModal = ({
     </div>
   );
 
-  /* ===================== RENDER ===================== */
+  /* ================= RENDER ================= */
   return (
     <ModalWrapper
       title="Bank & Crypto Details"
@@ -160,10 +165,12 @@ const BankCryptoModal = ({
       onClose={onClose}
       footer={footer}
     >
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-h-[65vh] overflow-y-auto pr-1">
         {/* BANK */}
-        <div className="border rounded p-4">
-          <h4 className="font-semibold mb-3">Bank Details</h4>
+        <div className={`rounded-xl border ${borderCls} ${cardBg} p-5`}>
+          <h4 className={`font-semibold mb-4 ${textMain}`}>
+            Bank Details
+          </h4>
           <div className="space-y-3">
             {[
               ["bankName", "Bank Name"],
@@ -177,10 +184,8 @@ const BankCryptoModal = ({
                 value={data[key]}
                 onChange={handleChange(key)}
                 readOnly={!isEditMode}
-                className={`w-full rounded border px-3 py-2 ${
-                  !isEditMode
-                    ? "bg-gray-100 cursor-not-allowed"
-                    : "bg-white"
+                className={`${inputBase} ${
+                  isEditMode ? inputEditable : inputReadOnly
                 }`}
               />
             ))}
@@ -188,8 +193,10 @@ const BankCryptoModal = ({
         </div>
 
         {/* CRYPTO */}
-        <div className="border rounded p-4">
-          <h4 className="font-semibold mb-3">Crypto Details</h4>
+        <div className={`rounded-xl border ${borderCls} ${cardBg} p-5`}>
+          <h4 className={`font-semibold mb-4 ${textMain}`}>
+            Crypto Details
+          </h4>
           <div className="space-y-3">
             {[
               ["walletAddress", "Wallet Address"],
@@ -201,10 +208,8 @@ const BankCryptoModal = ({
                 value={data[key]}
                 onChange={handleChange(key)}
                 readOnly={!isEditMode}
-                className={`w-full rounded border px-3 py-2 ${
-                  !isEditMode
-                    ? "bg-gray-100 cursor-not-allowed"
-                    : "bg-white"
+                className={`${inputBase} ${
+                  isEditMode ? inputEditable : inputReadOnly
                 }`}
               />
             ))}

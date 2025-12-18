@@ -1,7 +1,16 @@
-import React from 'react';
-import ModalWrapper from './ModalWrapper';
+import React from "react";
+import ModalWrapper from "./ModalWrapper";
+import { useTheme } from "../context/ThemeContext";
 
-const CommissionWithdrawalModal = ({ visible, onClose, commissiondata, onApprove, onReject }) => {
+const CommissionWithdrawalModal = ({
+  visible,
+  onClose,
+  commissiondata,
+  onApprove,
+  onReject,
+}) => {
+  const {isDarkMode} =useTheme();
+
   if (!commissiondata) return null;
 
   const {
@@ -15,8 +24,16 @@ const CommissionWithdrawalModal = ({ visible, onClose, commissiondata, onApprove
     status,
   } = commissiondata;
 
+  /* ================= THEME CLASSES ================= */
+
+
+  const labelText = isDarkMode ? "text-gray-400" : "text-gray-600";
+  const valueText = isDarkMode ? "text-gray-200" : "text-gray-800";
+
+  const divider = isDarkMode ? "border-gray-700" : "border-gray-300";
+
   const footer = (
-    <div className="flex justify-end gap-3 mt-4">
+    <div className="flex flex-wrap justify-end gap-3 mt-4">
       <button
         onClick={() => onApprove(id)}
         className="px-5 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 transition-all shadow-md"
@@ -33,7 +50,11 @@ const CommissionWithdrawalModal = ({ visible, onClose, commissiondata, onApprove
 
       <button
         onClick={onClose}
-        className="px-5 py-2 rounded-lg bg-gray-300 text-gray-800 hover:bg-gray-400 transition-all shadow-md"
+        className={`px-5 py-2 rounded-lg transition-all shadow-md ${
+          isDarkMode
+            ? "bg-gray-700 text-white hover:bg-gray-600"
+            : "bg-gray-300 text-gray-800 hover:bg-gray-400"
+        }`}
       >
         Close
       </button>
@@ -48,24 +69,25 @@ const CommissionWithdrawalModal = ({ visible, onClose, commissiondata, onApprove
       footer={footer}
     >
       <div className="max-h-[470px] overflow-y-auto p-2">
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
-
+        <div
+          className={`rounded-xl shadow-lg p-6 border ${isDarkMode? "bg-black border-gray-700 text-white" : "bg-white border-gray-200 text-black"}`}
+        >
           {/* Header */}
           <div className="mb-5">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{username}</h2>
-            <p className="text-gray-500 dark:text-gray-400 text-sm">{email}</p>
+            <h2 className="text-2xl font-bold">{username}</h2>
+            <p className="text-yellow-500 text-sm break-all">{email}</p>
           </div>
 
-          <div className="border-t border-gray-300 dark:border-gray-600 my-4"></div>
+          <div className={`border-t my-4 ${divider}`}></div>
 
           {/* Details Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            <Info label="Transaction ID" value={id} />
-            <Info label="Date/Time" value={created_at} />
-            <Info label="Trading Account ID" value={trading_account_id} />
-            <Info label="Type" value={transaction_type} />
-            <Info label="Amount" value={`$${amount}`} />
-            <Info label="Status" value={status} />
+            <Info label="Transaction ID" value={id} labelText={labelText} valueText={valueText} />
+            <Info label="Date / Time" value={created_at} labelText={labelText} valueText={valueText} />
+            <Info label="Trading Account ID" value={trading_account_id} labelText={labelText} valueText={valueText} />
+            <Info label="Type" value={transaction_type} labelText={labelText} valueText={valueText} />
+            <Info label="Amount" value={`$${amount}`} labelText={labelText} valueText={valueText} />
+            <Info label="Status" value={status} labelText={labelText} valueText={valueText} />
           </div>
         </div>
       </div>
@@ -73,11 +95,15 @@ const CommissionWithdrawalModal = ({ visible, onClose, commissiondata, onApprove
   );
 };
 
-// Reusable info block (same design as other modals)
-const Info = ({ label, value }) => (
-  <div className="flex flex-col">
-    <span className="text-gray-500 dark:text-gray-400 text-sm">{label}</span>
-    <span className="font-medium text-gray-900 dark:text-gray-200">{value}</span>
+/* ================= INFO BLOCK ================= */
+const Info = ({ label, value, labelText, valueText }) => (
+  <div className="flex flex-col break-words">
+    <span className={`text-sm text-yellow-500 ${labelText}`}>
+      {label}
+    </span>
+    <span className={`font-medium ${valueText}`}>
+      {value}
+    </span>
   </div>
 );
 
