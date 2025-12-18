@@ -34,11 +34,11 @@ const PendingRequest = () => {
 
   // Mapping of tab to approve/reject endpoint base path (action POST endpoints)
   const approveRejectEndpoints = {
-    "IB Requests": "admin/ib-request", 
-    "Bank Details": "admin/bank-detail-request", 
-    "Profile Changes": "admin/profile-change-request", 
-    "Document Requests": "admin/document-request", 
-    "Crypto Details": "admin/crypto-detail", 
+    "IB Requests": "admin/ib-request",
+    "Bank Details": "admin/bank-detail-request",
+    "Profile Changes": "admin/profile-change-request",
+    "Document Requests": "admin/document-request",
+    "Crypto Details": "admin/crypto-detail",
     "Pending Deposits": "admin/transaction", // Transactions (Deposits/Withdrawals) use this base
     "Pending Withdrawals": "admin/transaction",
     "Commission Withdrawals": "admin/transaction",
@@ -63,7 +63,7 @@ const PendingRequest = () => {
   const fetchCommissionProfiles = async () => {
     try {
       // Assuming 'get' utility prepends API_BASE
-      const response = await get("commissioning-profiles/"); 
+      const response = await get("commissioning-profiles/");
       if (Array.isArray(response)) {
         setCommissionProfiles(response);
       } else {
@@ -75,10 +75,10 @@ const PendingRequest = () => {
   };
 
   useEffect(() => {
-  if (activeTab) {
-    loadTabData(activeTab);
-  }
-}, []); 
+    if (activeTab) {
+      loadTabData(activeTab);
+    }
+  }, []);
 
 
   // Run once on page load
@@ -166,9 +166,8 @@ const PendingRequest = () => {
         const rowId = _row?.id;
         return (
           <select
-            className={`border px-2 py-1 rounded ${
-              isDarkMode ? "bg-gray-900" : "bg-white text-black"
-            }`}
+            className={`border px-2 py-1 rounded ${isDarkMode ? "bg-gray-900" : "bg-white text-black"
+              }`}
             value={cellValue || ""}
             onChange={(e) =>
               setTableData((prev) =>
@@ -290,7 +289,7 @@ const PendingRequest = () => {
           >
             View
           </button>
-          
+
         </div>
       ),
     },
@@ -476,10 +475,10 @@ const PendingRequest = () => {
         return;
       }
       // Assuming 'get' utility correctly prepends API_BASE and handles headers
-      const response = await get(endpoint); 
-      
+      const response = await get(endpoint);
+
       console.log(`[PendingRequest] Data received for tab "${tab}":`, response);
-      
+
       let respData = response;
       let dataArray = [];
 
@@ -519,37 +518,37 @@ const PendingRequest = () => {
     activeTab === "Bank Details"
       ? bankDetailsColumns
       : activeTab === "Pending Deposits"
-      ? pendingDepositsColumns
-      : activeTab === "Pending Withdrawals"
-      ? pendingWithdrawalsColumns
-      : activeTab === "Commission Withdrawals"
-      ? commissionWithdrawalsColumns
-      : activeTab === "Profile Changes"
-      ? profileChangesColumns
-      : activeTab === "Document Requests"
-      ? documentRequestsColumns
-      : activeTab === "Crypto Details"
-      ? cryptoDetailsColumns
-      : defaultColumns;
+        ? pendingDepositsColumns
+        : activeTab === "Pending Withdrawals"
+          ? pendingWithdrawalsColumns
+          : activeTab === "Commission Withdrawals"
+            ? commissionWithdrawalsColumns
+            : activeTab === "Profile Changes"
+              ? profileChangesColumns
+              : activeTab === "Document Requests"
+                ? documentRequestsColumns
+                : activeTab === "Crypto Details"
+                  ? cryptoDetailsColumns
+                  : defaultColumns;
 
   return (
     <div className="px-4">
       {/* Navigation Tabs */}
-      <div className="flex flex-wrap gap-2 mb-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
         {buttons.map((btn) => (
           <button
             key={btn}
             onClick={() => handleTabClick(btn)}
-            className={`px-4 py-2 rounded-md font-semibold ${
-              activeTab === btn
+            className={`md:px-4 md:py-2 p-2 rounded-md font-semibold w-full transition-all ${activeTab === btn
                 ? "bg-yellow-400 text-black"
                 : "bg-gray-200 dark:bg-gray-700 dark:text-white text-black"
-            }`}
+              }`}
           >
             {btn}
           </button>
         ))}
       </div>
+
 
       {/* Table */}
       <ErrorBoundary>
@@ -577,13 +576,13 @@ const PendingRequest = () => {
           setModalVisible(false);
         }}
       />
-      
+
 
       <PendingWithdrawalModal
         visible={withdrawalModalVisible}
         onClose={() => setWithdrawalModalVisible(false)}
         withdrawalData={selectedWithdrawal}
-       onApprove={(id) => {
+        onApprove={(id) => {
           handleAction(id, "approve", activeTab);
           setWithdrawalModalVisible(false);
         }}

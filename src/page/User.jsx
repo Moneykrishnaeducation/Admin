@@ -521,16 +521,18 @@ const User = () => {
   const btnGhost = isDarkMode ? "bg-gray-800 text-white border border-gray-700" : "bg-gray-100 text-black border border-gray-200";
 
   return (
-    <div className={`p-4 min-h-screen ${pageBg}`}>
-      {/* Header */}
-      <div className="flex items-center justify-end gap-3 mb-4">
-        <button
-          onClick={() => setShowAddModal(true)}
-          className={`${btnPrimary} px-6 py-2 rounded-lg font-semibold flex items-center gap-2`}
-        >
-          <PlusCircle size={16} /> Add User
-        </button>
-      </div>
+    <div className={`p-4 min-h-screen ${pageBg} relative`}>
+  {/* Header */}
+  <div className="md:absolute md:top-4 md:right-4 left-4 left-auto flex justify-center mb-4 md:mb-0 z-10">
+
+    <button
+      onClick={() => setShowAddModal(true)}
+      className={`${btnPrimary} mx-2 w-full md:w-auto px-6 py-2 flex justify-center rounded-lg font-semibold flex items-center gap-2`}
+    >
+      <PlusCircle size={16} />
+      Add User
+    </button>
+  </div>
 
       {/* Table */}
       <TableStructure

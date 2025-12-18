@@ -66,58 +66,58 @@ const TradingAccountPage = () => {
 
   // fetch users (admin) with pagination
   const fetchUsers = React.useCallback(
-      async ({ page: p = 1, pageSize: ps = 10, query = "" }) => {
-        const endpoint = "/admin/trading-accounts/";
-        const params = new URLSearchParams();
-        params.set("page", String(p));
-        params.set("pageSize", String(ps));
-        if (query) params.set("query", query);
-        try {
-          const client = typeof window !== "undefined" && window.adminApiClient ? window.adminApiClient : null;
-          let resJson;
-          if (client && typeof client.get === "function") {
-            resJson = await client.get(`${endpoint}?${params.toString()}`);
-          } else {
-            const token =
-              typeof window !== "undefined"
-                ? localStorage.getItem("jwt_token") || localStorage.getItem("access_token")
-                : null;
-            const headers = { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) };
-            const res = await fetch(`${endpoint}?${params.toString()}`, { credentials: "include", headers });
-            if (!res.ok) throw new Error(`Failed to fetch ${endpoint}: ${res.status}`);
-            resJson = await res.json();
-          }
-          const items = Array.isArray(resJson.data)
-            ? resJson.data
-            : Array.isArray(resJson)
+    async ({ page: p = 1, pageSize: ps = 10, query = "" }) => {
+      const endpoint = "/admin/trading-accounts/";
+      const params = new URLSearchParams();
+      params.set("page", String(p));
+      params.set("pageSize", String(ps));
+      if (query) params.set("query", query);
+      try {
+        const client = typeof window !== "undefined" && window.adminApiClient ? window.adminApiClient : null;
+        let resJson;
+        if (client && typeof client.get === "function") {
+          resJson = await client.get(`${endpoint}?${params.toString()}`);
+        } else {
+          const token =
+            typeof window !== "undefined"
+              ? localStorage.getItem("jwt_token") || localStorage.getItem("access_token")
+              : null;
+          const headers = { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) };
+          const res = await fetch(`${endpoint}?${params.toString()}`, { credentials: "include", headers });
+          if (!res.ok) throw new Error(`Failed to fetch ${endpoint}: ${res.status}`);
+          resJson = await res.json();
+        }
+        const items = Array.isArray(resJson.data)
+          ? resJson.data
+          : Array.isArray(resJson)
             ? resJson
             : resJson.results || [];
-          const total =
-            typeof resJson.total === "number"
-              ? resJson.total
-              : typeof resJson.count === "number"
+        const total =
+          typeof resJson.total === "number"
+            ? resJson.total
+            : typeof resJson.count === "number"
               ? resJson.count
               : items.length;
-          const mapped = items.map((u) => ({
-            userId: u.user_id ?? u.id ?? u.pk,
-            name: `${u.username || "-"}`.trim(),
-            email: u.email,
-            accountId: u.account_id || "-",
-            balance: typeof u.balance === "number" ? u.balance : 0,
-            leverage : u.leverage || "-",
-            status: u.status ? "Running" : "Stopped",
-            country: u.country || "-",
-            isEnabled: Boolean(u.is_is_enabled ?? u.enabled ?? u.is_enabled),
-          }));
-          setData(mapped);
-          return { data: mapped, total };
-        } catch (err) {
-          console.error("Failed to load users:", err);
-          return { data: [], total: 0 };
-        }
-      },
-      []
-    );
+        const mapped = items.map((u) => ({
+          userId: u.user_id ?? u.id ?? u.pk,
+          name: `${u.username || "-"}`.trim(),
+          email: u.email,
+          accountId: u.account_id || "-",
+          balance: typeof u.balance === "number" ? u.balance : 0,
+          leverage: u.leverage || "-",
+          status: u.status ? "Running" : "Stopped",
+          country: u.country || "-",
+          isEnabled: Boolean(u.is_is_enabled ?? u.enabled ?? u.is_enabled),
+        }));
+        setData(mapped);
+        return { data: mapped, total };
+      } catch (err) {
+        console.error("Failed to load users:", err);
+        return { data: [], total: 0 };
+      }
+    },
+    []
+  );
 
   React.useEffect(() => {
     fetchUsers(page, pageSize);
@@ -228,7 +228,7 @@ const TradingAccountPage = () => {
     const isExpanded = expandedId === row.accountId;
 
 
-   const actionItems = [
+    const actionItems = [
       {
         icon: <Wallet size={18} />,
         label: "Deposit",
@@ -306,24 +306,23 @@ const TradingAccountPage = () => {
   };
 
   return (
-    <div className="p-4">
-      <h2 className="text-xl font-semibold mb-4 text-yellow-400">Trading Accounts</h2>
+    <div className="p-4 relative">
+      {error && <div className="text-red-400 mb-2">{error}</div>}
 
-      {loading && <div className="text-white">Loading…</div>}
-      {error && <div className="text-red-400">{error}</div>}
-
+      {/* Internal Transfer Button */}
+      <div className="flex justify-center md:absolute md:top-4 md:right-4 md:left-auto mb-4 md:mb-0 z-10">
+        <button
+          className="bg-yellow-400 mx-2 w-full md:w-auto text-black px-4 py-2 rounded-md font-semibold flex items-center gap-2 hover:opacity-90 transition"
+          onClick={() => setInternalTransferOpen(true)}
+        >
+          <span>➕</span>
+          Internal Transfer
+        </button>
+      </div>
       <TableStructure
         columns={columns}
         data={data}
         initialPageSize={10}
-        topActions={
-          <button
-            className="bg-yellow-400 text-black px-3 py-2 rounded-md font-semibold flex items-center gap-2"
-            onClick={() => setInternalTransferOpen(true)}
-          >
-            <span>➕</span> Internal Transfer
-          </button>
-        }
         renderRowSubComponent={renderRowSubComponent}
         onRowClick={onRowClick}
       />
