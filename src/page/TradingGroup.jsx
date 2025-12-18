@@ -273,6 +273,56 @@ export default function GroupConfiguration() {
     fetchCurrentGroups();
   }, [fetchCurrentGroups]);
 
+ /* ---------------- FETCH AVAILABLE GROUPS FOR EDITING ---------------- */
+  const fetchAvailableGroups = useCallback(async () => {
+    const endpoint = "/api/available-groups/";
+    try {
+      const token =
+        typeof window !== "undefined"
+          ? localStorage.getItem("jwt_token") ||
+            localStorage.getItem("access_token")
+          : null;
+
+      const headers = {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      };
+
+      const res = await fetch(endpoint, { credentials: "include", headers });
+      if (!res.ok)
+        throw new Error(`Failed to fetch ${endpoint}: ${res.status}`);
+
+      const data = await res.json();
+
+      if (data.success && data.groups) {
+        
+     setGroups(
+          data.groups.map((g) => ({
+            id: g.id,
+            label: g.label,
+            type: g.is_demo ? "demo" : "real",
+            enabled: g.enabled,
+            alias: g.alias || "",
+            is_default: g.is_default,
+            is_demo_default: g.is_demo_default,
+          }))
+        );
+
+
+        setSelectedDefault(
+          data.groups.find((g) => g.is_default)?.id || null
+        );
+        setSelectedDemoDefault(
+          data.groups.find((g) => g.is_demo_default)?.id || null
+        );
+        setLastUpdated(new Date().toLocaleString());
+      }
+    } catch (err) {
+      console.error("Failed to fetch groups:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
 
 
@@ -350,6 +400,12 @@ const payloadGroups = groups.map((g) => ({
     return { success: false, message: err.message };
   }
 };
+
+
+  /* Load editable groups after current active configuration */
+  useEffect(() => {
+    fetchAvailableGroups();
+  }, [fetchAvailableGroups]);
 
 
 
