@@ -20,7 +20,7 @@ import {
   Shuffle,
   Award,
 } from "lucide-react";
-import Verify from "../Modals/verify";
+import Verify from "../Modals/Verify";
 
 import DemoAccountModal from "../Modals/DemoAccountModal";
 import BankCryptoModal from "../Modals/BankCryptoModal";
@@ -46,10 +46,8 @@ const User = () => {
 
 
   const [data, setData] = useState([]);
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
 
-  // Client-side fetch for TableStructure
+  // Client-side fetch for TableStructure - load all data
   const handleTableFetch = React.useCallback(
     async ({ page: p = 1, pageSize: ps = 10, query = "" }) => {
       const endpoint = "/api/admin/users/";
@@ -98,27 +96,18 @@ const User = () => {
         }));
         setData(mapped);
         return { data: mapped, total };
-      } catch (err) {
-        console.error("Failed to load users:", err);
+      } catch {
+        console.error("Failed to load users");
         return { data: [], total: 0 };
       }
     },
     []
   );
 
-  const patchUser = async (userId, payload) => {
-    const res = await fetch(`/api/user/${userId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
-
-    if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err?.message || "Failed to update user");
-    }
-    return await res.json();
-  };
+  // Load all data on mount for client-side
+  useEffect(() => {
+    handleTableFetch({ page: 1, pageSize: 10000, query: "" });
+  }, [handleTableFetch]);
 
   // Row expansion
   const [expandedRows, setExpandedRows] = useState(new Set());
@@ -317,7 +306,7 @@ const User = () => {
     try {
       console.log("Uploading ID for", verifyRow?.id, idFile.name);
       setTimeout(() => setUploadingId(false), 700);
-    } catch (err) {
+    } catch {
       setUploadingId(false);
       alert("Upload failed");
     }
@@ -332,7 +321,7 @@ const User = () => {
     try {
       console.log("Uploading Address for", verifyRow?.id, addressFile.name);
       setTimeout(() => setUploadingAddress(false), 700);
-    } catch (err) {
+    } catch {
       setUploadingAddress(false);
       alert("Upload failed");
     }
@@ -415,10 +404,11 @@ const User = () => {
   const handleDisable = async (row) => {
     console.log("Toggle user:", row?.id, "New status:", !row.isEnabled);
     // TODO: Call API to disable/enable user
+    const newEnabled = !row.isEnabled;
     // Optimistically update UI
     setData(prevData =>
       prevData.map(user =>
-        user.userId === row.userId ? { ...user, isEnabled: !user.isEnabled } : user
+        user.userId === row.userId ? { ...user, isEnabled: newEnabled } : user
       )
     );
     // Call API to actually enable/disable user
@@ -435,11 +425,12 @@ const User = () => {
         method: "PATCH",
         headers,
         credentials: "include",
-        body: JSON.stringify({ active: !row.isEnabled }),
+        body: JSON.stringify({ active: newEnabled }),
       });
       if (!response.ok) {
         throw new Error("Failed to update user status");
       }
+      return newEnabled;
     } catch (err) {
       alert("Failed to update user status");
       // Optionally revert UI change if needed
@@ -448,6 +439,7 @@ const User = () => {
           user.userId === row.userId ? { ...user, isEnabled: row.isEnabled } : user
         )
       );
+      throw err; // Re-throw to allow caller to handle
     }
   };
   const handleTransactions = (row) => {
@@ -537,10 +529,10 @@ const User = () => {
       {/* Table */}
       <TableStructure
         columns={columns}
+        data={data}
         onRowClick={toggleRowExpanded}
         renderRowSubComponent={renderRowSubComponent}
-        onFetch={handleTableFetch}
-        serverSide={true}
+        serverSide={false}
         initialPageSize={10}
       />
 
