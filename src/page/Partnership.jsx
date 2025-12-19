@@ -1053,7 +1053,7 @@ const Partnership = () => {
     try {
       const endpoint = API_ENDPOINTS.createCommissionProfile;
       if (!endpoint) throw new Error("Create endpoint not configured");
-      const token = window.localStorage.getItem("accessToken") || window.localStorage.getItem("token");
+      const token = window.localStorage.getItem("access_token") || window.localStorage.getItem("token");
       // Build payload to match backend serializer expectations
       const body = {
         // serializer expects 'name' for the profile name
