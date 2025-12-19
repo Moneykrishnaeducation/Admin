@@ -1,212 +1,229 @@
 import React, { useEffect, useState } from "react";
 import { X } from "lucide-react";
+import { useTheme } from "../context/ThemeContext"; // ✅ THEME CONTEXT
+
+/* ========================================================= */
+/* ====================== MAIN MODAL ======================== */
+/* ========================================================= */
 
 const Verify = ({
-  isDarkMode,
+  verifyRow,
   modalBg,
   btnGhost,
-  verifyRow,
-  idFile,
-  addressFile,
-  idMismatch,
-  addressMismatch,
-  uploadingId,
-  uploadingAddress,
   setVerifyModalOpen,
-  handleIdSelect,
-  handleAddressSelect,
-  handleUploadId,
-  handleUploadAddress,
+  refreshActionPanelForUser,
 }) => {
-  const displayId =
-    verifyRow?.id ?? verifyRow?.userId ?? verifyRow?.user_id ?? "";
+  const { isDarkMode } = useTheme(); // ✅ USE THEME CONTEXT
 
-  const [fetchedUser, setFetchedUser] = useState(null);
-  const [verificationData, setVerificationData] = useState({
-    id_document: { status: "loading", file_url: null, file_name: null },
-    address_document: { status: "loading", file_url: null, file_name: null },
+  const userId =
+    verifyRow?.id ?? verifyRow?.user_id ?? verifyRow?.userId ?? "";
+
+  const [userName, setUserName] = useState("User");
+
+  const [docs, setDocs] = useState({
+    id: initialDocState(),
+    address: initialDocState(),
   });
 
-  useEffect(() => {
-    let cancelled = false;
+  /* ================= AUTH HEADERS ================= */
 
+  async function authHeaders() {
     const token =
-      typeof window !== "undefined"
-        ? localStorage.getItem("jwt_token") ||
-          localStorage.getItem("access_token")
-        : null;
+      localStorage.getItem("access_token") ||
+      localStorage.getItem("jwt_token") ||
+      localStorage.getItem("token");
 
-    const headers = {
+    return {
       Accept: "application/json",
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     };
+  }
 
-    const userId =
-      verifyRow?.id ?? verifyRow?.userId ?? verifyRow?.user_id;
+  /* ================= LOAD USER + STATUS ================= */
 
+  useEffect(() => {
     if (!userId) return;
-
-    async function loadUser() {
-      try {
-        const resp = await fetch(`/users/${userId}/`, {
-          method: "GET",
-          credentials: "include",
-          headers,
-        });
-
-        if (resp.ok) {
-          const data = await resp.json();
-          if (!cancelled) setFetchedUser(data);
-        }
-      } catch (_) {
-        // silent fail
-      }
-    }
-
-    async function loadVerification() {
-      const id = verifyRow?.id ?? verifyRow?.userId ?? verifyRow?.user_id;
-      if (!id) return;
-      const token = typeof window !== "undefined" ? localStorage.getItem("jwt_token") || localStorage.getItem("access_token") : null;
-      const headers = {
-        Accept: "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      };
-      try {
-        const resp = await fetch(`/ib-user/${id}/verification/`, { method: "GET", credentials: "include", headers });
-        if (resp && resp.ok) {
-          const data = await resp.json();
-          if (!cancelled) setVerificationData(data);
-        } else {
-          throw new Error("verification fetch failed");
-        }
-      } catch (_) {
-        if (!cancelled) {
-          setVerificationData({
-            id_document: { status: "error", file_url: null, file_name: null },
-            address_document: {
-              status: "error",
-              file_url: null,
-              file_name: null,
-            },
-          });
-        }
-      }
-    }
-
     loadUser();
     loadVerification();
+  }, [userId]);
 
-    return () => {
-      cancelled = true;
-    };
-  }, [verifyRow]);
+  async function loadUser() {
+    try {
+      const resp = await fetch(`/users/${userId}/`, {
+        method: "GET",
+        credentials: "include",
+        headers: await authHeaders(),
+      });
 
-  const displayName =
-    fetchedUser?.username ||
-    fetchedUser?.name ||
-    `${fetchedUser?.first_name || ""} ${
-      fetchedUser?.last_name || ""
-    }`.trim() ||
-    verifyRow?.username ||
-    verifyRow?.name ||
-    `${verifyRow?.first_name || ""} ${
-      verifyRow?.last_name || ""
-    }`.trim() ||
-    "User";
+      if (resp.ok) {
+        const data = await resp.json();
+        setUserName(
+          data?.username ||
+            data?.name ||
+            `${data?.first_name || ""} ${data?.last_name || ""}`.trim() ||
+            "User"
+        );
+      }
+    } catch {}
+  }
 
-  const resolvedId =
-    fetchedUser?.user_id ?? fetchedUser?.id ?? displayId;
+  async function loadVerification() {
+    try {
+      const resp = await fetch(
+        `/api/admin/verification/status/${userId}/`,
+        {
+          method: "GET",
+          credentials: "include",
+          headers: await authHeaders(),
+        }
+      );
+
+      if (!resp.ok) throw new Error();
+
+      const data = await resp.json();
+      const documents = data?.data?.documents || {};
+
+      setDocs({
+        id: normalizeDoc(documents.identity),
+        address: normalizeDoc(documents.residence),
+      });
+    } catch {
+      setDocs({
+        id: { ...initialDocState(), status: "error" },
+        address: { ...initialDocState(), status: "error" },
+      });
+    }
+  }
+
+  /* ================= UPLOAD ================= */
+
+  async function uploadDocument(type) {
+    const doc = docs[type];
+    if (!doc.file) return alert("Please select a file");
+
+    const serverType = type === "id" ? "ID" : "Address";
+
+    const formData = new FormData();
+    formData.append("user_id", userId);
+    formData.append("document_type", serverType);
+    formData.append(
+      "filename_hint",
+      type === "id" ? "idproof" : "addressproof"
+    );
+    formData.append("file", doc.file);
+
+    updateDoc(type, { uploading: true });
+
+    try {
+      const resp = await fetch("/upload-document/", {
+        method: "POST",
+        headers: await authHeaders(),
+        body: formData,
+      });
+
+      if (!resp.ok) throw new Error("Upload failed");
+
+      updateDoc(type, {
+        uploading: false,
+        status: "pending",
+        file: null,
+      });
+
+      await verifyDocument(type, true);
+    } catch (err) {
+      alert(err.message);
+      updateDoc(type, { uploading: false });
+    }
+  }
+
+  /* ================= VERIFY ================= */
+
+  async function verifyDocument(type, auto = false) {
+    const serverType = type === "id" ? "ID" : "Address";
+
+    updateDoc(type, { verifying: true });
+
+    try {
+      const resp = await fetch(`/verify-document/${serverType}/`, {
+        method: "POST",
+        headers: {
+          ...(await authHeaders()),
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ user_id: userId }),
+      });
+
+      if (!resp.ok) throw new Error("Verification failed");
+
+      updateDoc(type, {
+        status: "verified",
+        verifying: false,
+      });
+
+      await loadVerification();
+      refreshActionPanelForUser?.(userId);
+    } catch {
+      updateDoc(type, {
+        status: auto ? "pending" : "uploaded",
+        verifying: false,
+      });
+    }
+  }
+
+  function updateDoc(type, patch) {
+    setDocs((prev) => ({
+      ...prev,
+      [type]: { ...prev[type], ...patch },
+    }));
+  }
+
+  /* ================= UI ================= */
 
   return (
-    <div
-      id="docverificationModal"
-      className="fixed inset-0 z-50 flex items-center justify-center"
-    >
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div
         className="absolute inset-0 bg-black/60"
         onClick={() => setVerifyModalOpen(false)}
       />
 
-      <div
-        className={`relative max-w-md w-full mx-4 rounded-lg shadow-xl ${modalBg} border ${
-          isDarkMode ? "border-yellow-700" : "border-gray-200"
-        }`}
-      >
-        {/* Header */}
-        <div
-          className="flex items-center justify-between p-4 border-b docVerification-header"
-          style={{ borderColor: isDarkMode ? "#b8860b33" : "#eee" }}
-        >
-          <div className="font-bold text-lg verification-title">
-            Document Verification for {displayName} ID:{" "}
-            <span
-              id="ib-user-id"
-              className={`font-extrabold ${
-                isDarkMode
-                  ? "text-yellow-400"
-                  : "text-yellow-600"
-              }`}
-            >
-              {resolvedId}
-            </span>
+      <div className={`relative max-w-lg w-full rounded-lg shadow-xl ${modalBg}`}>
+        {/* HEADER */}
+        <div className="flex justify-between items-center p-4 border-b">
+          <div className="font-bold">
+            Document Verification for {userName} ID:{" "}
+            <span className="text-yellow-500">{userId}</span>
           </div>
-
-          <button
-            className="p-1"
-            onClick={() => setVerifyModalOpen(false)}
-            aria-label="Close verify"
-          >
+          <button onClick={() => setVerifyModalOpen(false)}>
             <X />
           </button>
         </div>
 
-        {/* Body */}
+        {/* BODY */}
         <div className="p-4 space-y-6">
-          {/* ========== ID PROOF ========== */}
-          <DocumentSection
+          <DocumentBlock
             title="ID Proof"
-            data={verificationData.id_document}
-            file={idFile}
-            mismatch={idMismatch}
+            doc={docs.id}
+            type="id"
+            onSelect={(file) => updateDoc("id", file)}
+            onUpload={() => uploadDocument("id")}
+            onVerify={() => verifyDocument("id")}
             isDarkMode={isDarkMode}
-            onSelect={handleIdSelect}
-            onUpload={handleUploadId}
-            uploading={uploadingId}
-            inputId="id-proof-input"
-            previewId="id-preview-img"
           />
 
-          {/* ========== ADDRESS PROOF ========== */}
-          <DocumentSection
+          <DocumentBlock
             title="Address Proof"
-            data={verificationData.address_document}
-            file={addressFile}
-            mismatch={addressMismatch}
+            doc={docs.address}
+            type="address"
+            onSelect={(file) => updateDoc("address", file)}
+            onUpload={() => uploadDocument("address")}
+            onVerify={() => verifyDocument("address")}
             isDarkMode={isDarkMode}
-            onSelect={handleAddressSelect}
-            onUpload={handleUploadAddress}
-            uploading={uploadingAddress}
-            inputId="address-proof-input"
-            previewId="address-preview-img"
           />
 
-          {/* Legacy placeholders */}
-          <div className="hidden">
-            <a id="id-doc-link" />
-            <button id="id-change-btn" />
-            <button id="id-verify-btn" />
-            <span id="id-status" />
-
-            <a id="address-doc-link" />
-            <button id="address-change-btn" />
-            <button id="address-verify-btn" />
-            <span id="address-status" />
-          </div>
-
-          <div className="flex justify-end">
+          <div className="text-right">
             <button
+              className={`${btnGhost} px-4 py-2 rounded bg-yellow-500 text-black`}
               onClick={() => setVerifyModalOpen(false)}
-              className={`px-4 py-2 rounded ${btnGhost}`}
             >
               Close
             </button>
@@ -218,130 +235,125 @@ const Verify = ({
 };
 
 /* ========================================================= */
-/* ================ DOCUMENT SECTION ======================= */
+/* ================= DOCUMENT BLOCK ======================== */
 /* ========================================================= */
 
-const DocumentSection = ({
+function DocumentBlock({
   title,
-  data,
-  file,
-  mismatch,
-  isDarkMode,
+  doc,
+  type,
   onSelect,
   onUpload,
-  uploading,
-  inputId,
-  previewId,
-}) => {
-  const statusColor = {
-    not_uploaded: "text-orange-500",
-    uploaded: "text-green-500",
-    verified: "text-blue-500",
-    loading: "text-gray-500",
-    error: "text-red-500",
-  }[data.status];
-
+  onVerify,
+  isDarkMode,
+}) {
   return (
     <div>
       <div className="flex justify-between mb-1">
-        <div className="font-semibold">{title}</div>
-        <div className={`text-sm ${statusColor}`}>
-          • {data.status.replace("_", " ")}
-          {mismatch && " • Document Mismatch"}
-        </div>
+        <h4 className="font-semibold">{title}</h4>
+        <span className={`text-sm ${statusColor(doc.status)}`}>
+          • {doc.status.replace("_", " ")}
+        </span>
       </div>
 
-      {data.file_url && (
-        <div className="mb-2">
-          <img
-            src={data.file_url}
-            alt={data.file_name || title}
-            className="h-20 rounded border"
-          />
-          <div className="text-xs text-gray-500">
-            {data.file_name}
-          </div>
-        </div>
+      {doc.preview && (
+        <img
+          src={doc.preview}
+          alt="preview"
+          className="h-40 md:h-30 w-full mb-2 border rounded"
+        />
       )}
 
-      {file && file.type.startsWith("image/") && (
+      {doc.file_url && !doc.preview && (
         <img
-          id={previewId}
-          src={URL.createObjectURL(file)}
-          alt="Preview"
-          className="h-20 rounded border mb-2"
-          onLoad={(e) =>
-            URL.revokeObjectURL(e.currentTarget.src)
-          }
+          src={doc.file_url}
+          alt="preview"
+          className="h-40 md:h-30 w-full mb-2 border rounded"
         />
       )}
 
       <label
-        className={`block border border-dashed rounded py-6 text-center cursor-pointer ${
-          isDarkMode
-            ? "border-yellow-600 bg-gray-800"
-            : "border-gray-300 bg-gray-50"
+        className={`block border-dashed border rounded py-4 text-center cursor-pointer ${
+          isDarkMode ? "bg-gray-800" : "bg-gray-50"
         }`}
       >
         <input
-          id={inputId}
           type="file"
+          hidden
           accept="image/*,application/pdf"
-          onChange={onSelect}
-          className="hidden"
+          onChange={(e) => {
+            const f = e.target.files[0];
+            if (!f) return;
+            if (f.type.startsWith("image/")) {
+              const reader = new FileReader();
+              reader.onload = () =>
+                onSelect({ file: f, preview: reader.result });
+              reader.readAsDataURL(f);
+            } else {
+              onSelect({ file: f, preview: null });
+            }
+          }}
         />
-        {file ? file.name : `Select ${title}`}
+        {doc.file?.name || `Select ${title}`}
       </label>
 
-      <button
-        onClick={onUpload}
-        disabled={data.status === "verified" || uploading}
-        className={`w-full mt-2 py-3 rounded ${
-          data.status === "verified"
-            ? "bg-green-500 text-white"
-            : isDarkMode
-            ? "bg-yellow-500 text-black"
-            : "bg-blue-600 text-white"
-        }`}
-      >
-        {uploading
-          ? "Uploading..."
-          : data.status === "verified"
-          ? "Verified"
-          : "Upload"}
-      </button>
+      <div className="flex gap-2 mt-2">
+        <button
+          className="flex-1 bg-blue-600 text-white py-2 rounded"
+          disabled={doc.uploading || doc.status === "verified"}
+          onClick={onUpload}
+        >
+          {doc.uploading
+            ? `Uploading ${type === "id" ? "ID Proof" : "Address Proof"}...`
+            : "📤 Upload"}
+        </button>
+
+        {doc.status !== "verified" && (
+          <button
+            className="flex-1 bg-green-600 text-white py-2 rounded"
+            disabled={doc.verifying}
+            onClick={onVerify}
+          >
+            {doc.verifying ? "Verifying..." : "✅ Verify"}
+          </button>
+        )}
+      </div>
     </div>
   );
-};
+}
+
+/* ========================================================= */
+/* ===================== HELPERS =========================== */
+/* ========================================================= */
+
+function initialDocState() {
+  return {
+    status: "not_uploaded",
+    file: null,
+    preview: null,
+    file_url: null,
+    uploading: false,
+    verifying: false,
+  };
+}
+
+function normalizeDoc(doc) {
+  if (!doc) return initialDocState();
+  return {
+    ...initialDocState(),
+    status: doc.status || "uploaded",
+    file_url: doc.file_url,
+  };
+}
+
+function statusColor(status) {
+  return {
+    verified: "text-green-500",
+    uploaded: "text-orange-500",
+    pending: "text-orange-500",
+    not_uploaded: "text-red-500",
+    error: "text-red-600",
+  }[status];
+}
 
 export default Verify;
-
-/* ========================================================= */
-/* ================ LEGACY GLOBAL ========================== */
-/* ========================================================= */
-
-export async function openVerificationModal(userId) {
-  if (!userId && userId !== 0) return;
-
-  try {
-    const modal = document.getElementById(
-      "docverificationModal"
-    );
-    if (modal) modal.dataset.userId = userId;
-
-    if (typeof window !== "undefined") {
-      window.dispatchEvent(
-        new CustomEvent("openVerificationModal", {
-          detail: { userId },
-        })
-      );
-    }
-  } catch (err) {
-    console.error("openVerificationModal error:", err);
-  }
-}
-
-if (typeof window !== "undefined") {
-  if (!window.openVerificationModal)
-    window.openVerificationModal = openVerificationModal;
-}
