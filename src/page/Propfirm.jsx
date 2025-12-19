@@ -27,11 +27,11 @@ const PropFirm = () => {
     price: "",
     bonus: "",
     tradable: "",
-    leverage: "",
-    target: "",
-    share: "",
     cutoff: "",
+    target: "",
     time: "",
+    share: "",
+    leverage: "",
     status: true
   });
 
@@ -153,13 +153,13 @@ const PropFirm = () => {
     setFormData({
       name: "",
       price: "",
-      bonusFund: "",
-      tradableFund: "",
-      leverage: "",
-      target: "",
-      share: "",
+      bonus: "",
+      tradable: "",
       cutoff: "",
+      target: "",
       time: "",
+      share: "",
+      leverage: "",
       status: true
     });
   };
@@ -407,7 +407,7 @@ const PropFirm = () => {
         <div className="overflow-x-auto">{renderTable()}</div>
       </div>
 
-      {/* Modal */}
+
 {/* Modal */}
 {isModalOpen && (
   <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/80">
@@ -470,7 +470,7 @@ const PropFirm = () => {
 
         <input
           type="text"
-          name="bonusFund"
+          name="bonus"
           value={formData.bonus}
           onChange={handleInputChange}
           placeholder="Bonus Fund"
@@ -482,7 +482,7 @@ const PropFirm = () => {
 
         <input
           type="text"
-          name="tradableFund"
+          name="tradable"
           value={formData.tradable}
           onChange={handleInputChange}
           placeholder="Tradable Fund"
@@ -494,10 +494,10 @@ const PropFirm = () => {
 
         <input
           type="text"
-          name="leverage"
-          value={formData.leverage}
+          name="cutoff"
+          value={formData.cutoff}
           onChange={handleInputChange}
-          placeholder="Leverage"
+          placeholder="Maximum Cutoff"
           className="w-full p-2 bg-black border border-yellow-400 text-yellow-400 rounded
                      hover:border-yellow-300 focus:border-yellow-300 placeholder-gray-600 focus:placeholder-transparent
 "
@@ -518,7 +518,19 @@ const PropFirm = () => {
 
         <input
           type="text"
-          name="profitShare"
+          name="time"
+          value={formData.time}
+          onChange={handleInputChange}
+          placeholder="Target Time"
+          className="w-full p-2 bg-black border border-yellow-400 text-yellow-400 rounded
+                     hover:border-yellow-300 focus:border-yellow-300 placeholder-gray-600 focus:placeholder-transparent
+"
+          required
+        />
+
+        <input
+          type="text"
+          name="share"
           value={formData.share}
           onChange={handleInputChange}
           placeholder="Profit Share"
@@ -530,22 +542,10 @@ const PropFirm = () => {
 
         <input
           type="text"
-          name="maxCutoff"
-          value={formData.cutoff}
+          name="leverage"
+          value={formData.leverage}
           onChange={handleInputChange}
-          placeholder="Maximum Cutoff"
-          className="w-full p-2 bg-black border border-yellow-400 text-yellow-400 rounded
-                     hover:border-yellow-300 focus:border-yellow-300 placeholder-gray-600 focus:placeholder-transparent
-"
-          required
-        />
-
-        <input
-          type="text"
-          name="targetTime"
-          value={formData.time}
-          onChange={handleInputChange}
-          placeholder="Target Time"
+          placeholder="Leverage"
           className="w-full p-2 bg-black border border-yellow-400 text-yellow-400 rounded
                      hover:border-yellow-300 focus:border-yellow-300 placeholder-gray-600 focus:placeholder-transparent
 "
