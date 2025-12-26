@@ -47,7 +47,7 @@ const ChangeLeverageModal = ({
       const leverageValue = extractLeverageValue(newLeverage);
       await apiClient.post(
         `/api/demo_accounts/${accountId}/reset_leverage/`,
-        { leverage: leverageValue }
+        { accountId: accountId, leverage: leverageValue }
       );
       onUpdate(newLeverage);
       onClose();
@@ -65,7 +65,7 @@ const ChangeLeverageModal = ({
       const leverageValue = extractLeverageValue(currentLeverage);
       await apiClient.post(
         `/api/demo_accounts/${accountId}/reset_leverage/`,
-        { leverage: leverageValue }
+        { accountId: accountId,leverage: leverageValue }
       );
       setNewLeverage(currentLeverage);
       onUpdate(currentLeverage);

@@ -102,8 +102,22 @@ const PendingRequest = () => {
       // and sends the status in the body via PATCH method.
       if (tab === "IB Requests") {
         fullEndpoint = `${endpointBase}/${id}/`;
-        // 'approved' or 'rejected' should be passed as the status in the body
-        bodyData = JSON.stringify({ status: action === "approve" ? "approved" : "rejected" });
+        // Find the row data to get the selected commissioning profile
+        const row = tableData.find(item => item.id === id);
+        if (!row) {
+          alert("Request data not found");
+          return;
+        }
+        if (action === "approve") {
+          const selectedProfile = row.commissionProfile;
+          if (!selectedProfile) {
+            alert("Please select a commissioning profile before approving.");
+            return;
+          }
+          bodyData = JSON.stringify({ status: "approved", profile_name: selectedProfile });
+        } else {
+          bodyData = JSON.stringify({ status: "rejected" });
+        }
         method = 'PATCH'; // Use PATCH for IB Requests as per backend
       }
       // Special cases for Profile Changes, Document Requests, Bank Details, and Crypto Details which use PATCH method
