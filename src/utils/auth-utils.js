@@ -2,10 +2,11 @@
  * Authentication Utilities for Admin Panel
  * 
  * This script provides authentication functions for the admin dashboard.
+ * Updated to use HttpOnly cookies set by the backend instead of localStorage.
  */
 
-// Enhanced Authentication Utilities
-// Version: 2.1.0 - OPTIMIZED_LOGGING_FIX - 2025-07-14T15:30:00.000Z
+// Enhanced Authentication Utilities (Cookie-Based)
+// Version: 3.0.0 - COOKIE_BASED_AUTH - 2025-12-26T00:00:00.000Z
 // =======================================================================
 
 (function() {
@@ -18,9 +19,9 @@
   }
   window.authUtilsInitialized = true;
 
-  console.log('🔧 Loading Auth Utils v2.1.0 - Optimized Logging');
+  console.log('🔧 Loading Auth Utils v3.0.0 - Cookie-Based Authentication');
 
-  // Enhanced auth utilities with reduced logging
+  // Enhanced auth utilities with cookie-based storage
   window.authUtils = {
     // Authentication state
     state: {
@@ -38,25 +39,11 @@
       if (this.state.initialized) return;
       
       this.state.initialized = true;
-      console.log('🔐 Auth utils initialized');
-      
-      // Set up periodic token validation
-      setInterval(() => this.validateTokens(), 300000); // 5 minutes
+      console.log('🔐 Auth utils initialized (Cookie-based)');
     },
 
     /**
-     * Validate stored tokens
-     */
-    validateTokens() {
-      const token = localStorage.getItem('jwt_token');
-      if (token && this.isTokenExpired(token)) {
-        console.log('🔄 Token expired, attempting refresh...');
-        this.refreshToken();
-      }
-    },
-
-    /**
-     * Check if user is authenticated
+     * Check if user is authenticated by verifying cookies exist
      */
     async checkAuth() {
       if (!this.state.initialized) {
@@ -69,117 +56,87 @@
 
       try {
         this.state.checking = true;
-        const token = localStorage.getItem('access_token') || localStorage.getItem('jwt_token');
         
-        if (!token) {
+        // Check if we can access the API with current cookies
+        // The backend will automatically send the jwt_token cookie
+        const response = await fetch('/api/dashboard/data/', {
+          method: 'GET',
+          credentials: 'include'  // Send cookies automatically
+        });
+        
+        if (response.status === 401) {
           this.state.authenticated = false;
           return false;
         }
-
-        // Check if token is expired
-        if (this.isTokenExpired(token)) {
-          return await this.refreshToken();
+        
+        if (response.ok) {
+          // Get user role from cookie if available
+          this.updateRoleFromCookie();
+          this.state.authenticated = true;
+          return true;
         }
         
-        // Update admin role from token
-        this.updateRoleFromToken(token);
-        
-        this.state.authenticated = true;
-        return true;
+        return false;
+      } catch (error) {
+        console.error('Auth check failed:', error);
+        this.state.authenticated = false;
+        return false;
       } finally {
         this.state.checking = false;
       }
     },
 
     /**
-     * Update admin role from token
+     * Update admin role from cookie
      */
-    updateRoleFromToken(token) {
+    updateRoleFromCookie() {
       try {
-        const tokenData = JSON.parse(atob(token.split('.')[1]));
-        if (tokenData.role) {
-          this.state.adminRole = tokenData.role;
+        const roleValue = this.getCookie('userRole');
+        if (roleValue) {
+          this.state.adminRole = roleValue;
         }
       } catch (e) {
-        // Silently handle token parsing errors
+        // Silently handle cookie read errors
       }
     },
 
     /**
-     * Check if token is expired
+     * Get cookie value by name
      */
-    isTokenExpired(token) {
-      try {
-        const tokenData = JSON.parse(atob(token.split('.')[1]));
-        return tokenData.exp * 1000 < Date.now();
-      } catch (e) {
-        return true;
+    getCookie(name) {
+      const nameEQ = name + "=";
+      const cookies = document.cookie.split(';');
+      for(let i = 0; i < cookies.length; i++) {
+        let cookie = cookies[i].trim();
+        if (cookie.indexOf(nameEQ) === 0) {
+          return decodeURIComponent(cookie.substring(nameEQ.length));
+        }
       }
+      return null;
     },
 
     /**
-     * Refresh authentication token
+     * Clear all authentication (logout)
+     * Note: HttpOnly cookies must be cleared by the backend on logout endpoint
      */
-    async refreshToken() {
-      try {
-        const refreshToken = localStorage.getItem('refreshToken');
-        if (!refreshToken) {
-          return false;
-        }
-
-        const response = await fetch('/api/token/refresh/', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ refresh: refreshToken })
-        });
-
-        if (!response.ok) {
-          throw new Error('Token refresh failed');
-        }
-
-        const data = await response.json();
-        
-        if (!data.access) {
-          throw new Error('Invalid refresh response');
-        }
-
-        // Store new tokens
-        localStorage.setItem('jwt_token', data.access);
-        localStorage.removeItem('access_token');
-        if (data.refresh) {
-          localStorage.setItem('refreshToken', data.refresh);
-        }
-
-        this.state.authenticated = true;
-        this.updateRoleFromToken(data.access);
-        
-        return true;
-      } catch (error) {
-        console.error('Token refresh failed:', error);
-        this.state.authenticated = false;
-        this.clearTokens();
-        return false;
-      }
-    },
-
-    /**
-     * Clear all tokens
-     */
-    clearTokens() {
-      localStorage.removeItem('jwt_token');
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('refreshToken');
+    clearAuth() {
+      // Clear any non-HttpOnly cookies
+      document.cookie = 'userName=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+      document.cookie = 'userEmail=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+      document.cookie = 'userRole=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+      
       this.state.authenticated = false;
       this.state.adminRole = null;
     },
 
     /**
-     * Get authentication token
+     * Get authentication token (for backwards compatibility)
+     * Note: In cookie-based auth, the token is automatically sent with each request
      */
     getToken() {
-      return localStorage.getItem('jwt_token') || localStorage.getItem('access_token');
+      // Tokens are in HttpOnly cookies, not accessible to JavaScript
+      // This returns null as a signal that auth is cookie-based
+      return null;
     },
 
     /**
@@ -197,43 +154,25 @@
     }
   };
 
-  // Helper functions for token validation
+  // Helper functions for auth validation
   window.authHelpers = {
     /**
-     * Check if JWT format is valid
+     * Get user info from non-HttpOnly cookies set by backend
      */
-    isValidJWTFormat(token) {
-      if (!token) return false;
-      const parts = token.split('.');
-      return parts.length === 3;
+    getUserInfo() {
+      return {
+        name: window.authUtils.getCookie('userName'),
+        email: window.authUtils.getCookie('userEmail'),
+        role: window.authUtils.getCookie('userRole')
+      };
     },
 
     /**
-     * Check if token is expired
+     * Check if user is authenticated
      */
-    isTokenExpired(token) {
-      return window.authUtils.isTokenExpired(token);
-    },
-
-    /**
-     * Check for tokens in URL (from login redirect)
-     */
-    checkUrlForTokens() {
-      const urlParams = new URLSearchParams(window.location.search);
-      const token = urlParams.get('token');
-      const refresh = urlParams.get('refresh');
-      
-      if (token && refresh) {
-        localStorage.setItem('jwt_token', token);
-        localStorage.setItem('refreshToken', refresh);
-        
-        // Clean up URL
-        window.history.replaceState({}, document.title, window.location.pathname);
-        
-        return true;
-      }
-      
-      return false;
+    isAuthenticated() {
+      // If we can read userRole cookie, user is likely authenticated
+      return window.authUtils.getCookie('userRole') !== null;
     }
   };
 
@@ -241,3 +180,4 @@
   window.authUtils.init();
 
 })();
+

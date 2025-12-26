@@ -216,15 +216,8 @@ export default function GroupConfiguration() {
     const endpoint = "/api/current-group-config/";
     try {
       let resJson;
-      const token =
-        typeof window !== "undefined"
-          ? localStorage.getItem("jwt_token") ||
-            localStorage.getItem("access_token")
-          : null;
-
       const headers = {
         "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
       };
 
       const res = await fetch(endpoint, { credentials: "include", headers });
@@ -277,15 +270,8 @@ export default function GroupConfiguration() {
   const fetchAvailableGroups = useCallback(async () => {
     const endpoint = "/api/available-groups/";
     try {
-      const token =
-        typeof window !== "undefined"
-          ? localStorage.getItem("jwt_token") ||
-            localStorage.getItem("access_token")
-          : null;
-
       const headers = {
         "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
       };
 
       const res = await fetch(endpoint, { credentials: "include", headers });
@@ -363,15 +349,8 @@ const payloadGroups = groups.map((g) => ({
     );
 
     // 4️⃣ Authorization headers
-    const token =
-      typeof window !== "undefined"
-        ? localStorage.getItem("jwt_token") ||
-          localStorage.getItem("access_token")
-        : null;
-
     const headers = {
       "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
     };
 
     // 5️⃣ Send POST request

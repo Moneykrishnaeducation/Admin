@@ -2,60 +2,46 @@
  * Authentication and API Utilities for Admin Panel
  * 
  * This script provides authenticated fetch functionality for the admin dashboard.
+ * Updated to use HttpOnly cookies set by the backend instead of localStorage.
  */
 
-// JWT Authentication Utilities
+// Cookie-Based Authentication Utilities
 class AdminAuthenticatedFetch {
     constructor(baseURL = '') {
         this.baseURL = baseURL;
     }
 
-    // Get JWT token from localStorage
-    getToken() {
-        return localStorage.getItem('jwt_token') || localStorage.getItem('access_token');
+    // Get cookie value by name
+    getCookieValue(name) {
+        const nameEQ = name + "=";
+        const cookies = document.cookie.split(';');
+        for(let i = 0; i < cookies.length; i++) {
+            let cookie = cookies[i].trim();
+            if (cookie.indexOf(nameEQ) === 0) {
+                return decodeURIComponent(cookie.substring(nameEQ.length));
+            }
+        }
+        return null;
     }
 
-    // Check if user is authenticated
+    // Check if user is authenticated by checking for cookies
     isAuthenticated() {
-        const token = this.getToken();
-        if (!token) return false;
-        
-        try {
-            // Basic token validation (check if it's not expired)
-            const payload = JSON.parse(atob(token.split('.')[1]));
-            const now = Date.now() / 1000;
-            return payload.exp > now;
-        } catch (error) {
-            console.warn('Invalid token format:', error);
-            return false;
-        }
+        // If userRole cookie exists, user is authenticated
+        // HttpOnly jwt_token cookie will be sent automatically
+        return this.getCookieValue('userRole') !== null;
     }
 
-    // Get admin role from token
+    // Get admin role from non-HttpOnly cookie
     getAdminRole() {
-        const token = this.getToken();
-        if (!token) return null;
-        
-        try {
-            const payload = JSON.parse(atob(token.split('.')[1]));
-            return payload.role || null;
-        } catch (error) {
-            console.warn('Error extracting role from token:', error);
-            return null;
-        }
+        return this.getCookieValue('userRole');
     }
 
-    // Create headers with authorization
+    // Create headers for API requests
     createHeaders(additionalHeaders = {}) {
         const headers = {
             'Content-Type': 'application/json',
             ...additionalHeaders
         };
-
-        const token = this.getToken();
-        if (token) {
-            headers['Authorization'] = `Bearer ${token}`;
-        }
 
         // Add CSRF token for POST, PUT, PATCH, DELETE requests
         const csrfToken = this.getCsrfToken();
@@ -69,14 +55,9 @@ class AdminAuthenticatedFetch {
     // Get CSRF token from cookie or meta tag
     getCsrfToken() {
         // First try to get from cookie
-        const name = 'csrftoken=';
-        const decodedCookie = decodeURIComponent(document.cookie);
-        const cookieParts = decodedCookie.split(';');
-        for (let part of cookieParts) {
-            part = part.trim();
-            if (part.indexOf(name) === 0) {
-                return part.substring(name.length, part.length);
-            }
+        const csrfCookie = this.getCookieValue('csrftoken');
+        if (csrfCookie) {
+            return csrfCookie;
         }
         
         // Then try to get from meta tag
@@ -97,11 +78,7 @@ class AdminAuthenticatedFetch {
         // For FormData, don't use default headers to avoid Content-Type conflict
         if (options.body instanceof FormData) {
             headers = options.headers || {};
-            // Add authorization and CSRF for FormData
-            const token = this.getToken();
-            if (token) {
-                headers['Authorization'] = `Bearer ${token}`;
-            }
+            // Add CSRF for FormData
             const csrfToken = this.getCsrfToken();
             if (csrfToken) {
                 headers['X-CSRFToken'] = csrfToken;
@@ -111,7 +88,7 @@ class AdminAuthenticatedFetch {
         }
 
         const config = {
-            credentials: 'include', // Always send cookies/session
+            credentials: 'include', // Send cookies automatically (including HttpOnly jwt_token)
             ...options,
             headers
         };
@@ -153,12 +130,12 @@ class AdminAuthenticatedFetch {
 
     // Handle authentication errors
     handleAuthError() {
-        // Clear stored tokens
-        localStorage.removeItem('jwt_token');
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('refreshToken');
-        localStorage.removeItem('adminRole');
-        // Redirect to a valid login page (update this if your login page is different)
+        // Clear non-HttpOnly cookies (HttpOnly cookies cleared by backend on logout)
+        document.cookie = 'userName=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+        document.cookie = 'userEmail=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+        document.cookie = 'userRole=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+        
+        // Redirect to login page
         window.location.href = '/admin/index.html?error=session_expired';
     }
 

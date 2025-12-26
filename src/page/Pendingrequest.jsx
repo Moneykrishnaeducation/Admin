@@ -134,21 +134,15 @@ const PendingRequest = () => {
       }
 
       const fullUrl = `${API_BASE}/${fullEndpoint}`;
-      const accessToken = localStorage.getItem('access_token');
 
       console.log(`[handleAction] POSTing to: ${fullUrl}`); // Log the exact URL being called
-
-      if (!accessToken) {
-        alert("No access token found");
-        return;
-      }
 
       const response = await fetch(fullUrl, {
         method: method,
         headers: {
-          Authorization: `Bearer ${accessToken}`,
           'Content-Type': 'application/json',
         },
+        credentials: 'include',  // Send cookies automatically (includes jwt_token)
         body: bodyData,
       });
 

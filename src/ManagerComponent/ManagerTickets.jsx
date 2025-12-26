@@ -4,6 +4,28 @@ import { useTheme } from "../context/ThemeContext";
 import { get, post, patch } from "../utils/api-config";
 import TableStructure from "../commonComponent/TableStructure";
 
+// Helper to get cookie value
+function getCookie(name) {
+  try {
+    const nameEQ = name + "=";
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+      let cookie = cookies[i].trim();
+      if (cookie.indexOf(nameEQ) === 0) {
+        let value = cookie.substring(nameEQ.length);
+        try {
+          return decodeURIComponent(value);
+        } catch {
+          return value;
+        }
+      }
+    }
+  } catch (e) {
+    console.error('Error parsing cookie:', e);
+  }
+  return '';
+}
+
 const ManagerTickets = () => {
   const { isDarkMode } = useTheme();
 
@@ -11,11 +33,9 @@ const ManagerTickets = () => {
   const [activeTab, setActiveTab] = useState("Open");
 
   const [userId] = useState(() => {
-    return (
-      localStorage.getItem("user_id") ||
-      localStorage.getItem("username") ||
-      ""
-    );
+    // User data is now stored in cookies set by backend
+    // Get from user cookie if available, otherwise empty string
+    return getCookie('user_id') || getCookie('username') || '';
   });
 
   const [tickets, setTickets] = useState({

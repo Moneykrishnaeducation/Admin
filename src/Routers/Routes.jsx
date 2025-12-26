@@ -59,9 +59,10 @@ const AppRoutes = ({ role }) => {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  /* ---------------- Persist current page ---------------- */
+  /* ---------------- Persist current page in cookies instead of localStorage ---------------- */
   useEffect(() => {
-    localStorage.setItem("current_page", location.pathname);
+    // Current page is tracked via React Router's location state
+    // No need to persist to storage - use location.pathname directly
   }, [location.pathname]);
 
   const isLoginPage =
@@ -136,25 +137,80 @@ const AppRoutes = ({ role }) => {
 /* ROOT ROUTER */
 /* -------------------------------------------------- */
 
+// Helper to get a cookie value - properly handles URL-encoded cookies
+function getCookie(name) {
+  try {
+    const nameEQ = name + "=";
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+      let cookie = cookies[i].trim();
+      if (cookie.indexOf(nameEQ) === 0) {
+        let value = cookie.substring(nameEQ.length);
+        try {
+          return decodeURIComponent(value);
+        } catch {
+          return value;
+        }
+      }
+    }
+  } catch (e) {
+    console.error('Error parsing cookie:', e);
+  }
+  return '';
+}
+
+// Helper to get role from cookies instead of localStorage
+function getUserRole() {
+  let role = "admin"; // Default to admin
+  
+  try {
+    // Get role from cookies (set by backend)
+    const userCookie = getCookie('user');
+    if (userCookie) {
+      try {
+        const userFromCookie = JSON.parse(userCookie);
+        if (userFromCookie?.role) {
+          console.debug('[Routes] Role from user cookie:', userFromCookie.role);
+          return userFromCookie.role;
+        }
+      } catch (e) {
+        console.debug('[Routes] Failed to parse user cookie:', e);
+      }
+    }
+    
+    // Fallback: check individual role cookies
+    const cookieRole = getCookie('userRole') || getCookie('user_role');
+    if (cookieRole) {
+      console.debug('[Routes] Role from role cookie:', cookieRole);
+      return cookieRole;
+    }
+  } catch (e) {
+    console.error('[Routes] Error reading user role:', e);
+  }
+  
+  return role;
+}
+
 const Routers = () => {
-  const [role, setRole] = useState(() => {
-    const userData = JSON.parse(localStorage.getItem("user"));
-    return userData?.role || "admin";
-  });
+  const [role, setRole] = useState(() => getUserRole());
 
   useEffect(() => {
     const syncRole = () => {
-      const userData = JSON.parse(localStorage.getItem("user"));
-      setRole(userData?.role || "admin");
+      const newRole = getUserRole();
+      setRole(newRole);
     };
 
     syncRole();
     window.addEventListener("focus", syncRole);
     window.addEventListener("storage", syncRole);
+    
+    // Also check periodically in case cookies are updated
+    const interval = setInterval(syncRole, 3000);
 
     return () => {
       window.removeEventListener("focus", syncRole);
       window.removeEventListener("storage", syncRole);
+      clearInterval(interval);
     };
   }, []);
 
@@ -168,3 +224,4 @@ const Routers = () => {
 };
 
 export default Routers;
+

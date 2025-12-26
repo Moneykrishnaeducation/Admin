@@ -42,15 +42,9 @@ const AdminManagerList = () => {
       if (client && typeof client.get === "function") {
         resJson = await client.get(endpoint);
       } else {
-        const token =
-          typeof window !== "undefined"
-            ? localStorage.getItem("jwt_token") ||
-              localStorage.getItem("access_token")
-            : null;
-
+        // Tokens are now in HttpOnly cookies - no need to manually add Authorization header
         const headers = {
           "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         };
 
         const res = await fetch(endpoint, {

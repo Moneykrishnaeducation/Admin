@@ -9,6 +9,28 @@ import { Bell, X, CheckCircle, Info, AlertCircle } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useTheme } from "../context/ThemeContext";
 
+// Helper to get cookie value
+function getCookie(name) {
+  try {
+    const nameEQ = name + "=";
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+      let cookie = cookies[i].trim();
+      if (cookie.indexOf(nameEQ) === 0) {
+        let value = cookie.substring(nameEQ.length);
+        try {
+          return decodeURIComponent(value);
+        } catch {
+          return value;
+        }
+      }
+    }
+  } catch (e) {
+    console.error('Error parsing cookie:', e);
+  }
+  return '';
+}
+
 const Header = ({ isSidebarOpen, setIsSidebarOpen }) => {
   const { isDarkMode, toggleMode } = useTheme();
   const navigate = useNavigate();
@@ -17,6 +39,7 @@ const Header = ({ isSidebarOpen, setIsSidebarOpen }) => {
   const [notifications, setNotifications] = useState([]);
   const [loadingNotifications] = useState(false);
   const [userName, setUserName] = useState("Admin User");
+
 
   const [showLogoutPopup, setShowLogoutPopup] = useState(false);
   const [logoutLoading, setLogoutLoading] = useState(false);
@@ -55,13 +78,14 @@ const Header = ({ isSidebarOpen, setIsSidebarOpen }) => {
       document.removeEventListener("mousedown", handleClickOutside);
   }, [showNotifications]);
 
-  // Load logged-in user's name from storage and listen for updates (cross-tab)
+  // Load logged-in user's name from cookies only (not localStorage)
   useEffect(() => {
     const loadUserName = () => {
       try {
-        const raw = localStorage.getItem('user') || sessionStorage.getItem('user');
-        if (raw) {
-          const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+        // Get user data from cookies set by backend
+        const userCookie = getCookie('user');
+        if (userCookie) {
+          const parsed = typeof userCookie === 'string' ? JSON.parse(userCookie) : userCookie;
           // Try common name fields
           const name = parsed?.first_name || parsed?.name || parsed?.full_name || parsed?.username || parsed?.email;
           if (name) {
@@ -70,11 +94,12 @@ const Header = ({ isSidebarOpen, setIsSidebarOpen }) => {
           }
         }
 
-        // Fallback to simple name keys if present
-        const fallback = localStorage.getItem('user_name') || sessionStorage.getItem('user_name') || localStorage.getItem('username') || sessionStorage.getItem('username');
-        if (fallback) setUserName(fallback);
+        // Fallback to individual user_name or username cookies
+        const userNameCookie = getCookie('user_name') || getCookie('username');
+        if (userNameCookie) setUserName(userNameCookie);
       } catch (err) {
         // ignore malformed JSON
+        console.debug('Error loading user name from cookies:', err);
       }
     };
 
@@ -82,6 +107,7 @@ const Header = ({ isSidebarOpen, setIsSidebarOpen }) => {
 
     const onStorage = (e) => {
       if (!e) return;
+      // Listen for user data updates from other tabs
       if (e.key === 'user' || e.key === 'user_name' || e.key === 'username') {
         loadUserName();
       }
@@ -91,26 +117,16 @@ const Header = ({ isSidebarOpen, setIsSidebarOpen }) => {
     return () => window.removeEventListener('storage', onStorage);
   }, []);
 
-  // 🔹 Handle logout (skipped API call)
+  // 🔹 Handle logout
   const handleLogout = async () => {
     setLogoutLoading(true);
     try {
-      // Clear stored tokens and user data (skipped API call)
-      const keysToRemove = [
-        'jwt_token', 'access_token', 'refresh_token', 'refreshToken',
-        'user',
-        'current_page'
-      ];
-      keysToRemove.forEach(key => {
-        localStorage.removeItem(key);
-        sessionStorage.removeItem(key);
-      });
+      // Tokens and user data are in HttpOnly cookies - they'll be cleared by the backend
+      // Just clear sessionStorage and navigate to login
+      sessionStorage.clear();
 
-      // Clear any pending verification marker
-      localStorage.removeItem('login_verification_pending');
-
-      // Trigger cross-tab logout
-      import('../utils/api-config').then(({ triggerCrossTabLogout }) => {
+      // Trigger cross-tab logout notification
+      import('../utils/api.js').then(({ triggerCrossTabLogout }) => {
         triggerCrossTabLogout();
       });
 

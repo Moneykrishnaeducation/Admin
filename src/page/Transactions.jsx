@@ -43,6 +43,21 @@ export default function Transactions() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
+  /* -------------------- Helper: Get CSRF Token -------------------- */
+  const getCsrfToken = () => {
+    const name = "csrftoken";
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== "") {
+      document.cookie.split(";").forEach((c) => {
+        c = c.trim();
+        if (c.substring(0, name.length + 1) === name + "=") {
+          cookieValue = decodeURIComponent(c.substring(name.length + 1));
+        }
+      });
+    }
+    return cookieValue;
+  };
+
   /* -------------------- Fetch -------------------- */
   const onFetch = useCallback(
     async ({ page: p = 1, pageSize: ps = rowsPerPage, query = "" } = {}) => {
@@ -62,7 +77,6 @@ export default function Transactions() {
         }
 
         setTokenMissing(false);
-        const token = window.authUtils.getToken();
 
         const params = new URLSearchParams();
         if (fromDate) params.append("start_date", fromDate);
@@ -71,6 +85,15 @@ export default function Transactions() {
         params.append("pageSize", ps);
         if (statusFilter !== "all") params.append("status", statusFilter);
         if (query) params.append("search", query);
+
+        // Prepare fetch headers with CSRF token
+        const csrfToken = getCsrfToken();
+        const fetchHeaders = {
+          "Content-Type": "application/json",
+        };
+        if (csrfToken) {
+          fetchHeaders["X-CSRFToken"] = csrfToken;
+        }
 
         let results = [];
         let total = 0;
@@ -90,10 +113,19 @@ export default function Transactions() {
           const responses = await Promise.all(
             endpoints.map((url) =>
               fetch(url, {
-                headers: {
-                  Authorization: `Bearer ${token}`,
-                },
-              }).then((res) => res.json())
+                credentials: 'include',
+                headers: fetchHeaders,
+              })
+                .then((res) => {
+                  if (!res.ok) {
+                    console.error(`Failed to fetch ${url}: ${res.status} ${res.statusText}`);
+                  }
+                  return res.json();
+                })
+                .catch((err) => {
+                  console.error(`Error fetching ${url}:`, err);
+                  return { results: [], total: 0 };
+                })
             )
           );
 
@@ -156,12 +188,14 @@ export default function Transactions() {
           }
 
           const res = await fetch(url, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
+            credentials: 'include',
+            headers: fetchHeaders,
           });
 
-          if (!res.ok) throw new Error("Network error");
+          if (!res.ok) {
+            console.error(`Failed to fetch ${url}: ${res.status} ${res.statusText}`);
+            throw new Error("Network error");
+          }
 
           const data = await res.json();
           results = Array.isArray(data.results)

@@ -69,16 +69,12 @@ const Dashboard = () => {
     : [];
 
   const downloadCSV = (url, filename) => {
-    const token = localStorage.getItem("access_token");
-    if (!token) {
-      alert("You must be logged in to download CSV.");
-      return;
-    }
-
+    // Token is automatically sent in cookies with credentials: include
+    // No need to manually extract or attach the token
     fetch(url, {
       method: "GET",
+      credentials: "include",  // Send cookies automatically
       headers: {
-        Authorization: `Bearer ${token}`,
         "Content-Type": "text/csv",
       },
     })

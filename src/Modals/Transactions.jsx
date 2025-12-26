@@ -42,18 +42,7 @@ const Transactions = ({ visible, onClose, accountId, isDarkMode }) => {
   const fetchTransactions = async () => {
     setLoading(true);
     try {
-      const token =
-        typeof window !== "undefined"
-          ? localStorage.getItem("jwt_token") ||
-            localStorage.getItem("access_token")
-          : null;
-
-      const data = await client.get(`/ib-user/${accountId}/transactions/`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
+      const data = await client.get(`/ib-user/${accountId}/transactions/`);
 
       setCompletedData(data.completed || []);
       setPendingData(data.pending || []);

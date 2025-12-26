@@ -78,11 +78,7 @@ const TradingAccountPage = () => {
         if (client && typeof client.get === "function") {
           resJson = await client.get(`${endpoint}?${params.toString()}`);
         } else {
-          const token =
-            typeof window !== "undefined"
-              ? localStorage.getItem("jwt_token") || localStorage.getItem("access_token")
-              : null;
-          const headers = { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) };
+          const headers = { "Content-Type": "application/json" };
           const res = await fetch(`${endpoint}?${params.toString()}`, { credentials: "include", headers });
           if (!res.ok) throw new Error(`Failed to fetch ${endpoint}: ${res.status}`);
           resJson = await res.json();

@@ -61,11 +61,7 @@ const User = () => {
         if (client && typeof client.get === "function") {
           resJson = await client.get(`${endpoint}?${params.toString()}`);
         } else {
-          const token =
-            typeof window !== "undefined"
-              ? localStorage.getItem("jwt_token") || localStorage.getItem("access_token")
-              : null;
-          const headers = { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) };
+          const headers = { "Content-Type": "application/json" };
           const res = await fetch(`${endpoint}?${params.toString()}`, { credentials: "include", headers });
           if (!res.ok) throw new Error(`Failed to fetch ${endpoint}: ${res.status}`);
           resJson = await res.json();
@@ -170,14 +166,8 @@ const User = () => {
         is_active: true,
       };
 
-      const token =
-        typeof window !== "undefined"
-          ? localStorage.getItem("jwt_token") || localStorage.getItem("access_token")
-          : null;
-
       const headers = {
         "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
       };
 
       const response = await fetch("/api/admin/create-user/", {
@@ -413,13 +403,8 @@ const User = () => {
     );
     // Call API to actually enable/disable user
     try {
-      const token =
-        typeof window !== "undefined"
-          ? localStorage.getItem("jwt_token") || localStorage.getItem("access_token")
-          : null;
       const headers = {
         "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
       };
       const response = await fetch(`/api/users/${row.userId}/status/`, {
         method: "PATCH",

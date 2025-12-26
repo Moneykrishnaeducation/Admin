@@ -28,8 +28,7 @@ const MailForm = () => {
       if (client && typeof client.post === 'function') {
         res = await client.post('/send-single-email/', payload);
       } else {
-        const token = localStorage.getItem('jwt_token') || localStorage.getItem('access_token');
-        const headers = { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) };
+        const headers = { 'Content-Type': 'application/json' };
         const response = await fetch('/api/send-single-email/', { method: 'POST', headers, credentials: 'include', body: JSON.stringify(payload) });
         res = await response.json();
         if (!response.ok) throw new Error(res.error || JSON.stringify(res));
@@ -80,8 +79,7 @@ const MailForm = () => {
       if (client && typeof client.post === 'function') {
         res = await client.post('/send-broadcast-email/', payload);
       } else {
-        const token = localStorage.getItem('jwt_token') || localStorage.getItem('access_token');
-        const headers = { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) };
+        const headers = { 'Content-Type': 'application/json' };
         const response = await fetch('/api/send-broadcast-email/', { method: 'POST', headers, credentials: 'include', body: JSON.stringify(payload) });
         res = await response.json();
         if (!response.ok) throw new Error(res.error || JSON.stringify(res));
@@ -103,8 +101,7 @@ const MailForm = () => {
     if (client && typeof client.get === 'function') {
       res = await client.get('/get-active-users-emails/');
     } else {
-      const token = localStorage.getItem('jwt_token') || localStorage.getItem('access_token');
-      const headers = { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) };
+      const headers = { 'Content-Type': 'application/json' };
       const response = await fetch('/api/get-active-users-emails/', { method: 'GET', headers, credentials: 'include' });
       res = await response.json();
       if (!response.ok) throw new Error(res.error || JSON.stringify(res));

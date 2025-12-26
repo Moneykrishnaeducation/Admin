@@ -23,11 +23,13 @@ function getUsersApiBase() {
 
 // Determine if we should use test endpoints (no authentication)
 function shouldUseTestEndpoints() {
-    // Use test endpoints if accessing dashboard directly or no auth token available
-    const hasAuthToken = localStorage.getItem('access_token') || localStorage.getItem('jwt_token');
+    // Check if user is authenticated via cookies
+    const hasAuthCookie = document.cookie.split(';').some(item => 
+        item.trim().startsWith('user=') || item.trim().startsWith('jwt_token=')
+    );
     const isDirectDashboardAccess = window.location.pathname.includes('/Components/dashboard.html');
     
-    return !hasAuthToken || isDirectDashboardAccess;
+    return !hasAuthCookie || isDirectDashboardAccess;
 }
 
 // Set the global API_BASE variable
@@ -47,15 +49,15 @@ console.log('🔧 Admin API Configuration:', {
 });
 
 // Helper function for authenticated API requests
+// Uses HttpOnly cookies automatically - no need to manually add Authorization header
 async function fetchWithAuth(url, options = {}) {
-    const token = localStorage.getItem('access_token') || localStorage.getItem('jwt_token');
-    
     const defaultOptions = {
         headers: {
             'Content-Type': 'application/json',
-            ...(token && { 'Authorization': `Bearer ${token}` }), // Attach token if available
             ...options.headers
-        }
+        },
+        // IMPORTANT: Include credentials so cookies are sent automatically
+        credentials: 'include',
     };
     
     const response = await fetch(url, { ...defaultOptions, ...options });
@@ -88,13 +90,11 @@ export async function post(endpoint, data, isFormData = false) {
     try {
         if (isFormData) {
             // For FormData, use fetch directly without Content-Type header
-            const token = localStorage.getItem('access_token') || localStorage.getItem('jwt_token');
+            // Cookies are sent automatically with credentials: include
             const response = await fetch(url, {
                 method: 'POST',
                 body: data,
-                headers: {
-                    ...(token && { 'Authorization': `Bearer ${token}` }),
-                }
+                credentials: 'include'
             });
 
             if (!response.ok) {

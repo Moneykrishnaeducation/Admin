@@ -50,11 +50,8 @@ const PropFirm = () => {
       setError(null);
 
       try {
-        const token = typeof window !== "undefined" ? localStorage.getItem("jwt_token") || localStorage.getItem("access_token") : null;
-
         const headers = {
           "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         };
 
         let type = '';
@@ -182,11 +179,8 @@ const PropFirm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const token = typeof window !== "undefined" ? localStorage.getItem("jwt_token") || localStorage.getItem("access_token") : null;
-
       const headers = {
         "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
       };
 
       const response = await fetch('/api/admin/prop-packages/create/', {
@@ -613,11 +607,8 @@ const PropFirm = () => {
               <button
                 onClick={async () => {
                   try {
-                    const token = typeof window !== "undefined" ? localStorage.getItem("jwt_token") || localStorage.getItem("access_token") : null;
-
                     const headers = {
                       "Content-Type": "application/json",
-                      ...(token ? { Authorization: `Bearer ${token}` } : {}),
                     };
 
                     const response = await fetch(`/api/admin/prop-requests/${selectedRequest.id}/approve/`, {
@@ -663,11 +654,8 @@ const PropFirm = () => {
               <button
                 onClick={async () => {
                   try {
-                    const token = typeof window !== "undefined" ? localStorage.getItem("jwt_token") || localStorage.getItem("access_token") : null;
-
                     const headers = {
                       "Content-Type": "application/json",
-                      ...(token ? { Authorization: `Bearer ${token}` } : {}),
                     };
 
                     const response = await fetch(`/api/admin/prop-requests/${selectedRequest.id}/reject/`, {

@@ -22,10 +22,9 @@ const ManagerActivities = () => {
       if (client && typeof client.get === 'function') {
         resJson = await client.get(`${endpoint}?${params.toString()}`);
       } else {
-        const token = localStorage.getItem('jwt_token') || localStorage.getItem('access_token');
+        // Tokens are now in HttpOnly cookies - no need to manually add Authorization header
         const headers = {
           'Content-Type': 'application/json',
-          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
         };
         const res = await fetch(`${endpoint}?${params.toString()}`, { credentials: 'include', headers });
         if (!res.ok) throw new Error(`Failed to fetch ${endpoint}: ${res.status}`);

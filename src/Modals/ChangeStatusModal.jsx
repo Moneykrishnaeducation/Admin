@@ -48,18 +48,12 @@ const ChangeStatusModal = ({
 
         setFetchLoading(true);
         try {
-          const token =
-            typeof window !== "undefined"
-              ? localStorage.getItem("jwt_token") ||
-                localStorage.getItem("access_token")
-              : null;
-
+          // Tokens are now in HttpOnly cookies - no need to manually add Authorization header
           const res = await fetch(`/api/admin/user-info/${userId}/`, {
             method: "GET",
             credentials: "include",
             headers: {
               "Content-Type": "application/json",
-              ...(token ? { Authorization: `Bearer ${token}` } : {}),
             },
           });
 
@@ -95,18 +89,12 @@ const ChangeStatusModal = ({
     try {
       const userId = userRow?.id ?? userRow?.userId;
 
-      const token =
-        typeof window !== "undefined"
-          ? localStorage.getItem("jwt_token") ||
-            localStorage.getItem("access_token")
-          : null;
-
+      // Tokens are now in HttpOnly cookies - no need to manually add Authorization header
       const res = await fetch(`/api/admin/update-user-status/${userId}/`, {
         method: "PATCH",
         credentials: "include",
         headers: {
           "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({ role: status }),
       });

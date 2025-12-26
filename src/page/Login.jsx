@@ -16,6 +16,19 @@ function getCookie(name) {
   return match ? decodeURIComponent(match.pop()) : '';
 }
 
+// Helper to set a cookie value
+function setCookie(name, value, days = 7) {
+  const expires = new Date();
+  expires.setTime(expires.getTime() + days * 24 * 60 * 60 * 1000);
+  document.cookie = `${name}=${encodeURIComponent(value)};expires=${expires.toUTCString()};path=/;SameSite=Lax`;
+}
+
+// Helper to get user data from cookies
+function getUserFromCookies() {
+  const userCookie = getCookie('user');
+  return userCookie ? JSON.parse(userCookie) : {};
+}
+
 // Ensure a CSRF cookie is present. Try a set of common endpoints to trigger the server
 // to set a `csrftoken` cookie. This is best-effort — if your backend exposes a
 // dedicated csrf endpoint (e.g. `/api/get-csrf/`) prefer that and update the list.
@@ -63,40 +76,41 @@ const Login = () => {
 
   const navigate = useNavigate();
 
-    // Helper to persist auth payloads with flexible keys
+    // Helper to handle login response
+    // Note: Tokens are now stored in HttpOnly cookies by the backend
+    // Frontend should NOT try to read or store JWT tokens
     function saveAuthData(data) {
       if (!data || typeof window === 'undefined') return;
-      // access tokens (support multiple key names)
-      if (data.access) localStorage.setItem('access_token', data.access);
-      if (data.accessToken) localStorage.setItem('access_token', data.accessToken);
-      if (data.jwt_token) localStorage.setItem('jwt_token', data.jwt_token);
-      // keep legacy names if present
-      if (data.accessToken) localStorage.setItem('accessToken', data.accessToken);
 
-      // refresh tokens
-      if (data.refresh) localStorage.setItem('refresh_token', data.refresh);
-      if (data.refreshToken) localStorage.setItem('refresh_token', data.refreshToken);
-      if (data.refreshToken) localStorage.setItem('refreshToken', data.refreshToken);
+      // NOTE: Access and refresh tokens are now in HttpOnly cookies set by backend
+      // Do NOT store them in localStorage anymore
 
-      // optional theme and misc
-      if (data.themeMode) localStorage.setItem('themeMode', data.themeMode);
-
-      // user fields
+      // Store user info for display purposes (these came from non-HttpOnly cookies or response)
+      // This is for UI purposes only, not for authentication
       const respUser = { ...(data.user || {}) };
-      // merge role if provided at top-level or alternate keys
+
+      // Merge role if provided
       respUser.role = respUser.role || data.role || data.userRole || data.user_role;
       if (data.name && !respUser.name) respUser.name = data.name;
       if (data.email && !respUser.email) respUser.email = data.email;
 
-      localStorage.setItem('user', JSON.stringify(respUser));
+      // Save to cookies only
+      setCookie('user', JSON.stringify(respUser));
 
-      // store some alternate flat keys for older code paths
-      if (respUser.email) localStorage.setItem('userEmail', respUser.email);
-      if (respUser.name) localStorage.setItem('userName', respUser.name);
-      if (respUser.role) {
-        localStorage.setItem('userRole', respUser.role);
-        localStorage.setItem('user_role', respUser.role);
+      // Store some alternate flat keys for older code paths (UI display only)
+      if (respUser.email) {
+        setCookie('userEmail', respUser.email);
       }
+      if (respUser.name) {
+        setCookie('userName', respUser.name);
+      }
+      if (respUser.role) {
+        setCookie('userRole', respUser.role);
+        setCookie('user_role', respUser.role);
+      }
+
+      // Store optional theme preference if provided
+      if (data.themeMode) setCookie('themeMode', data.themeMode);
     }
 
     useEffect(() => {
@@ -169,7 +183,7 @@ const Login = () => {
           setShowVerificationModal(true);
         } else {
           saveAuthData(response.data);
-          const userData = JSON.parse(localStorage.getItem('user') || '{}');
+          const userData = getUserFromCookies();
           const role = userData?.role || 'manager';
           if (role === 'admin') navigate('/dashboard');
           else navigate('/manager/dashboard');
@@ -199,7 +213,7 @@ const Login = () => {
         if (response.data?.access && response.data?.refresh) {
           saveAuthData(response.data);
           setShowVerificationModal(false);
-          const userData = JSON.parse(localStorage.getItem('user') || '{}');
+          const userData = getUserFromCookies();
           const role = userData?.role || 'manager';
           if (role === 'admin') navigate('/dashboard');
           else navigate('/manager/dashboard');
@@ -214,7 +228,7 @@ const Login = () => {
         );
         saveAuthData(loginResp.data);
         setShowVerificationModal(false);
-        const role = JSON.parse(localStorage.getItem('user') || '{}')?.role || 'manager';
+        const role = getUserFromCookies()?.role || 'manager';
         if (role === 'admin') navigate('/dashboard');
         else navigate('/manager/dashboard');
       } catch (err) {

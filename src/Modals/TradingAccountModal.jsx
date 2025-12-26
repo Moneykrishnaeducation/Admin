@@ -69,8 +69,7 @@ const TradingAccountModal = ({
     (async () => {
       try {
         const endpoint = `ib-user/${userId}/trading-accounts/`;
-        const token = typeof window !== "undefined" ? (localStorage.getItem("jwt_token") || localStorage.getItem("access_token")) : null;
-        const headers = { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) };
+        const headers = { "Content-Type": "application/json" };
         const res = await fetch(endpoint, { credentials: "include", headers });
         if (!res.ok) throw new Error(`Failed to fetch ${endpoint}: ${res.status}`);
         const json = await res.json();

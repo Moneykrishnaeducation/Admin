@@ -171,16 +171,14 @@ const Partnership = () => {
     if (!endpoint) return;
     setError(null);
     try {
-      // Build headers and include credentials to support cookie-based auth
+      // Build headers for authentication
       const headers = { Accept: "application/json" };
-      // If you store a token in localStorage (e.g. 'accessToken' or 'token'), include it
-      const token = window.localStorage.getItem("access_token") || window.localStorage.getItem("token");
-      if (token) headers["Authorization"] = `Bearer ${token}`;
+      // Tokens are now in HttpOnly cookies, no need to manually add Authorization header
 
       const res = await fetch(`${endpoint}?page=${pageByTab[tab]}&per_page=${perPage}`, {
         method: "GET",
         headers,
-        credentials: "include",
+        credentials: "include",  // Send cookies automatically
       });
 
       if (res.status === 401) {
@@ -250,14 +248,12 @@ const Partnership = () => {
     setActionLoading((s) => ({ ...s, [id]: true }));
     setError(null);
     try {
-      const token = window.localStorage.getItem("access_token") || window.localStorage.getItem("token");
       // Build URL with id (backend expects /api/admin/transaction/<id>/approve/)
       const url = `${API_ENDPOINTS.withdrawalApprove}${id}/approve/`;
       const res = await fetch(url, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         credentials: "include",
         body: JSON.stringify({ transactionId: id }),
@@ -282,14 +278,12 @@ const Partnership = () => {
     setActionLoading((s) => ({ ...s, [id]: true }));
     setError(null);
     try {
-      const token = window.localStorage.getItem("access_token") || window.localStorage.getItem("token");
       // Build URL with id (backend expects /api/admin/transaction/<id>/reject/)
       const url = `${API_ENDPOINTS.withdrawalReject}${id}/reject/`;
       const res = await fetch(url, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         credentials: "include",
         body: JSON.stringify({ transactionId: id }),
@@ -465,10 +459,10 @@ const Partnership = () => {
     const endpoint = `${API_ENDPOINTS.tradingAccounts}${userId}/trading-accounts/`;
     setError(null);
     try {
-      const token = window.localStorage.getItem("access_token") || window.localStorage.getItem("token");
+      // Tokens are now in HttpOnly cookies - no need to manually add Authorization header
       const res = await fetch(endpoint, {
         method: "GET",
-        headers: { Accept: "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        headers: { Accept: "application/json" },
         credentials: "include",
       });
       if (res.status === 401) {
@@ -490,10 +484,10 @@ const Partnership = () => {
     const endpoint = `${API_ENDPOINTS.commissionBalance}${userId}/commission-balance/`;
     setError(null);
     try {
-      const token = window.localStorage.getItem("access_token") || window.localStorage.getItem("token");
+      // Tokens are now in HttpOnly cookies - no need to manually add Authorization header
       const res = await fetch(endpoint, {
         method: "GET",
-        headers: { Accept: "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        headers: { Accept: "application/json" },
         credentials: "include",
       });
       if (res.status === 401) {
@@ -536,12 +530,11 @@ const Partnership = () => {
     setError(null);
     try {
       const endpoint = "/api/admin/commission-db-withdraw/";
-      const token = window.localStorage.getItem("access_token") || window.localStorage.getItem("token");
+      // Tokens are now in HttpOnly cookies - no need to manually add Authorization header
       const res = await fetch(endpoint, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         credentials: "include",
         body: JSON.stringify({
@@ -569,12 +562,11 @@ const Partnership = () => {
     setError(null);
     try {
       const endpoint = "/api/admin/commission-zero/";
-      const token = window.localStorage.getItem("access_token") || window.localStorage.getItem("token");
+      // Tokens are now in HttpOnly cookies - no need to manually add Authorization header
       const res = await fetch(endpoint, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         credentials: "include",
         body: JSON.stringify({
@@ -599,10 +591,10 @@ const Partnership = () => {
     const endpoint = `${API_ENDPOINTS.partnerProfile}${userId}/`;
     setError(null);
     try {
-      const token = window.localStorage.getItem("access_token") || window.localStorage.getItem("token");
+      // Tokens are now in HttpOnly cookies - no need to manually add Authorization header
       const res = await fetch(endpoint, {
         method: "GET",
-        headers: { Accept: "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        headers: { Accept: "application/json" },
         credentials: "include",
       });
       if (res.status === 401) {
@@ -623,10 +615,10 @@ const Partnership = () => {
     const endpoint = API_ENDPOINTS.commissionProfiles;
     setError(null);
     try {
-      const token = window.localStorage.getItem("access_token") || window.localStorage.getItem("token");
+      // Tokens are now in HttpOnly cookies - no need to manually add Authorization header
       const res = await fetch(endpoint, {
         method: "GET",
-        headers: { Accept: "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        headers: { Accept: "application/json" },
         credentials: "include",
       });
       if (res.status === 401) {
@@ -653,12 +645,11 @@ const Partnership = () => {
     setError(null);
     try {
       const endpoint = `/update-partner-profile/${selectedId}/`;
-      const token = window.localStorage.getItem("access_token") || window.localStorage.getItem("token");
+      // Tokens are now in HttpOnly cookies - no need to manually add Authorization header
       const res = await fetch(endpoint, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         credentials: "include",
         body: JSON.stringify({ profile_id: selectedNewProfile }),
@@ -689,10 +680,10 @@ const Partnership = () => {
     const endpoint = API_ENDPOINTS.unassignedClients;
     setError(null);
     try {
-      const token = window.localStorage.getItem("access_token") || window.localStorage.getItem("token");
+      // Tokens are now in HttpOnly cookies - no need to manually add Authorization header
       const res = await fetch(endpoint, {
         method: "GET",
-        headers: { Accept: "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        headers: { Accept: "application/json" },
         credentials: "include",
       });
       if (res.status === 401) {
@@ -728,12 +719,11 @@ const Partnership = () => {
     try {
       // First, get the IB user email
       const ibUserEndpoint = `/api/admin/user-info/${selectedId}/`;
-      const token = window.localStorage.getItem("access_token") || window.localStorage.getItem("token");
+      // Tokens are now in HttpOnly cookies - no need to manually add Authorization header
       const ibRes = await fetch(ibUserEndpoint, {
         method: "GET",
         headers: {
           Accept: "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         credentials: "include",
       });
@@ -747,7 +737,6 @@ const Partnership = () => {
         method: "GET",
         headers: {
           Accept: "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         credentials: "include",
       });
@@ -761,7 +750,6 @@ const Partnership = () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         credentials: "include",
         body: JSON.stringify({
@@ -787,10 +775,10 @@ const Partnership = () => {
     const endpoint = `/api/admin/commission-withdrawal-history/${userId}/`;
     setError(null);
     try {
-      const token = window.localStorage.getItem("access_token") || window.localStorage.getItem("token");
+      // Tokens are now in HttpOnly cookies - no need to manually add Authorization header
       const res = await fetch(endpoint, {
         method: "GET",
-        headers: { Accept: "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        headers: { Accept: "application/json" },
         credentials: "include",
       });
       if (res.status === 401) {
@@ -831,10 +819,10 @@ const Partnership = () => {
 
     setError(null);
     try {
-      const token = window.localStorage.getItem("access_token") || window.localStorage.getItem("token");
+      // Tokens are now in HttpOnly cookies - no need to manually add Authorization header
       const res = await fetch(endpoint, {
         method: "GET",
-        headers: { Accept: "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        headers: { Accept: "application/json" },
         credentials: "include",
       });
       if (res.status === 401) {
@@ -862,10 +850,10 @@ const Partnership = () => {
     const endpoint = `${API_ENDPOINTS.statistics}${id}/statistics/`;
     setError(null);
     try {
-      const token = window.localStorage.getItem("access_token") || window.localStorage.getItem("token");
+      // Tokens are now in HttpOnly cookies - no need to manually add Authorization header
       const res = await fetch(endpoint, {
         method: "GET",
-        headers: { Accept: "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        headers: { Accept: "application/json" },
         credentials: "include",
       });
       if (res.status === 401) {
@@ -896,12 +884,11 @@ const Partnership = () => {
     setError(null);
     try {
       const endpoint = `/api/admin/disable-ib/${selectedId}/`;
-      const token = window.localStorage.getItem("access_token") || window.localStorage.getItem("token");
+      // Tokens are now in HttpOnly cookies - no need to manually add Authorization header
       const res = await fetch(endpoint, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         credentials: "include",
       });
@@ -923,10 +910,10 @@ const Partnership = () => {
     const endpoint = `/api/admin/ib-users/${userId}/clients/`;
     setError(null);
     try {
-      const token = window.localStorage.getItem("access_token") || window.localStorage.getItem("token");
+      // Tokens are now in HttpOnly cookies - no need to manually add Authorization header
       const res = await fetch(endpoint, {
         method: "GET",
-        headers: { Accept: "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        headers: { Accept: "application/json" },
         credentials: "include",
       });
       if (res.status === 401) {
@@ -966,10 +953,10 @@ const Partnership = () => {
     if (!endpoint) return;
     setError(null);
     try {
-      const token = window.localStorage.getItem("access_token") || window.localStorage.getItem("token");
+      // Tokens are now in HttpOnly cookies - no need to manually add Authorization header
       const res = await fetch(endpoint, {
         method: "GET",
-        headers: { Accept: "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        headers: { Accept: "application/json" },
         credentials: "include",
       });
       if (res.status === 401) {
@@ -1011,10 +998,10 @@ const Partnership = () => {
     setModalLoading(true);
     setError(null);
     try {
-      const token = window.localStorage.getItem("access_token") || window.localStorage.getItem("token");
+      // Tokens are now in HttpOnly cookies - no need to manually add Authorization header
       const res = await fetch(endpoint, {
         method: "GET",
-        headers: { Accept: "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        headers: { Accept: "application/json" },
         credentials: "include",
       });
       if (res.status === 401) {
@@ -1053,7 +1040,7 @@ const Partnership = () => {
     try {
       const endpoint = API_ENDPOINTS.createCommissionProfile;
       if (!endpoint) throw new Error("Create endpoint not configured");
-      const token = window.localStorage.getItem("access_token") || window.localStorage.getItem("token");
+      // Tokens are now in HttpOnly cookies - no need to manually add Authorization header
       // Build payload to match backend serializer expectations
       const body = {
         // serializer expects 'name' for the profile name
@@ -1089,7 +1076,6 @@ const Partnership = () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         credentials: "include",
         body: JSON.stringify(body),

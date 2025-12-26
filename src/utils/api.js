@@ -21,13 +21,11 @@ export function getCookie(name) {
   return cookieValue;
 }
 
-// Get auth headers with token
+// Get auth headers with token from HttpOnly cookies
 export const getAuthHeaders = () => {
   const headers = { 'Content-Type': 'application/json' };
-  const token = localStorage.getItem('jwt_token') || localStorage.getItem('accessToken') || localStorage.getItem('access_token');
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
+  // Tokens are now stored in HttpOnly cookies by the backend
+  // The browser automatically includes them in requests
   return headers;
 };
 
@@ -39,14 +37,8 @@ export const getAuthHeaders = () => {
  */
 export function handleUnauthorized() {
   try {
-    // Immediate cleanup
-    localStorage.clear();
+    // Clear session storage (but not localStorage since we're not using it for auth)
     sessionStorage.clear();
-
-    // Trigger cross-tab logout if available
-    if (typeof triggerCrossTabLogout === 'function') {
-      triggerCrossTabLogout();
-    }
 
     // Call app-defined logout if available
     if (typeof window.performLogout === 'function') {
@@ -161,42 +153,27 @@ export const useCurrentPage = () => {
   const location = useLocation();
   const currentPage = location.pathname;
 
-  // Store current page in localStorage for cross-tab persistence
-  React.useEffect(() => {
-    localStorage.setItem('current_page', currentPage);
-  }, [currentPage]);
+  // Current page is available from location.pathname
+  // No need to store in localStorage
 
   return currentPage;
 };
 
-// Listen for page changes across tabs
-window.addEventListener('storage', (event) => {
-  if (event.key === 'current_page') {
-    // Optionally handle page sync across tabs if needed
-    console.log('Page changed in another tab:', event.newValue);
-  }
-});
+// Storage event listeners removed - no longer using localStorage for auth/page tracking
 
-// Listen for unauthorized events across all tabs
-window.addEventListener('storage', (event) => {
-  if (event.key === 'unauthorized_logout') {
-    handleUnauthorized();
-  }
-});
-
-// Function to trigger logout across all tabs
+// Cross-tab logout is now handled via backend session management
 export const triggerCrossTabLogout = () => {
-  localStorage.setItem('unauthorized_logout', Date.now().toString());
-  // Clean up immediately
-  localStorage.removeItem('unauthorized_logout');
+  // Logout will be coordinated server-side via session cookies
+  console.log('Logout triggered - handled server-side via session management');
 };
 
-// Get current page from localStorage
+// Current page is managed through React Router - no need for localStorage
 export const getCurrentPage = () => {
-  return localStorage.getItem('current_page') || '/dashboard';
+  return window.location.pathname || '/dashboard';
 };
 
-// Set current page in localStorage
+// Current page is managed through React Router navigation
 export const setCurrentPage = (page) => {
-  localStorage.setItem('current_page', page);
+  // Use window.location or React Router's navigate() instead
+  window.location.pathname = page;
 };

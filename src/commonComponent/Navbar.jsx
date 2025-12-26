@@ -15,14 +15,83 @@ import {
   X,
 } from "lucide-react";
 
+// Helper to get a cookie value - properly handles URL-encoded cookies
+function getCookie(name) {
+  try {
+    const nameEQ = name + "=";
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+      let cookie = cookies[i].trim();
+      if (cookie.indexOf(nameEQ) === 0) {
+        let value = cookie.substring(nameEQ.length);
+        try {
+          return decodeURIComponent(value);
+        } catch {
+          return value;
+        }
+      }
+    }
+  } catch (e) {
+    console.error('Error parsing cookie:', e);
+  }
+  return '';
+}
+
 const Navbar = ({ isSidebarOpen, setIsSidebarOpen }) => {
   const { isDarkMode } = useTheme();
   const location = useLocation();
   const [isMobileView, setIsMobileView] = React.useState(false);
+  const [role, setRole] = React.useState("manager");
 
-  // User role
-  const userData = JSON.parse(localStorage.getItem("user"));
-  const role = userData?.role || "manager";
+  // User role - read from cookies only
+  React.useEffect(() => {
+    const updateRole = () => {
+      let currentRole = "manager";
+      
+      try {
+        // Check user cookie first
+        const userCookie = getCookie('user');
+        if (userCookie) {
+          try {
+            const userFromCookie = JSON.parse(userCookie);
+            if (userFromCookie?.role) {
+              currentRole = userFromCookie.role;
+              console.debug('Role from user cookie:', currentRole);
+              setRole(currentRole);
+              return;
+            }
+          } catch (e) {
+            console.debug('Failed to parse user cookie:', e);
+          }
+        }
+        
+        // Fallback: Check individual role cookies
+        const cookieRole = getCookie('userRole') || getCookie('user_role');
+        if (cookieRole) {
+          currentRole = cookieRole;
+          console.debug('Role from role cookie:', currentRole);
+        } else {
+          console.debug('No role found in cookies, defaulting to manager');
+        }
+        
+        setRole(currentRole);
+      } catch (e) {
+        console.error('Error reading user role:', e);
+        setRole("manager");
+      }
+    };
+
+    // Update role immediately on mount
+    updateRole();
+    
+    // Listen for storage changes (from other tabs/windows)
+    window.addEventListener('storage', updateRole);
+    
+    // Re-check role when location changes (page navigation)
+    return () => {
+      window.removeEventListener('storage', updateRole);
+    };
+  }, [location]);
 
   // Detect screen size
   React.useEffect(() => {

@@ -26,10 +26,6 @@ export default function DemoAccountModal({
       setError(null);
 
       try {
-        const token =
-          localStorage.getItem("jwt_token") ||
-          localStorage.getItem("access_token");
-
         const params = new URLSearchParams({
           user_id: String(userId),
         });
@@ -42,7 +38,6 @@ export default function DemoAccountModal({
             credentials: "include",
             headers: {
               Accept: "application/json",
-              ...(token && { Authorization: `Bearer ${token}` }),
             },
             signal: controller.signal,
           }
