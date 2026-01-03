@@ -23,7 +23,7 @@ import ChangeUserProfileModal from "../Modals/ChangeUserProfileModal";
 import ChangeLeverageModal from "../Modals/ChangeLeverageModal";
 import AlgoTradingModal from "../Modals/AlgoTradingModal";
 
-const currencyFormatter = (v) => {
+const _currencyFormatter = (v) => {
   if (typeof v !== "number") return v;
 
 };
@@ -31,10 +31,10 @@ const currencyFormatter = (v) => {
 
 const TradingAccountPage = () => {
   const [data, setData] = useState([]);
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const [page, _setPage] = useState(1);
+  const [pageSize, _setPageSize] = useState(10);
 
-  const [loading] = useState(false);
+  const [_loading] = useState(false);
   const [error] = useState(null);
   const [expandedId, setExpandedId] = useState(null);
 
@@ -121,7 +121,7 @@ const TradingAccountPage = () => {
   }, [page, pageSize]);
 
   // Reference for modal backdrop to handle outside click
-  const interTransModalRef = useRef(null);
+  const _interTransModalRef = useRef(null);
 
   // ======================
   // Modal Handlers
@@ -131,9 +131,24 @@ const TradingAccountPage = () => {
     setModalAccountId(row.accountId);
     setDepositModalOpen(true);
   };
-  const handleDeposit = ({ accountId, amount, comment }) => {
-    if (!amount || Number(amount) <= 0) return alert("Invalid Deposit Amount");
-    alert(`Deposited $${amount} to ${accountId}\nComment: ${comment}`);
+  // Parent handler receives response object from DepositModal via onSubmit
+  const handleDeposit = (res) => {
+    // res may be the server response object or a payload with amount/accountId
+    let amount = null;
+    let acct = modalAccountId;
+    let comment = "";
+    if (!res) {
+      setDepositModalOpen(false);
+      return;
+    }
+    if (typeof res === "object") {
+      amount = res.amount ?? res.new_balance ?? (res.transaction && res.transaction.amount) ?? null;
+      acct = res.account_id ?? res.accountId ?? acct;
+      comment = res.comment ?? "";
+    }
+    if (amount != null) {
+      alert(`Deposited $${amount} to ${acct}\nComment: ${comment}`);
+    }
     setDepositModalOpen(false);
   };
 
@@ -141,9 +156,22 @@ const TradingAccountPage = () => {
     setModalAccountId(row.accountId);
     setWithdrawModalOpen(true);
   };
-  const handleWithdraw = ({ accountId, amount, comment }) => {
-    if (!amount || Number(amount) <= 0) return alert("Invalid Withdrawal Amount");
-    alert(`Withdrew $${amount} from ${accountId}\nComment: ${comment}`);
+  const handleWithdraw = (res) => {
+    let amount = null;
+    let acct = modalAccountId;
+    let comment = "";
+    if (!res) {
+      setWithdrawModalOpen(false);
+      return;
+    }
+    if (typeof res === "object") {
+      amount = res.amount ?? res.new_balance ?? (res.transaction && res.transaction.amount) ?? null;
+      acct = res.account_id ?? res.accountId ?? acct;
+      comment = res.comment ?? "";
+    }
+    if (amount != null) {
+      alert(`Withdrew $${amount} from ${acct}\nComment: ${comment}`);
+    }
     setWithdrawModalOpen(false);
   };
 
@@ -151,9 +179,22 @@ const TradingAccountPage = () => {
     setModalAccountId(row.accountId);
     setCreditInModalOpen(true);
   };
-  const handleCreditIn = ({ accountId, amount, comment }) => {
-    if (!amount || Number(amount) <= 0) return alert("Invalid Credit In Amount");
-    alert(`Credit In $${amount} to ${accountId}\nComment: ${comment}`);
+  const handleCreditIn = (res) => {
+    let amount = null;
+    let acct = modalAccountId;
+    let comment = "";
+    if (!res) {
+      setCreditInModalOpen(false);
+      return;
+    }
+    if (typeof res === "object") {
+      amount = res.amount ?? res.new_balance ?? (res.transaction && res.transaction.amount) ?? null;
+      acct = res.account_id ?? res.accountId ?? acct;
+      comment = res.comment ?? "";
+    }
+    if (amount != null) {
+      alert(`Credit In $${amount} to ${acct}\nComment: ${comment}`);
+    }
     setCreditInModalOpen(false);
   };
 
@@ -161,9 +202,22 @@ const TradingAccountPage = () => {
     setModalAccountId(row.accountId);
     setCreditOutModalOpen(true);
   };
-  const handleCreditOut = ({ accountId, amount, comment }) => {
-    if (!amount || Number(amount) <= 0) return alert("Invalid Credit Out Amount");
-    alert(`Credit Out $${amount} from ${accountId}\nComment: ${comment}`);
+  const handleCreditOut = (res) => {
+    let amount = null;
+    let acct = modalAccountId;
+    let comment = "";
+    if (!res) {
+      setCreditOutModalOpen(false);
+      return;
+    }
+    if (typeof res === "object") {
+      amount = res.amount ?? res.new_balance ?? (res.transaction && res.transaction.amount) ?? null;
+      acct = res.account_id ?? res.accountId ?? acct;
+      comment = res.comment ?? "";
+    }
+    if (amount != null) {
+      alert(`Credit Out $${amount} from ${acct}\nComment: ${comment}`);
+    }
     setCreditOutModalOpen(false);
   };
 

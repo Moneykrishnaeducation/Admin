@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useCallback } from "react";
 import TableStructure from "../commonComponent/TableStructure";
 
 const Activities = () => {
@@ -6,37 +6,39 @@ const Activities = () => {
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [_total, setTotal] = useState(0);
 
   // Server-side fetch handler for TableStructure
-  const handleFetch = async ({ page, pageSize, query }) => {
+  const handleFetch = useCallback(async ({ page = 1, pageSize = 100, query = "" } = {}) => {
     setError(null);
     const endpoint = activeLog === "client" ? "/api/activity/client-logs/" : "/api/activity/staff/";
 
     try {
-      const client = window && window.adminApiClient ? window.adminApiClient : null;
+      const client = typeof window !== "undefined" && window.adminApiClient ? window.adminApiClient : null;
       const params = new URLSearchParams();
-      params.set('page', String(page || 1));
-      params.set('page_size', String(pageSize || 10));
-      if (query) params.set('query', String(query));
+      params.set("page", String(page));
+      params.set("pageSize", String(pageSize));
+      if (query) params.set("query", String(query));
 
       let resJson;
-      if (client && typeof client.get === 'function') {
+      if (client && typeof client.get === "function") {
         resJson = await client.get(`${endpoint}?${params.toString()}`);
       } else {
-        // Tokens are now in HttpOnly cookies - no need to manually add Authorization header
-        const headers = {
-          'Content-Type': 'application/json',
-        };
-        const res = await fetch(`${endpoint}?${params.toString()}`, { credentials: 'include', headers });
+        const headers = { "Content-Type": "application/json" };
+        const res = await fetch(`${endpoint}?${params.toString()}`, { credentials: "include", headers });
         if (!res.ok) throw new Error(`Failed to fetch ${endpoint}: ${res.status}`);
         resJson = await res.json();
       }
 
-      // Expect backend to return { data: [...], total: N }
-      const items = Array.isArray(resJson.data) ? resJson.data : [];
-      const total = typeof resJson.total === 'number' ? resJson.total : (Array.isArray(resJson) ? resJson.length : 0);
+      const raw = Array.isArray(resJson.data)
+        ? resJson.data
+        : Array.isArray(resJson.results)
+        ? resJson.results
+        : Array.isArray(resJson)
+        ? resJson
+        : [];
 
-      const mapped = items.map((item, idx) => ({
+      const mapped = raw.map((item, idx) => ({
         id: item.id ?? item.pk ?? idx,
         time: item.time ?? item.created_at ?? item.timestamp ?? item.date ?? null,
         user: item.user ?? item.username ?? item.email ?? item.name ?? "Unknown",
@@ -45,14 +47,37 @@ const Activities = () => {
         userAgent: item.user_agent ?? item.userAgent ?? "",
       }));
 
-      return { data: mapped, total };
+      const totalCount = typeof resJson.total === "number" ? resJson.total : typeof resJson.count === "number" ? resJson.count : mapped.length;
+      return { data: mapped, total: totalCount };
     } catch (err) {
       setError(err.message || String(err));
       return { data: [], total: 0 };
     }
-  };
+  }, [activeLog]);
 
   const data = useMemo(() => logs, [logs]);
+
+  // Fetch once when activeLog changes
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      setLoading(true);
+      try {
+        const res = await handleFetch();
+        if (!mounted) return;
+        setLogs(res.data || []);
+        setTotal(res.total || 0);
+      } catch (err) {
+        if (!mounted) return;
+        setError(err.message || String(err));
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, [activeLog]);
 
   const columns = [
     {
@@ -98,9 +123,8 @@ const Activities = () => {
       <TableStructure
         key={activeLog} // reset paging when switching logs
         columns={columns}
-        data={[]}
-        serverSide={true}
-        onFetch={handleFetch}
+        data={data}
+        serverSide={false}
       />
     </div>
   );
