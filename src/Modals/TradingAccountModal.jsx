@@ -399,6 +399,7 @@ const TradingAccountModal = ({
         <ChangeLeverageModal
           visible={activeOperation === 'leverage' && !!selectedAccount}
           onClose={resetOperationForm}
+          accountId={selectedAccount?.accountId}
           currentLeverage={selectedAccount?.leverage || leverage}
           leverageOptions={["1:10","1:50","1:100","1:200","1:500","1:1000"]}
           onUpdate={(newLev) => handleOperationSubmit('leverage', { newLeverage: newLev })}

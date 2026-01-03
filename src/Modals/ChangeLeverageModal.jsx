@@ -22,9 +22,47 @@ const ChangeLeverageModal = ({
   useEffect(() => {
     if (visible) {
       setStep(1);
-      setNewLeverage(currentLeverage);
+      setNewLeverage(currentLeverage ?? "");
     }
   }, [visible, currentLeverage]);
+
+  useEffect(() => {
+    // If currentLeverage doesn't match any option, default to first available option
+    if (visible && leverageOptions && leverageOptions.length) {
+      const matches = leverageOptions.map(String).includes(String(currentLeverage));
+      if (!matches) {
+        setNewLeverage((prev) => (prev ? prev : leverageOptions[0] || ""));
+      }
+    }
+  }, [visible, currentLeverage, leverageOptions]);
+
+  // Resolve account id robustly: accept number/string or object with `id`.
+  const resolvedAccountId = (() => {
+    if (!accountId) return null;
+    // string or numeric id
+    if (typeof accountId === "string") {
+      const t = accountId.trim();
+      if (t === "" || t === "undefined") return null;
+      const onlyDigits = t.replace(/[^0-9]/g, "");
+      if (onlyDigits && onlyDigits.length === String(t).length) return Number(t);
+      if (!Number.isNaN(Number(t))) return Number(t);
+      return t;
+    }
+    if (typeof accountId === "number") return accountId;
+    if (typeof accountId === "object") {
+      // common shapes
+      const possible = ["id", "accountId", "account_id", "demoAccountId", "demo_account_id", "pk"];
+      for (const k of possible) {
+        if (accountId[k]) return accountId[k];
+      }
+      return null;
+    }
+    return null;
+  })();
+
+  useEffect(() => {
+    console.debug("ChangeLeverageModal: resolvedAccountId=", resolvedAccountId, "accountIdProp=", accountId);
+  }, [resolvedAccountId, accountId]);
 
   /* ---------------- HELPERS ---------------- */
   const extractLeverageValue = (lev) => {
@@ -38,17 +76,30 @@ const ChangeLeverageModal = ({
 
   const openConfirm = () => {
     if (!newLeverage || newLeverage === currentLeverage) return;
+    if (!resolvedAccountId) {
+      alert("Account ID is missing. Cannot change leverage.");
+      return;
+    }
     setStep(2);
   };
 
   const confirmUpdate = async () => {
+    if (!resolvedAccountId) {
+      alert("Account ID is missing. Cannot update leverage.");
+      return;
+    }
     setLoading(true);
     try {
       const leverageValue = extractLeverageValue(newLeverage);
-      await apiClient.post(
-        `/api/demo_accounts/${accountId}/reset_leverage/`,
-        { accountId: accountId, leverage: leverageValue }
-      );
+      if (!leverageValue || Number.isNaN(leverageValue)) {
+        alert("Invalid leverage selected.");
+        return;
+      }
+      // Use admin trading-account leverage endpoint for trading accounts
+      await apiClient.post(`/api/admin/change-leverage/`, {
+        account_id: resolvedAccountId,
+        new_leverage: leverageValue,
+      });
       onUpdate(newLeverage);
       onClose();
     } catch (error) {
@@ -60,13 +111,22 @@ const ChangeLeverageModal = ({
   };
 
   const resetLeverage = async () => {
+    if (!resolvedAccountId) {
+      alert("Account ID is missing. Cannot reset leverage.");
+      return;
+    }
     setLoading(true);
     try {
       const leverageValue = extractLeverageValue(currentLeverage);
-      await apiClient.post(
-        `/api/demo_accounts/${accountId}/reset_leverage/`,
-        { accountId: accountId,leverage: leverageValue }
-      );
+      if (!leverageValue || Number.isNaN(leverageValue)) {
+        alert("Invalid leverage to reset to.");
+        return;
+      }
+      // Reset uses same admin endpoint but sends current leverage as the new value
+      await apiClient.post(`/api/admin/change-leverage/`, {
+        account_id: resolvedAccountId,
+        new_leverage: leverageValue,
+      });
       setNewLeverage(currentLeverage);
       onUpdate(currentLeverage);
       onClose();
@@ -143,6 +203,9 @@ const ChangeLeverageModal = ({
                   value={newLeverage}
                   onChange={(e) => setNewLeverage(e.target.value)}
                 >
+                  <option value="" disabled>
+                    Select leverage
+                  </option>
                   {leverageOptions.map((opt) => (
                     <option key={opt} value={opt}>
                       {opt}
@@ -153,16 +216,18 @@ const ChangeLeverageModal = ({
 
               <div className="flex flex-wrap justify-end gap-3 pt-2">
                 <button
+                  type="button"
                   onClick={resetLeverage}
-                  disabled={loading}
+                  disabled={loading || !currentLeverage}
                   className={btnGray + " disabled:opacity-50"}
                 >
                   Reset
                 </button>
 
                 <button
+                  type="button"
                   onClick={openConfirm}
-                  disabled={loading}
+                  disabled={loading || !newLeverage || newLeverage === currentLeverage}
                   className={btnPrimary + " disabled:opacity-50"}
                 >
                   Update
@@ -198,6 +263,7 @@ const ChangeLeverageModal = ({
 
               <div className="flex justify-center gap-4 pt-4">
                 <button
+                  type="button"
                   onClick={confirmUpdate}
                   disabled={loading}
                   className={btnPrimary + " disabled:opacity-50"}
