@@ -50,6 +50,7 @@ const TradingAccountModal = ({
   const [accountsState, setAccountsState] = useState([]);
   const [filterAccountType, setFilterAccountType] = useState('all');
 
+  
   // Close if clicked outside
   useEffect(() => {
     const handler = (e) => {

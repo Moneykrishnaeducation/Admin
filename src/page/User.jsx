@@ -520,6 +520,7 @@ const User = () => {
         onFetch={handleTableFetch}
         initialPageSize={10}
       />
+      
 
       {/* Add User Modal */}
       {showAddModal && (
