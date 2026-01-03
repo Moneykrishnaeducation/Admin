@@ -101,9 +101,8 @@ const User = () => {
   );
 
   // Load all data on mount for client-side
-  useEffect(() => {
-    handleTableFetch({ page: 1, pageSize: 10000, query: "" });
-  }, [handleTableFetch]);
+  // No initial client-side preload; TableStructure will call `handleTableFetch` when serverSide=true
+  // (This avoids loading all users into the client and enables backend search.)
 
   // Row expansion
   const [expandedRows, setExpandedRows] = useState(new Set());
@@ -517,7 +516,8 @@ const User = () => {
         data={data}
         onRowClick={toggleRowExpanded}
         renderRowSubComponent={renderRowSubComponent}
-        serverSide={false}
+        serverSide={true}
+        onFetch={handleTableFetch}
         initialPageSize={10}
       />
 

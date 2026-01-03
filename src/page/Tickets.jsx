@@ -47,11 +47,43 @@ const Tickets = ({ isAdmin = false }) => {
         method: "GET",
       });
 
-      setTickets({
-        open: data.open || [],
-        pending: data.pending || [],
-        closed: data.closed || [],
-      });
+      // Normalize different possible API shapes:
+      // 1) { open: [], pending: [], closed: [] }
+      // 2) { results: [...] } (paginated)
+      // 3) [ ... ] (flat list)
+      let open = [];
+      let pending = [];
+      let closed = [];
+
+      if (Array.isArray(data)) {
+        data.forEach((t) => {
+          if (t.status === "open") open.push(t);
+          else if (t.status === "pending") pending.push(t);
+          else closed.push(t);
+        });
+      } else if (data && Array.isArray(data.results)) {
+        data.results.forEach((t) => {
+          if (t.status === "open") open.push(t);
+          else if (t.status === "pending") pending.push(t);
+          else closed.push(t);
+        });
+      } else if (data && (data.open || data.pending || data.closed)) {
+        open = data.open || [];
+        pending = data.pending || [];
+        closed = data.closed || [];
+      } else {
+        // Fallback: try to extract any array-like value
+        const maybe = data && Object.values(data).find((v) => Array.isArray(v));
+        if (maybe) {
+          maybe.forEach((t) => {
+            if (t.status === "open") open.push(t);
+            else if (t.status === "pending") pending.push(t);
+            else closed.push(t);
+          });
+        }
+      }
+
+      setTickets({ open, pending, closed });
     } catch (err) {
       console.error(err);
       setError(err.message);
@@ -95,12 +127,37 @@ const Tickets = ({ isAdmin = false }) => {
   ===================================================== */
   const columns = [
     {
-      Header: "Created Date",
+      Header: "Created Date & Time",
       accessor: "created_at",
-      Cell: (value) => new Date(value).toLocaleDateString(),
+      Cell: (value, row) => {
+        const raw =
+          value ?? row?.created_at ?? row?.createdAt ?? row?.created?.created_at ?? row?.created?.createdAt;
+
+        if (!raw) return "";
+
+        // Try parsing the date robustly
+        let dt = new Date(raw);
+        if (isNaN(dt)) {
+          // Trim excessive fractional seconds (some datetimes have microseconds beyond JS parse)
+          const alt = String(raw).replace(/(\.\d{3})\d+Z$/, "$1Z");
+          dt = new Date(alt);
+        }
+
+        if (isNaN(dt)) {
+          // Fallback: show the date portion if ISO-ish
+          const s = String(raw);
+          if (s.includes("T")) return s.split("T")[0];
+          return s;
+        }
+
+        // Show date + hour:minute (local)
+        const datePart = dt.toLocaleDateString();
+        const timePart = dt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        return (<span>{`${datePart} ${timePart}`}</span>);
+      },
     },
     { Header: "Ticket ID", accessor: "id" },
-    { Header: "User ID", accessor: "created_by" },
+    { Header: "User ID", accessor: "user_id" },
     { Header: "Subject", accessor: "subject" },
     { Header: "Status", accessor: "status" },
   ];

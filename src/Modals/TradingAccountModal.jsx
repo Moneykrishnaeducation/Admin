@@ -48,6 +48,7 @@ const TradingAccountModal = ({
   const [historyTab, setHistoryTab] = useState("transactions");
   const [availableGroups, setAvailableGroups] = useState([]);
   const [accountsState, setAccountsState] = useState([]);
+  const [filterAccountType, setFilterAccountType] = useState('all');
 
   // Close if clicked outside
   useEffect(() => {
@@ -68,7 +69,11 @@ const TradingAccountModal = ({
 
     (async () => {
       try {
-        const endpoint = `ib-user/${userId}/trading-accounts/`;
+        let endpoint = `ib-user/${userId}/trading-accounts/`;
+        // Add server-side account_type filter if set
+        if (filterAccountType && filterAccountType !== 'all') {
+          endpoint += `?account_type=${encodeURIComponent(filterAccountType)}`;
+        }
         const headers = { "Content-Type": "application/json" };
         const res = await fetch(endpoint, { credentials: "include", headers });
         if (!res.ok) throw new Error(`Failed to fetch ${endpoint}: ${res.status}`);
@@ -97,7 +102,7 @@ const TradingAccountModal = ({
     return () => {
       cancelled = true;
     };
-  }, [userId, visible]);
+  }, [userId, visible, filterAccountType]);
 
   if (!visible) return null;
 
@@ -260,6 +265,7 @@ const TradingAccountModal = ({
 
   const displayAccounts = Array.isArray(accounts) && accounts.length ? accounts : accountsState;
 
+
   return (
     <div className={`fixed inset-0 ${overlayBg} flex items-center justify-center z-50 p-4`}>
       <div
@@ -280,6 +286,19 @@ const TradingAccountModal = ({
 
         {/* Table */}
         <div className="overflow-x-auto">
+          <div className="flex items-center gap-3 mb-3">
+            <label className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Account Type:</label>
+            <select
+              value={filterAccountType}
+              onChange={(e) => setFilterAccountType(e.target.value)}
+              className={`px-2 py-1 rounded ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-black'} border ${borderColor}`}
+            >
+              <option value="all">All</option>
+              <option value="standard">standard</option>
+              <option value="mam">mam</option>
+              <option value="mam_investment">mam_investment</option>
+            </select>
+          </div>
           <table className="w-full border-collapse">
             <thead>
               <tr className={`text-left ${isDarkMode ? "bg-gray-800" : "bg-gray-100"}`}>
