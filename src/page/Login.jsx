@@ -35,12 +35,12 @@ function getUserFromCookies() {
 async function ensureCsrf(baseUrl) {
   if (getCookie('csrftoken')) return;
   const endpoints = [
-    '/api/get-csrf/',
-    '/api/get_csrf/',
+    // '/api/get-csrf/',
+    // '/api/get_csrf/',
     '/api/csrf/',
-    '/csrf/',
-    '/api/auth/csrf/',
-    '/'
+    // '/csrf/',
+    // '/api/auth/csrf/',
+    // '/'
   ];
 
   for (const ep of endpoints) {
@@ -274,6 +274,9 @@ const Login = () => {
 
     return (
       <StyledWrapper>
+        <div className="logo-top">
+          <img src="/static/admin/logo.svg" alt="logo" className="logo-img" />
+        </div>
         <div className="box">
           <div className="login">
             <form className="loginBx" method="POST" action="" id="signinForm" onSubmit={handleSubmit}>
@@ -484,6 +487,25 @@ const Login = () => {
     justify-content: center;
     align-items: center;
     transition: 0.5s;
+  }
+
+  /* Top-centered logo */
+  .logo-top {
+    position: absolute;
+    top: 18px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .logo-img {
+    height: 48px;
+    width: auto;
+    object-fit: contain;
+    filter: drop-shadow(0 6px 12px rgba(0,0,0,0.6));
   }
 
   @keyframes rotating {

@@ -171,7 +171,7 @@ const Navbar = ({ isSidebarOpen, setIsSidebarOpen }) => {
           <Link to="/dashboard">
             <img
               className="h-10 object-contain cursor-pointer"
-              src="https://vtindex.com/img/logo/logo.svg"
+              src="/static/admin/logo.svg"
               alt="Logo"
             />
           </Link>
