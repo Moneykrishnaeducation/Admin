@@ -111,9 +111,15 @@ const onFetch = useCallback(
       else if (typeFilter === "Internal Transfer") url = "/api/admin/internal-transfer/?" + params.toString();
 
       const response = await fetch(url, {
-        headers: { Authorization: `Bearer ${token}` },
+        credentials: 'include', // send session cookie if present
+        headers: Object.assign({ Accept: 'application/json' }, token ? { Authorization: `Bearer ${token}` } : {}),
       });
 
+      if (response.status === 403) {
+        console.error('Access forbidden (403) when fetching transactions');
+        setTokenMissing(true);
+        return { data: [], total: 0 };
+      }
       if (!response.ok) throw new Error("Network response was not ok");
       const data = await response.json();
 
@@ -293,9 +299,14 @@ const onFetch = useCallback(
       else if (typeFilter === "Internal Transfer") url = "/api/admin/internal-transfer/?" + params.toString();
 
       const response = await fetch(url, {
-        headers: { Authorization: `Bearer ${token}` },
+        credentials: 'include',
+        headers: Object.assign({ Accept: 'application/json' }, token ? { Authorization: `Bearer ${token}` } : {}),
       });
 
+      if (response.status === 403) {
+        console.error('Access forbidden (403) when fetching transactions');
+        return [];
+      }
       if (!response.ok) throw new Error("Network response was not ok");
       const data = await response.json();
 
