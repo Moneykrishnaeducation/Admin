@@ -69,28 +69,22 @@ const ManagerTickets = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const fd = new FormData(e.target);
-
-    fd.append("created_by", userId);
-
-    // Remove empty files
-    const tempFiles = fd.getAll("documents").filter(
-      (f) => f instanceof File && f.size > 0
-    );
-
-    fd.delete("documents");
-    tempFiles.forEach((f) => fd.append("documents", f));
+    const formData = new FormData(e.target);
+    const subject = formData.get("subject");
+    const description = formData.get("description");
 
     try {
-      // IMPORTANT: post() must NOT set content-type for FormData
-      await post("tickets/", fd, true); // <--- true = isFormData
+      await post("tickets/", {
+        subject: subject,
+        description: description,
+      });
 
       alert("Ticket created successfully!");
       setActivePage("view");
       fetchTickets();
     } catch (err) {
       console.error("Error creating ticket:", err);
-      alert("Failed to create ticket.");
+      alert("Failed to create ticket: " + (err.message || "Unknown error"));
     }
   };
 
