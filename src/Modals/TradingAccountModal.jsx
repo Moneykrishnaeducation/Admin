@@ -70,7 +70,7 @@ const TradingAccountModal = ({
 
     (async () => {
       try {
-        let endpoint = `ib-user/${userId}/trading-accounts/`;
+        let endpoint = `/ib-user/${userId}/trading-accounts/`;
         // Add server-side account_type filter if set
         if (filterAccountType && filterAccountType !== 'all') {
           endpoint += `?account_type=${encodeURIComponent(filterAccountType)}`;
