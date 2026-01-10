@@ -8,11 +8,11 @@ const Modal = ({ open, onClose, title, children, actions, width = "w-80" }) => {
 
   return (
     <div
-      className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50"
+      className="fixed inset-0 flex items-center justify-center z-50 bg-black/60 backdrop-blur-sm"
       onClick={onClose}
     >
       <div
-        className={`bg-black p-6 rounded shadow-lg max-h-[90vh] overflow-y-auto text-white ${width}`}
+        className={`bg-black p-6 rounded-xl shadow-lg max-h-[90vh] overflow-y-auto text-white ${width} border border-yellow-500/60 shadow-[0_0_20px_rgba(255,215,0,0.12)]`}
         onClick={(e) => e.stopPropagation()}
       >
         <h2 className="text-xl font-semibold mb-4 text-white">{title}</h2>
@@ -48,15 +48,44 @@ const ManagerDemo = () => {
   const [viewTab, setViewTab] = useState("history");
   const [viewData, setViewData] = useState(null);
 
+  // Helper: safe currency formatter for view modal
+  const formatCurrency = useCallback((v) => {
+    try {
+      if (v == null || v === '') return '0.00';
+      const n = Number(String(v).replace(/[^0-9.-]+/g, ''));
+      return isFinite(n) ? n.toFixed(2) : '0.00';
+    } catch (e) {
+      return '0.00';
+    }
+  }, []);
+
   // Table columns
   const columns = useMemo(() => [
     { Header: "User ID", accessor: "user_id" },
     { Header: "Name", accessor: "name" },
     { Header: "Email", accessor: "email" },
-    { Header: "Phone", accessor: "phone" },
     { Header: "Account ID", accessor: "account_id" },
-    { Header: "Registered Date", accessor: "registered_date" },
-    { Header: "Country", accessor: "country" },
+    { Header: "Balance", accessor: "balance" },
+    // { Header: "Phone", accessor: "phone" },
+    { Header: "Leverage", accessor: "leverage" },
+    {
+      Header: "Status",
+      accessor: "is_active",
+      Cell: (cell) => {
+        const raw = (cell && typeof cell === 'object' && 'value' in cell) ? cell.value : cell;
+        const str = raw == null ? "" : String(raw).toLowerCase();
+        const isActive = raw === true || str === "true" || str === "1" || str === "active" || str === "running";
+        const label = isActive ? "Active" : "Inactive";
+        const colorClass = isActive ? "bg-green-500" : "bg-red-500";
+
+        return (
+          <span className="inline-flex items-center gap-2">
+            <span className={`${colorClass} w-3 h-3 rounded-full inline-block`} />
+            <span className="text-xs font-semibold text-white">{label}</span>
+          </span>
+        );
+      },
+    },
   ], []);
 
   const historyColumns = [
@@ -106,7 +135,7 @@ const ManagerDemo = () => {
 
 
       // first successful fetch -> clear initial loading indicator
-      if (isInitialLoading) setIsInitialLoading(false);
+      setIsInitialLoading(false);
 
       return { data: pageData, total };
     } catch (err) {
@@ -129,7 +158,8 @@ const ManagerDemo = () => {
 
   const openBalanceModal = (row) => {
     setSelectedRow(row);
-    setNewBalance("10000.00");
+    const initial = row?.balance ?? row?.current_balance ?? row?.account_summary?.balance ?? "10000.00";
+    setNewBalance(String(initial));
     setBalanceModal(true);
   };
 
@@ -172,8 +202,9 @@ const ManagerDemo = () => {
     try {
       await post(`demo_accounts/${selectedRow.account_id}/reset_balance/`, { balance: newBalance });
       alert(`Balance reset to $${newBalance}`);
+      // update selected row balance so UI reflects new value
+      setSelectedRow((prev) => prev ? { ...prev, balance: newBalance } : prev);
       setBalanceModal(false);
-      setSelectedRow(null);
 
       // trigger table refresh
       setRefreshKey((k) => k + 1);
@@ -186,7 +217,6 @@ const ManagerDemo = () => {
 
   // Actions column
   const actionsColumn = (row) => {
-    const isEnabled = accountStatusMap[row.account_id];
     return (
       <div className="flex gap-2">
         <button
@@ -201,13 +231,6 @@ const ManagerDemo = () => {
           onClick={(e) => { e.stopPropagation(); openBalanceModal(row); }}
         >
           Reset Balance
-        </button>
-
-        <button
-          className="bg-yellow-600 text-white px-2 py-1 rounded hover:bg-yellow-700"
-          onClick={(e) => { e.stopPropagation(); openLeverageModal(row); }}
-        >
-          Reset Leverage
         </button>
 
       </div>
@@ -226,7 +249,7 @@ const ManagerDemo = () => {
     const actionItems = [
       { icon: "🔍", label: "View", onClick: () => openViewModal(row) },
       { icon: "💰", label: "Reset Balance", onClick: () => openBalanceModal(row) },
-      { icon: "⚖️", label: "Reset Leverage", onClick: () => openLeverageModal(row) },
+      
     ];
 
     return (
@@ -288,13 +311,13 @@ const ManagerDemo = () => {
       <Modal
         open={balanceModal}
         onClose={() => setBalanceModal(false)}
-        title="Reset Balance"
+        title={<h2 className="text-[#d4af37] font-semibold">Reset Balance</h2>}
         actions={[
           <button key="cancel" className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600 text-white" onClick={() => setBalanceModal(false)}>Cancel</button>,
           <button key="ok" className="bg-yellow-500 px-4 py-2 rounded text-black hover:bg-yellow-600" onClick={handleBalanceSubmit}>OK</button>,
         ]}
       >
-        <p className="mb-2 text-white">Current Balance: $10000.00</p>
+        <p className="mb-2 text-white text-lg">Current Balance: <span className="text-[#d4af37] font-semibold">${formatCurrency(selectedRow?.balance ?? selectedRow?.current_balance ?? selectedRow?.account_summary?.balance ?? newBalance)}</span></p>
         <label htmlFor="balanceInput" className="block mb-1 text-white">Enter new balance</label>
         <input
           type="number"
@@ -311,32 +334,51 @@ const ManagerDemo = () => {
       <Modal
         open={viewModal}
         onClose={() => setViewModal(false)}
-        title="View Account Details"
-        width="w-150"
+        title={<h2 className="text-[#d4af37] font-semibold">View Account Details</h2>}
+        width="w-[70%]"
         actions={[
           <button key="close" className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600 text-white" onClick={() => setViewModal(false)}>Close</button>,
         ]}
       >
         {/* Account Summary */}
         {viewData && (
-          <div className="flex justify-between text-white mb-4 space-x-6">
-            <h3 className="text-lg font-semibold">Balance: ${viewData.account_summary?.balance || 0}</h3>
-            <h3 className="text-lg font-semibold">Equity: ${viewData.account_summary?.equity || 0}</h3>
-            <h3 className="text-lg font-semibold">Open Positions: {viewData.account_summary?.open_positions || 0}</h3>
+          <div className="mb-4">
+            <div className="p-4 rounded-lg border border-yellow-500/30 mb-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-white">
+                <div>
+                  <p className="text-sm text-gray-400">Balance</p>
+                  <p className="text-yellow-400 text-lg font-semibold">${formatCurrency(viewData.account_summary?.balance)}</p>
+                </div>
+
+                <div>
+                  <p className="text-sm text-gray-400">Equity</p>
+                  <p className="text-yellow-400 text-lg font-semibold">${formatCurrency(viewData.account_summary?.equity)}</p>
+                </div>
+
+                <div>
+                  <p className="text-sm text-gray-400">Open Positions</p>
+                  <p className="text-yellow-400 text-lg font-semibold">{viewData.account_summary?.open_positions || 0}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Controls: History / Positions (left) and Search (right) on one line */}
+            <div className="flex items-center justify-between gap-4 mb-4 flex-nowrap whitespace-nowrap">
+              <div className="flex gap-3 mt-2">
+                <button
+                  className={`px-4 py-2 rounded ${viewTab === 'history' ? 'bg-yellow-600 text-black' : 'bg-gray-700 text-white'}`}
+                  onClick={() => setViewTab('history')}
+                >History</button>
+                <button
+                  className={`px-4 py-2 rounded ${viewTab === 'positions' ? 'bg-yellow-600 text-black' : 'bg-gray-700 text-white'}`}
+                  onClick={() => setViewTab('positions')}
+                >Positions</button>
+              </div>
+
+              {/* search handled by table below; removed duplicate top-right search */}
+            </div>
           </div>
         )}
-
-        {/* Tabs */}
-        <div className="flex gap-4 mb-4">
-          <button
-            className={`px-4 py-2 rounded ${viewTab === 'history' ? 'bg-yellow-600 text-black' : 'bg-gray-700 text-white'}`}
-            onClick={() => setViewTab('history')}
-          >History</button>
-          <button
-            className={`px-4 py-2 rounded ${viewTab === 'positions' ? 'bg-yellow-600 text-black' : 'bg-gray-700 text-white'}`}
-            onClick={() => setViewTab('positions')}
-          >Positions</button>
-        </div>
 
         {/* Tables */}
         {viewTab === 'history' && viewData && (

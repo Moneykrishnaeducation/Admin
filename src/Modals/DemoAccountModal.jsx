@@ -11,6 +11,18 @@ export default function DemoAccountModal({ isOpen, onClose, userRow, isDarkMode 
   const [selectedRow, setSelectedRow] = useState(null);
   const [accountStatusMap, setAccountStatusMap] = useState({});
 
+  // read user role from cookie (userRole or user_role)
+  const getCookie = (name) => {
+    const match = document.cookie.match(new RegExp('(?:^|; )' + name + '=([^;]*)'));
+    return match ? decodeURIComponent(match[1]) : null;
+  };
+
+  const [userRole, setUserRole] = useState(null);
+  useEffect(() => {
+    const role = (getCookie('userRole') || getCookie('user_role') || '').toString().toLowerCase();
+    setUserRole(role || null);
+  }, []);
+
   // Modals
   const [leverageModal, setLeverageModal] = useState(false);
   const [balanceModal, setBalanceModal] = useState(false);
@@ -207,49 +219,20 @@ export default function DemoAccountModal({ isOpen, onClose, userRow, isDarkMode 
 
   const actionsColumn = (row) => {
     const isEnabled = accountStatusMap[row.account_id];
+    const showView = userRole !== 'admin';
     return (
       <div className="flex gap-2">
-        <button
-          className="bg-yellow-600 text-white px-2 py-1 rounded hover:bg-yellow-700"
-          onClick={(e) => {
-            e.stopPropagation();
-            openViewModal(row);
-          }}
-        >
-          View
-        </button>
-
-        <button
-          className="bg-yellow-600 text-white px-2 py-1 rounded hover:bg-yellow-700"
-          onClick={(e) => {
-            e.stopPropagation();
-            openBalanceModal(row);
-          }}
-        >
-          Reset Balance
-        </button>
-
-        <button
-          className="bg-yellow-600 text-white px-2 py-1 rounded hover:bg-yellow-700"
-          onClick={(e) => {
-            e.stopPropagation();
-            openLeverageModal(row);
-          }}
-        >
-          Reset Leverage
-        </button>
-
-        <button
-          className={`px-2 py-1 rounded text-white ${
-            isEnabled ? "bg-red-600 hover:bg-red-700" : "bg-green-600 hover:bg-green-700"
-          }`}
-          onClick={(e) => {
-            e.stopPropagation();
-            toggleAccountStatus(row.account_id);
-          }}
-        >
-          {isEnabled ? "Disable" : "Enable"}
-        </button>
+        {showView && (
+          <button
+            className="bg-yellow-600 text-white px-2 py-1 rounded hover:bg-yellow-700"
+            onClick={(e) => {
+              e.stopPropagation();
+              openViewModal(row);
+            }}
+          >
+            View
+          </button>
+        )}
       </div>
     );
   };
@@ -262,7 +245,7 @@ export default function DemoAccountModal({ isOpen, onClose, userRow, isDarkMode 
     const hasActionsColumn = typeof actionsColumn === "function";
     const colSpan = columns.length + (hasActionsColumn ? 1 : 0);
 
-    const actionItems = [
+    let actionItems = [
       { icon: "🔍", label: "View", onClick: () => openViewModal(row) },
       { icon: "💰", label: "Reset Balance", onClick: () => openBalanceModal(row) },
       { icon: "⚖️", label: "Reset Leverage", onClick: () => openLeverageModal(row) },
@@ -286,7 +269,9 @@ export default function DemoAccountModal({ isOpen, onClose, userRow, isDarkMode 
             }}
             className=" text-yellow-400 rounded p-2 flex gap-4 flex-wrap"
           >
-            <SubRowButtons actionItems={actionItems} />
+            {userRole == 'admin' && (
+              <SubRowButtons actionItems={actionItems} />
+            )}
           </div>
         </td>
       </tr>
