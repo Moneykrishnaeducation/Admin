@@ -477,7 +477,19 @@ const TradingAccountPage = () => {
         onClose={() => setLeverageModalOpen(false)}
         currentLeverage={selectedLeverage}
         leverageOptions={["1:50", "1:100", "1:200", "1:300", "1:500"]}
-        onUpdate={(newLev) => console.log("Updated leverage:", newLev)}
+        onUpdate={(newLev) => {
+          // Update the selected leverage immediately
+          setSelectedLeverage(newLev);
+          // Update the data array with new leverage
+          setData(prevData =>
+            prevData.map(acc =>
+              acc.accountId === selectedAccountId
+                ? { ...acc, leverage: newLev }
+                : acc
+            )
+          );
+          showToast(`Leverage updated to ${newLev}`, 'success');
+        }}
       />
 
       <DepositModal visible={depositModalOpen} onClose={() => setDepositModalOpen(false)} accountId={modalAccountId} onSubmit={handleDeposit} />
