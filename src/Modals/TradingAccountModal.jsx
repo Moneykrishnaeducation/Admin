@@ -37,7 +37,8 @@ const TradingAccountModal = ({
   const [expandedRowId, setExpandedRowId] = useState(null);
   const [activeOperation, setActiveOperation] = useState(null);
   const [selectedAccount, setSelectedAccount] = useState(null);
-  const { isDarkMode } = useTheme();
+  const theme = useTheme() || {};
+  const { isDarkMode = true } = theme;
   // read user role from cookie (userRole or user_role)
   const getCookie = (name) => {
     const match = document.cookie.match(new RegExp('(?:^|; )' + name + '=([^;]*)'));

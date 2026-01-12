@@ -30,7 +30,8 @@ import TradingAccountModal from "../Modals/TradingAccountModal";
 import IbStatusModal from "../Modals/IbStatusModal";
 
 const User = () => {
-  const { isDarkMode } = useTheme(); // from your ThemeContext
+  const theme = useTheme() || {};
+  const { isDarkMode = true } = theme;
 
 
   // will be loaded from API

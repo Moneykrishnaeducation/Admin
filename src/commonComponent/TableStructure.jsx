@@ -82,7 +82,8 @@ const TableStructure = ({
   const handlePrev = () => setPage((p) => Math.max(1, p - 1));
   const handleNext = () => setPage((p) => Math.min(totalPages, p + 1));
 
-  const { isDarkMode } = useTheme();
+  const themeContext = useTheme() || {};
+  const { isDarkMode = true } = themeContext;
 
   const tableBg = isDarkMode ? "bg-black" : "bg-white";
   const tdText = isDarkMode ? "text-white" : "text-black";

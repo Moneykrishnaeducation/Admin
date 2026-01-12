@@ -3,7 +3,8 @@ import ModalWrapper from './ModalWrapper';
 import { useTheme } from '../context/ThemeContext';
 
 const MessageModal = ({ visible, title = 'Message', message = '', onClose, okLabel = 'OK' }) => {
-  const { isDarkMode } = useTheme();
+  const theme = useTheme() || {};
+  const { isDarkMode = true } = theme;
   const textMain = isDarkMode ? 'text-white' : 'text-black';
   const textMuted = isDarkMode ? 'text-gray-400' : 'text-gray-600';
   const cardBg = isDarkMode ? 'bg-gray-900' : 'bg-white';

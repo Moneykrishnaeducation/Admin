@@ -13,7 +13,8 @@ const Verify = ({
   setVerifyModalOpen,
   refreshActionPanelForUser,
 }) => {
-  const { isDarkMode } = useTheme(); // ✅ USE THEME CONTEXT
+  const theme = useTheme() || {};
+  const { isDarkMode = true } = theme;
 
   const userId =
     verifyRow?.id ?? verifyRow?.user_id ?? verifyRow?.userId ?? "";

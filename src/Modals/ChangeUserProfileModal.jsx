@@ -10,7 +10,8 @@ const ChangeUserProfileModal = ({
   accountId,
   onSubmit,
 }) => {
-  const { isDarkMode } = useTheme();
+  const theme = useTheme() || {};
+  const { isDarkMode = true } = theme;
   const [selectedGroup, setSelectedGroup] = useState("");
   const [groups, setGroups] = useState([]);
   const [loading, setLoading] = useState(false);

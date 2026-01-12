@@ -2,7 +2,8 @@ import React, { useEffect } from "react";
 import { useTheme } from "../context/ThemeContext";
 
 const ModalWrapper = ({ title, visible, onClose, children, footer, maxWidthClass = 'max-w-3xl' }) => {
-  const { isDarkMode } = useTheme();
+  const theme = useTheme() || {};
+  const { isDarkMode = true } = theme;
 
   /* ===============================
      LOCK BODY SCROLL

@@ -13,7 +13,8 @@ const ChangeLeverageModal = ({
   onUpdate,
 }) => {
   const modalRef = useRef(null);
-  const { isDarkMode } = useTheme();
+  const theme = useTheme() || {};
+  const { isDarkMode = true } = theme;
 
   const [step, setStep] = useState(1);
   const [newLeverage, setNewLeverage] = useState("");

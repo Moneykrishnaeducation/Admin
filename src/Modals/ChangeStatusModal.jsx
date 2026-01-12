@@ -11,7 +11,8 @@ const ChangeStatusModal = ({
   onUpdate,
   userRow,
 }) => {
-  const { isDarkMode } = useTheme();
+  const theme = useTheme() || {};
+  const { isDarkMode = true } = theme;
 
   // Accept both visible or isOpen
   const isVisible = visible ?? isOpen;

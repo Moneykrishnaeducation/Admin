@@ -3,7 +3,8 @@ import { useTheme } from "../context/ThemeContext";
 
 const InternalTransferModal = ({ visible, onClose, accounts = [] }) => {
   const modalRef = useRef(null);
-  const { theme } = useTheme(); // "light" | "dark"
+  const themeContext = useTheme() || {};
+  const { theme = "dark" } = themeContext; // "light" | "dark"
 
   // form state
   const [fromAcc, setFromAcc] = useState("");

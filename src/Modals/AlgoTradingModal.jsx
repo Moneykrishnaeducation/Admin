@@ -5,7 +5,8 @@ const AlgoTradingModal = ({ visible, onClose, accountId, onProceed }) => {
   const [step, setStep] = useState(1);
   const [action, setAction] = useState("");
   const modalRef = useRef(null);
-  const { isDarkMode } = useTheme();
+  const theme = useTheme() || {};
+  const { isDarkMode = true } = theme;
 
   useEffect(() => {
     if (visible) {

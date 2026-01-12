@@ -6,7 +6,8 @@ import { useTheme } from '../context/ThemeContext';
 
 
 const HistoryModal = ({ visible, onClose, accountId, activeTab, setActiveTab }) => {
-  const { isDarkMode } = useTheme();
+  const theme = useTheme() || {};
+  const { isDarkMode = true } = theme;
   const [selectedDays, setSelectedDays] = useState(30);
   const [historyData, setHistoryData] = useState(null);
   const [loading, setLoading] = useState(false);

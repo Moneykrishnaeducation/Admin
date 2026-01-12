@@ -202,7 +202,8 @@ function GroupConfigurationGuideToggle({ isDarkMode }) {
 
 /* ---------------- MAIN COMPONENT ---------------- */
 export default function GroupConfiguration() {
-  const { isDarkMode } = useTheme();
+  const theme = useTheme() || {};
+  const { isDarkMode = true } = theme;
   const [groups, setGroups] = useState([]);
   const [selectedDefault, setSelectedDefault] = useState(null);
   const [selectedDemoDefault, setSelectedDemoDefault] = useState(null);

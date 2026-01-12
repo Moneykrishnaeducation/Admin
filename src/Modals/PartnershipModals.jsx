@@ -75,7 +75,8 @@ const PartnershipModals = ({
   selectedId,
   handleDisableIBSubmit,
 }) => {
-  const { isDarkMode } = useTheme();
+  const theme = useTheme() || {};
+  const { isDarkMode = true } = theme;
   return (
     <>
       {showCommissionModal && (

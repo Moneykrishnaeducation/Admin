@@ -7,7 +7,8 @@ const apiClient = new AdminAuthenticatedFetch("/api");
 const client = new AdminAuthenticatedFetch("");
 
 const CreditInModal = ({ visible, onClose, accountId, onSubmit }) => {
-  const { isDarkMode } = useTheme();
+  const theme = useTheme() || {};
+  const { isDarkMode = true } = theme;
 
   const [amount, setAmount] = useState("");
   const [comment, setComment] = useState("");
