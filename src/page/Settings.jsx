@@ -152,15 +152,41 @@ const Settings = () => {
   };
 
   return (
-    <div className={`min-h-screen bg-transparent ${isDarkMode ? 'text-yellow-400' : 'text-gray-900'} flex flex-col items-center p-4 sm:p-6 md:p-8`}>
-      <h2 className={`text-2xl sm:text-3xl font-bold mb-6 text-center ${isDarkMode ? 'text-yellow-400' : 'text-gray-900'}`}>Server Configuration</h2>
+    <div className={`bg-transparent ${isDarkMode ? 'text-yellow-400' : 'text-gray-900'} flex flex-col items-center justify-center p-4 sm:p-6 md:p-8`}>
 
       <form
         onSubmit={handleSubmit}
-        className={`${isDarkMode ? 'bg-black' : 'bg-white'} p-4 sm:p-6 md:p-8 rounded-2xl shadow-[0px_0px_10px_rgba(255,255,255,0.2),0px_0px_15px_rgba(255,0,0,0.15)] w-full max-w-8xl sm:max-w-lg hover:shadow-[0px_0px_15px_rgba(255,255,255,0.35),0px_0px_20px_rgba(255,215,0,0.25)] transition-shadow duration-300`}
+        className={`${isDarkMode ? 'bg-black' : 'bg-white'} p-4 sm:p-6 md:p-8 rounded-2xl shadow-[0px_0px_10px_rgba(255,255,255,0.2),0px_0px_15px_rgba(255,0,0,0.15)] w-full max-w-lg mx-auto hover:shadow-[0px_0px_15px_rgba(255,255,255,0.35),0px_0px_20px_rgba(255,215,0,0.25)] transition-shadow duration-300`}
       >
         {loading ? (
-          <div className={isDarkMode ? "text-yellow-300" : "text-gray-600"}>Loading server settings...</div>
+          <div className={`w-full flex items-center justify-center ${isDarkMode ? 'text-yellow-300' : 'text-gray-600'}`}>
+            <div className="w-full max-w-lg animate-pulse space-y-6 min-h-[220px]">
+              <div className="flex flex-col gap-2">
+                <div className={`${isDarkMode ? 'bg-yellow-400/30' : 'bg-gray-300'} skeleton-gold h-4 rounded w-1/3`} />
+                <div className={`${isDarkMode ? 'bg-yellow-400/20' : 'bg-gray-200'} skeleton-gold h-12 rounded w-full`} />
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <div className={`${isDarkMode ? 'bg-yellow-400/30' : 'bg-gray-300'} skeleton-gold h-4 rounded w-1/3`} />
+                <div className={`${isDarkMode ? 'bg-yellow-400/20' : 'bg-gray-200'} skeleton-gold h-12 rounded w-full`} />
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <div className={`${isDarkMode ? 'bg-yellow-400/30' : 'bg-gray-300'} skeleton-gold h-4 rounded w-1/3`} />
+                <div className={`${isDarkMode ? 'bg-yellow-400/20' : 'bg-gray-200'} skeleton-gold h-12 rounded w-full`} />
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <div className={`${isDarkMode ? 'bg-yellow-400/30' : 'bg-gray-300'} skeleton-gold h-4 rounded w-1/3`} />
+                <div className={`${isDarkMode ? 'bg-yellow-400/20' : 'bg-gray-200'} skeleton-gold h-12 rounded w-full`} />
+              </div>
+
+              <div className="flex flex-col sm:flex-row justify-end gap-3 mt-4">
+                <div className={`${isDarkMode ? 'bg-yellow-400/20' : 'bg-gray-200'} skeleton-gold h-10 w-36 rounded-full`} />
+                <div className={`${isDarkMode ? 'bg-yellow-400/20' : 'bg-gray-200'} skeleton-gold h-10 w-36 rounded-md`} />
+              </div>
+            </div>
+          </div>
         ) : (
           <>
             {error && <div className="text-red-400 mb-3">{error}</div>}

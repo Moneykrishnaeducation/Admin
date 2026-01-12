@@ -280,7 +280,6 @@ const AdminManagerList = () => {
       </h1>
 
       {/* Loading/Error */}
-      {loading && <p className="text-center text-yellow-400 text-lg mb-4">Loading...</p>}
       {error && <p className={`text-center text-lg mb-4 ${isDarkMode ? 'text-red-400' : 'text-red-500'}`}>{error}</p>}
 
       {/* Search Input */}
@@ -310,40 +309,65 @@ const AdminManagerList = () => {
           </thead>
 
           <tbody>
-            {currentRows.map((item, index) => (
-              <tr
-                key={item.id}
-                className={`transition border-b ${isDarkMode ? 'hover:bg-gray-700 border-gray-800' : 'hover:bg-gray-100 border-gray-300'}`}
-              >
-                <td className="p-3">{(currentPage - 1) * rowsPerPage + index + 1}</td>
-                <td className="p-3">{item.name}</td>
-                <td className={`p-3 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{item.email}</td>
-                <td className="p-3">
-                  <span
-                    className={`px-3 py-1 text-sm font-bold ${
-                      item.role === "Admin"
-                        ? isDarkMode
-                          ? "text-blue-400"
-                          : "text-blue-600"
-                        : isDarkMode
-                        ? "text-green-400"
-                        : "text-green-600"
-                    }`}
-                  >
-                    {item.role}
-                  </span>
-                </td>
-                <td className="p-3">{item.elevated}</td>
-                <td className="p-3 flex gap-2">
-                  <button onClick={() => handleOpenStatusModal(item)} className="p-2 rounded-md bg-yellow-500 hover:bg-yellow-600 text-black">
-                    <Pencil size={16} />
-                  </button>
-                  <button onClick={() => handleDeleteUser(item)} className={`p-2 rounded-md bg-red-600 hover:bg-red-700 ${isDarkMode ? 'text-white' : 'text-white'}`}>
-                    <Trash2 size={16} />
-                  </button>
-                </td>
-              </tr>
-            ))}
+            {loading ? (
+              Array.from({ length: Math.min(3, rowsPerPage) }).map((_, i) => (
+                <tr key={`skeleton-${i}`} className={`border-b ${isDarkMode ? 'border-gray-800' : 'border-gray-300'}`}>
+                  <td className="p-3">
+                    <div className={`${isDarkMode ? 'bg-gray-600' : 'bg-gray-300'} skeleton-gold h-4 rounded w-6`} />
+                  </td>
+                  <td className="p-3">
+                    <div className={`${isDarkMode ? 'bg-gray-600' : 'bg-gray-300'} skeleton-gold h-4 rounded w-48`} />
+                  </td>
+                  <td className="p-3">
+                    <div className={`${isDarkMode ? 'bg-gray-600' : 'bg-gray-300'} skeleton-gold h-4 rounded w-56`} />
+                  </td>
+                  <td className="p-3">
+                    <div className={`${isDarkMode ? 'bg-gray-600' : 'bg-gray-300'} skeleton-gold h-4 rounded w-28`} />
+                  </td>
+                  <td className="p-3">
+                    <div className={`${isDarkMode ? 'bg-gray-600' : 'bg-gray-300'} skeleton-gold h-4 rounded w-36`} />
+                  </td>
+                  <td className="p-3">
+                    <div className={`${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'} skeleton-gold h-8 rounded w-20 ml-auto`} />
+                  </td>
+                </tr>
+              ))
+            ) : (
+              currentRows.map((item, index) => (
+                <tr
+                  key={item.id}
+                  className={`transition border-b ${isDarkMode ? 'hover:bg-gray-700 border-gray-800' : 'hover:bg-gray-100 border-gray-300'}`}
+                >
+                  <td className="p-3">{(currentPage - 1) * rowsPerPage + index + 1}</td>
+                  <td className="p-3">{item.name}</td>
+                  <td className={`p-3 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{item.email}</td>
+                  <td className="p-3">
+                    <span
+                      className={`px-3 py-1 text-sm font-bold ${
+                        item.role === "Admin"
+                          ? isDarkMode
+                            ? "text-blue-400"
+                            : "text-blue-600"
+                          : isDarkMode
+                          ? "text-green-400"
+                          : "text-green-600"
+                      }`}
+                    >
+                      {item.role}
+                    </span>
+                  </td>
+                  <td className="p-3">{item.elevated}</td>
+                  <td className="p-3 flex gap-2">
+                    <button onClick={() => handleOpenStatusModal(item)} className="p-2 rounded-md bg-yellow-500 hover:bg-yellow-600 text-black">
+                      <Pencil size={16} />
+                    </button>
+                    <button onClick={() => handleDeleteUser(item)} className={`p-2 rounded-md bg-red-600 hover:bg-red-700 ${isDarkMode ? 'text-white' : 'text-white'}`}>
+                      <Trash2 size={16} />
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>

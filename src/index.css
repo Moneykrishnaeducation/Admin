@@ -37,3 +37,15 @@
   scrollbar-width: thin;
   scrollbar-color: #ffff00 var(--scrollbar-track);
 }
+
+/* Gold skeleton shimmer used for loading placeholders */
+.skeleton-gold {
+  background-image: linear-gradient(90deg, rgba(250,204,21,0.06) 0%, rgba(250,204,21,0.18) 50%, rgba(250,204,21,0.06) 100%);
+  background-size: 200% 100%;
+  animation: skeletonGold 1.6s linear infinite;
+}
+
+@keyframes skeletonGold {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
