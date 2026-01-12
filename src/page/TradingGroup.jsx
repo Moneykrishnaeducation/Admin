@@ -449,6 +449,16 @@ const changeDefault = (id, type) => {
   >
     <Info size={18} />
     <strong>Current Active Configuration</strong>
+    <button
+      type="button"
+      onClick={(e) => {
+        e.stopPropagation();
+        window.location.href = "/admin";
+      }}
+      className="ml-auto text-yellow-400 px-3 py-1 rounded font-semibold hover:brightness-95 transition"
+    >
+      &times;
+    </button>
   </h1>
 
   {showActiveConfig && (
@@ -468,7 +478,7 @@ const changeDefault = (id, type) => {
         {groups.map((g) => (
           <Badge
             key={g.id}
-            label={g.id}
+            label={g.id + (g.alias ? `(${g.alias})` : "")}
             isActive={g.id === selectedDefault || g.id === selectedDemoDefault}
             isDemo={g.type === "demo"}
             isVIP={g.label.includes("(VIP)")}
