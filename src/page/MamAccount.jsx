@@ -103,30 +103,12 @@ const MamAccount = () => {
     setDepositModalOpen(false);
   };
 
-  const handleDeposit = ({ accountId, amount, comment }) => {
-    if (amount.trim() === "" || isNaN(amount) || Number(amount) <= 0) {
-      alert("Please enter a valid deposit amount.");
-      return;
-    }
-    alert(`Deposited $${amount} to account ${accountId}\nComment: ${comment}`);
-    setDepositModalOpen(false);
-  };
-
   const handleOpenWithdrawModal = (row) => {
     setModalAccountId(row.accountId || "");
     setWithdrawModalOpen(true);
   };
 
   const handleCloseWithdrawModal = () => {
-    setWithdrawModalOpen(false);
-  };
-
-  const handleWithdraw = ({ accountId, amount, comment }) => {
-    if (amount.trim() === "" || isNaN(amount) || Number(amount) <= 0) {
-      alert("Please enter a valid withdrawal amount.");
-      return;
-    }
-    alert(`Withdrew $${amount} from account ${accountId}\nComment: ${comment}`);
     setWithdrawModalOpen(false);
   };
 
@@ -139,30 +121,12 @@ const MamAccount = () => {
     setCreditInModalOpen(false);
   };
 
-  const handleCreditIn = ({ accountId, amount, comment }) => {
-    if (amount.trim() === "" || isNaN(amount) || Number(amount) <= 0) {
-      alert("Please enter a valid Credit In amount.");
-      return;
-    }
-    alert(`Credited In $${amount} to account ${accountId}\nComment: ${comment}`);
-    setCreditInModalOpen(false);
-  };
-
   const handleOpenCreditOutModal = (row) => {
     setModalAccountId(row.accountId || "");
     setCreditOutModalOpen(true);
   };
 
   const handleCloseCreditOutModal = () => {
-    setCreditOutModalOpen(false);
-  };
-
-  const handleCreditOut = ({ accountId, amount, comment }) => {
-    if (amount.trim() === "" || isNaN(amount) || Number(amount) <= 0) {
-      alert("Please enter a valid Credit Out amount.");
-      return;
-    }
-    alert(`Credited Out $${amount} from account ${accountId}\nComment: ${comment}`);
     setCreditOutModalOpen(false);
   };
 
@@ -261,14 +225,18 @@ const MamAccount = () => {
   };
 
   // Server-side fetch handler for MAM tables
-  // Wrapped in useCallback so its identity is stable and TableStructure's
-  // effect doesn't re-run on every render.
   const handleFetch = useCallback(async ({ page, pageSize, query }) => {
     const endpoint = activeTab === 'mam' ? '/api/mam-managers/' : '/api/mam-investors/';
     const params = new URLSearchParams();
     params.set('page', String(page || 1));
     params.set('page_size', String(pageSize || 10));
-    if (query) params.set('query', String(query));
+    
+    // Add search query parameter if provided
+    if (query && query.trim()) {
+      params.set('search', String(query.trim()));
+    }
+
+    console.log('MAM Fetch URL:', `${endpoint}?${params.toString()}`);
 
     try {
       const client = window && window.adminApiClient ? window.adminApiClient : null;
@@ -282,6 +250,8 @@ const MamAccount = () => {
         resJson = await res.json();
       }
 
+      console.log('MAM Fetch Response:', resJson);
+
       // Expect { data: [...], total: N } or fallback to array
       const items = Array.isArray(resJson.data) ? resJson.data : (Array.isArray(resJson) ? resJson : (resJson.results || []));
       const total = typeof resJson.total === 'number' ? resJson.total : (typeof resJson.count === 'number' ? resJson.count : items.length);
@@ -291,17 +261,11 @@ const MamAccount = () => {
           return {
             id: item.id ?? item.pk ?? idx,
             userId: item.user_id ?? item.user ?? item.userId ?? '',
-            // Prefer username, fall back to account_name or existing name
             name: (item.username ?? item.account_name ?? item.name) || `${(item.first_name || '')} ${(item.last_name || '')}`.trim() || 'Unknown',
-            // Email field from API is `email`
             managerEmail: item.email ?? item.managerEmail ?? item.manager_email ?? '',
-            // account id fields
             mamAccountId: item.account_id ?? item.accountId ?? item.mamAccountId ?? '',
-            // balance can be under `balance` or `equity` (string) — normalize to number when possible
             accountBalance: item.balance ?? item.accountBalance ?? (item.equity ? Number(item.equity) : 0) ?? 0,
-            // profit comes from `profit`
             totalProfit: item.profit ?? item.totalProfit ?? item.total_profit ?? 0,
-            // profit sharing percentage from backend
             profitShare: item.profit_sharing_percentage ?? item.profitShare ?? item.profit_share ?? 0,
             riskLevel: item.risk_level ?? item.riskLevel ?? '',
             payoutFrequency: item.payout_frequency ?? item.payoutFrequency ?? '',
@@ -312,15 +276,11 @@ const MamAccount = () => {
         // investor mapping
         return {
           id: item.id ?? item.pk ?? idx,
-          // user id for first column
           userId: item.user_id ?? item.user ?? item.userId ?? '',
-          // investor's displayed name
           investorName: item.username ?? item.investorName ?? `${item.first_name ?? ''} ${item.last_name ?? ''}`.trim() ?? '',
           investorEmail: item.investorEmail ?? item.email ?? item.investor_email ?? '',
-          // manager/master name for this investor's MAM account
           managerName: item.mam_master_account_name ?? item.mam_master_account?.user?.username ?? item.managerName ?? '',
           tradingAccountId: item.tradingAccountId ?? item.trading_account_id ?? item.accountId ?? item.account_id ?? '',
-          // amountInvested: prefer explicit invested fields, otherwise fall back to balance/equity
           amountInvested: (
             Number(item.amountInvested ?? item.amount_invested ?? item.invested_amount ?? null) ||
             Number(item.balance ?? item.equity ?? 0)
@@ -396,30 +356,25 @@ const MamAccount = () => {
         />
       </div>
 
-      {/* Modal components */}
       <DepositModal
         visible={depositModalOpen}
         onClose={handleCloseDepositModal}
         accountId={modalAccountId}
-        onSubmit={handleDeposit}
       />
       <WithdrawModal
         visible={withdrawModalOpen}
         onClose={handleCloseWithdrawModal}
         accountId={modalAccountId}
-        onSubmit={handleWithdraw}
       />
       <CreditInModal
         visible={creditInModalOpen}
         onClose={handleCloseCreditInModal}
         accountId={modalAccountId}
-        onSubmit={handleCreditIn}
       />
       <CreditOutModal
         visible={creditOutModalOpen}
         onClose={handleCloseCreditOutModal}
         accountId={modalAccountId}
-        onSubmit={handleCreditOut}
       />
       <DisableModal
         visible={disableModalOpen}
