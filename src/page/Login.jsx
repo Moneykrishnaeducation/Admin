@@ -307,13 +307,6 @@ const Login = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
-                <i
-                  className={showPassword ? 'fa-regular fa-eye-slash' : 'fa-regular fa-eye'}
-                  id="togglePassword"
-                  onClick={() => setShowPassword((s) => !s)}
-                  role="button"
-                  aria-label={showPassword ? 'Hide password' : 'Show password'}
-                />
               </div>
 
               <button type="submit" disabled={isLoading}>
@@ -595,9 +588,11 @@ const Login = () => {
   button:disabled { background: #333; color: #777; cursor: not-allowed; }
 
   .password-wrapper { position: relative; width: 100%; }
-  .password-wrapper input { padding-right: 40px; }
-  .password-wrapper i { position: absolute; top: 50%; right: 15px; transform: translateY(-50%); color: #D4AF37; cursor: pointer; font-size: 1em; transition: color 0.3s; }
-  .password-wrapper i:hover { color: #FFD36D; }
+  .password-wrapper input { padding-right: 15px; }
+  .password-wrapper input::-ms-reveal { 
+    color: #ffffff !important; 
+    filter: brightness(0) saturate(100%) invert(100%);
+  }
 
   .spinner {
     display: none;
