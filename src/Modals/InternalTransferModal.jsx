@@ -1,6 +1,78 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useTheme } from "../context/ThemeContext";
 
+const SearchableSelect = ({ accounts, value, onChange, label, searchValue, onSearchChange, inputBg, labelText }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const filteredAccounts = accounts.filter((acc) =>
+    String(acc.account_no).toLowerCase().includes(searchValue.toLowerCase()) ||
+    (acc.balance && String(acc.balance).includes(searchValue))
+  );
+
+  const selectedAccount = accounts.find((acc) => String(acc.account_no) === String(value));
+
+  return (
+    <div className="mb-3" ref={dropdownRef}>
+      <label className={`block mb-1 ${labelText}`}>{label}</label>
+      <div className="relative">
+        <button
+          className={`w-full px-3 py-2 rounded border text-left ${inputBg} flex justify-between items-center`}
+          onClick={() => setIsOpen(!isOpen)}
+        >
+          <span>{selectedAccount ? `${selectedAccount.account_no} — ₹${selectedAccount.balance}` : "-- Select --"}</span>
+          <span className="text-lg">{isOpen ? "▲" : "▼"}</span>
+        </button>
+
+        {isOpen && (
+          <div className={`absolute top-full left-0 right-0 mt-1 rounded border shadow-lg z-50 ${inputBg}`}>
+            <input
+              type="text"
+              placeholder="Search account..."
+              className={`w-full px-3 py-2 rounded-t border-b ${inputBg} focus:outline-none`}
+              value={searchValue}
+              onChange={(e) => onSearchChange(e.target.value)}
+              autoFocus
+            />
+            <ul className="max-h-48 overflow-y-auto">
+              {filteredAccounts.length > 0 ? (
+                filteredAccounts.map((acc) => (
+                  <li key={acc.account_no}>
+                    <button
+                      className={`w-full px-3 py-2 text-left hover:bg-blue-500 hover:text-white transition ${
+                        String(value) === String(acc.account_no) ? "bg-blue-500 text-white" : ""
+                      }`}
+                      onClick={() => {
+                        onChange(acc.account_no);
+                        setIsOpen(false);
+                        onSearchChange("");
+                      }}
+                    >
+                      {acc.account_no} — ₹{acc.balance}
+                    </button>
+                  </li>
+                ))
+              ) : (
+                <li className="px-3 py-2 text-gray-500">No accounts found</li>
+              )}
+            </ul>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 const InternalTransferModal = ({ visible, onClose, accounts = [] }) => {
   const modalRef = useRef(null);
   const themeContext = useTheme() || {};
@@ -12,6 +84,8 @@ const InternalTransferModal = ({ visible, onClose, accounts = [] }) => {
   const [amount, setAmount] = useState("");
   const [comment, setComment] = useState("");
   const [showComment, setShowComment] = useState(false);
+  const [searchFrom, setSearchFrom] = useState("");
+  const [searchTo, setSearchTo] = useState("");
 
   // toast state
   const [toast, setToast] = useState(null);
@@ -131,38 +205,28 @@ const InternalTransferModal = ({ visible, onClose, accounts = [] }) => {
         <h2 className="text-xl font-semibold mb-4">Internal Transfer</h2>
 
         {/* From Account */}
-        <div className="mb-3">
-          <label className={`block mb-1 ${labelText}`}>From Account</label>
-          <select
-            className={`w-full px-3 py-2 rounded border ${inputBg}`}
-            value={fromAcc}
-            onChange={(e) => setFromAcc(e.target.value)}
-          >
-            <option value="">-- Select --</option>
-            {accounts.map((acc) => (
-              <option key={acc.account_no} value={acc.account_no}>
-                {acc.account_no} — ₹{acc.balance}
-              </option>
-            ))}
-          </select>
-        </div>
+        <SearchableSelect
+          accounts={accounts}
+          value={fromAcc}
+          onChange={setFromAcc}
+          label="From Account"
+          searchValue={searchFrom}
+          onSearchChange={setSearchFrom}
+          inputBg={inputBg}
+          labelText={labelText}
+        />
 
         {/* To Account */}
-        <div className="mb-3">
-          <label className={`block mb-1 ${labelText}`}>To Account</label>
-          <select
-            className={`w-full px-3 py-2 rounded border ${inputBg}`}
-            value={toAcc}
-            onChange={(e) => setToAcc(e.target.value)}
-          >
-            <option value="">-- Select --</option>
-            {accounts.map((acc) => (
-              <option key={acc.account_no} value={acc.account_no}>
-                {acc.account_no} — ₹{acc.balance}
-              </option>
-            ))}
-          </select>
-        </div>
+        <SearchableSelect
+          accounts={accounts}
+          value={toAcc}
+          onChange={setToAcc}
+          label="To Account"
+          searchValue={searchTo}
+          onSearchChange={setSearchTo}
+          inputBg={inputBg}
+          labelText={labelText}
+        />
 
         {/* Amount */}
         <div className="mb-3">
