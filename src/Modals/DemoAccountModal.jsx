@@ -213,7 +213,8 @@ export default function DemoAccountModal({ isOpen, onClose, userRow, isDarkMode 
       alert(`${isEnabled ? "Disabled" : "Enabled"} successfully.`);
     } catch (err) {
       console.error(err);
-      alert("Failed to change account status.");
+      const errorMessage = err?.response?.data?.error || err?.response?.data?.detail || err?.message || "Failed to change account status.";
+      alert(errorMessage);
     }
   };
 
