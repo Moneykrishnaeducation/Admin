@@ -13,6 +13,12 @@ const WithdrawModal = ({ visible, onClose, accountId, onSubmit }) => {
   const [amount, setAmount] = useState("");
   const [comment, setComment] = useState("");
   const [loading, setLoading] = useState(false);
+  const [toast, setToast] = useState(null);
+
+  const showToast = (msg, type = "success") => {
+    setToast({ msg, type });
+    setTimeout(() => setToast(null), 2500);
+  };
 
   /* ---------------- THEME CLASSES ---------------- */
   const cardBg = isDarkMode
@@ -33,35 +39,82 @@ const WithdrawModal = ({ visible, onClose, accountId, onSubmit }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!accountId) return alert("Missing account ID");
-    if (!amount || Number(amount) <= 0) return alert("Enter valid amount");
+    if (!accountId) {
+      showToast("Missing account ID", "error");
+      return;
+    }
+
+    if (!amount || Number(amount) <= 0) {
+      showToast("Enter a valid withdraw amount", "error");
+      return;
+    }
 
     try {
       setLoading(true);
 
-      const csrfRes = await client.get("/api/csrf/");
-      const csrfToken = csrfRes?.csrfToken;
-      if (!csrfToken) return alert("CSRF failed");
+      // STEP 1 → CSRF TOKEN
+      let csrfToken = null;
+      try {
+        const csrfRes = await client.get("/api/csrf/");
+        csrfToken = csrfRes?.csrfToken;
+      } catch (csrfError) {
+        console.error("CSRF Token Error:", csrfError);
+        showToast("Failed to get CSRF token", "error");
+        return;
+      }
 
+      if (!csrfToken) {
+        showToast("Failed to get CSRF token", "error");
+        return;
+      }
+
+      // STEP 2 → WITHDRAW API CALL
       const payload = {
         account_id: accountId,
         amount: Number(amount),
         comment: comment || "",
       };
 
-      const withdrawRes = await apiClient.post("/admin/withdraw/", payload, {
-        headers: { "X-CSRFToken": csrfToken },
-      });
+      let withdrawRes;
+      try {
+        withdrawRes = await apiClient.post("/admin/withdraw/", payload, {
+          headers: { "X-CSRFToken": csrfToken },
+        });
+      } catch (postError) {
+        console.error("POST Request Error:", postError);
+        showToast(postError?.message || "Withdraw failed. Please try again.", "error");
+        return;
+      }
 
-      onSubmit?.(withdrawRes);
-      alert(`Withdraw Success: $${withdrawRes.amount}`);
+      // Parse response if it's a string
+      let parsedRes = withdrawRes;
+      if (typeof withdrawRes === 'string') {
+        try {
+          parsedRes = JSON.parse(withdrawRes);
+        } catch (e) {
+          console.error("Failed to parse response:", e);
+          parsedRes = withdrawRes;
+        }
+      }
 
-      setAmount("");
-      setComment("");
-      onClose();
+      if (parsedRes && (parsedRes.status === "approved" || parsedRes.message || parsedRes.amount)) {
+        showToast(`✅ Withdraw Successful: $${parsedRes?.amount}`, "success");
+        
+        try {
+          if (onSubmit) onSubmit(parsedRes);
+        } catch (submitError) {
+          console.error("Submit callback error:", submitError);
+        }
+
+        setAmount("");
+        setComment("");
+        setTimeout(onClose, 1500);
+      } else {
+        showToast("Withdraw failed. Please try again.", "error");
+      }
     } catch (err) {
       console.error("WITHDRAW ERROR:", err);
-      alert("Withdrawal failed");
+      showToast(typeof err?.message === 'string' ? err.message : "Withdraw failed. Please try again.", "error");
     } finally {
       setLoading(false);
     }
@@ -95,6 +148,17 @@ const WithdrawModal = ({ visible, onClose, accountId, onSubmit }) => {
       footer={footer}
       className={`${cardBg}`}
     >
+      {/* Toast - positioned at page top-right */}
+      {toast && (
+        <div
+          className={`fixed top-5 right-5 px-4 py-2 rounded-md text-white shadow-lg z-50 ${
+            toast.type === "error" ? "bg-red-600" : toast.type === "warning" ? "bg-yellow-600" : "bg-green-600"
+          }`}
+        >
+          {toast.msg}
+        </div>
+      )}
+
       <form onSubmit={handleSubmit} className="space-y-4">
 
         {/* Account ID */}
