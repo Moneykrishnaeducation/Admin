@@ -128,15 +128,42 @@ class AdminAuthenticatedFetch {
                 throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
 
-            // Try to parse JSON, fallback to text
-            const contentType = response.headers.get('content-type');
-            if (contentType && contentType.includes('application/json')) {
-                return await response.json();
-            } else {
-                return await response.text();
+            // Read response as text first
+            let responseText = '';
+            try {
+                responseText = await response.text();
+            } catch (readError) {
+                console.warn('Failed to read response body:', readError);
+                return {};
+            }
+            
+            // Safely check if responseText is a string and has content
+            let trimmedText = '';
+            if (responseText && typeof responseText === 'string') {
+                try {
+                    trimmedText = responseText.trim();
+                } catch (trimError) {
+                    console.warn('Failed to trim response:', trimError);
+                    trimmedText = '';
+                }
+            }
+
+            // If response is empty
+            if (!trimmedText) {
+                return {};
+            }
+
+            // Try to parse as JSON
+            try {
+                const parsed = JSON.parse(trimmedText);
+                return parsed;
+            } catch (parseError) {
+                // If not valid JSON, return as plain text
+                console.warn('Response is not valid JSON');
+                return responseText;
             }
         } catch (error) {
-            console.error('Fetch error:', error);
+            console.error('[AdminAuthenticatedFetch] Error:', error);
             throw error;
         }
     }

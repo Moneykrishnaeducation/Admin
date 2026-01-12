@@ -9,6 +9,12 @@ const DepositModal = ({ visible, onClose, accountId, onSubmit }) => {
   const [amount, setAmount] = useState("");
   const [comment, setComment] = useState("");
   const [loading, setLoading] = useState(false);
+  const [toast, setToast] = useState(null);
+
+  const showToast = (msg, type = "success") => {
+    setToast({ msg, type });
+    setTimeout(() => setToast(null), 2500);
+  };
 
   // -------------------------------
   // HANDLE DEPOSIT SUBMISSION
@@ -17,12 +23,12 @@ const DepositModal = ({ visible, onClose, accountId, onSubmit }) => {
     e.preventDefault();
 
     if (!accountId) {
-      alert("Missing account ID");
+      showToast("Missing account ID", "error");
       return;
     }
 
     if (!amount || Number(amount) <= 0) {
-      alert("Enter a valid deposit amount");
+      showToast("Enter a valid deposit amount", "error");
       return;
     }
 
@@ -30,11 +36,18 @@ const DepositModal = ({ visible, onClose, accountId, onSubmit }) => {
       setLoading(true);
 
       // STEP 1 → FETCH CSRF TOKEN
-      const csrfRes = await client.get("/api/csrf/");
-      const csrfToken = csrfRes?.csrfToken;
+      let csrfToken = null;
+      try {
+        const csrfRes = await client.get("/api/csrf/");
+        csrfToken = csrfRes?.csrfToken;
+      } catch (csrfError) {
+        console.error("CSRF Token Error:", csrfError);
+        showToast("Failed to get CSRF token", "error");
+        return;
+      }
 
       if (!csrfToken) {
-        alert("Failed to get CSRF token");
+        showToast("Failed to get CSRF token", "error");
         return;
       }
 
@@ -46,28 +59,58 @@ const DepositModal = ({ visible, onClose, accountId, onSubmit }) => {
         transaction_type: "deposit",
       };
 
-      const depositRes = await apiClient.post(
-        "/admin/deposit/",
-        payload,
-        {
-          headers: {
-            "X-CSRFToken": csrfToken,
-          },
+      let depositRes;
+      try {
+        depositRes = await apiClient.post(
+          "/admin/deposit/",
+          payload,
+          {
+            headers: {
+              "X-CSRFToken": csrfToken,
+            },
+          }
+        );
+      } catch (postError) {
+        console.error("POST Request Error:", postError);
+        showToast(postError?.message || "Deposit failed. Please try again.", "error");
+        return;
+      }
+
+      console.log("Deposit Response:", depositRes, "Type:", typeof depositRes);
+
+      // Parse response if it's a string
+      let parsedRes = depositRes;
+      if (typeof depositRes === 'string') {
+        try {
+          parsedRes = JSON.parse(depositRes);
+        } catch (e) {
+          console.error("Failed to parse response:", e);
+          parsedRes = depositRes;
         }
-      );
+      }
 
-      // SEND RESULT TO PARENT COMPONENT
-      if (onSubmit) onSubmit(depositRes);
+      // CHECK IF DEPOSIT WAS SUCCESSFUL
+      if (parsedRes && (parsedRes.status === "approved" || parsedRes.message)) {
+        showToast(`✅ Deposit Successful: $${parsedRes?.amount}`, "success");
+        
+        // SEND RESULT TO PARENT COMPONENT
+        try {
+          if (onSubmit) onSubmit(parsedRes);
+        } catch (submitError) {
+          console.error("Submit callback error:", submitError);
+          // Still show success even if callback fails
+        }
 
-      alert(`Deposit Successful: $${depositRes?.amount}`);
-
-      // RESET FORM
-      setAmount("");
-      setComment("");
-      onClose();
+        // RESET FORM
+        setAmount("");
+        setComment("");
+        setTimeout(onClose, 1500);
+      } else {
+        showToast("Deposit failed. Please try again.", "error");
+      }
     } catch (err) {
       console.error("DEPOSIT ERROR:", err);
-      alert("Deposit failed. Please try again.");
+      showToast(typeof err?.message === 'string' ? err.message : "Deposit failed. Please try again.", "error");
     } finally {
       setLoading(false);
     }
@@ -113,6 +156,17 @@ const DepositModal = ({ visible, onClose, accountId, onSubmit }) => {
       onClose={onClose}
       footer={footer}
     >
+      {/* Toast - positioned at page top-right */}
+      {toast && (
+        <div
+          className={`fixed top-5 right-5 px-4 py-2 rounded-md text-white shadow-lg z-50 ${
+            toast.type === "error" ? "bg-red-600" : toast.type === "warning" ? "bg-yellow-600" : "bg-green-600"
+          }`}
+        >
+          {toast.msg}
+        </div>
+      )}
+
       <form onSubmit={handleSubmit} className="space-y-5">
         {/* ACCOUNT ID */}
         <div>

@@ -13,6 +13,12 @@ const CreditInModal = ({ visible, onClose, accountId, onSubmit }) => {
   const [amount, setAmount] = useState("");
   const [comment, setComment] = useState("");
   const [loading, setLoading] = useState(false);
+  const [toast, setToast] = useState(null);
+
+  const showToast = (msg, type = "success") => {
+    setToast({ msg, type });
+    setTimeout(() => setToast(null), 2500);
+  };
 
   /* ===============================
      HANDLE CREDIT-IN ACTION
@@ -21,12 +27,12 @@ const CreditInModal = ({ visible, onClose, accountId, onSubmit }) => {
     e.preventDefault();
 
     if (!accountId) {
-      alert("Missing account ID");
+      showToast("Missing account ID", "error");
       return;
     }
 
     if (!amount || Number(amount) <= 0) {
-      alert("Enter a valid credit amount");
+      showToast("Enter a valid credit amount", "error");
       return;
     }
 
@@ -34,11 +40,18 @@ const CreditInModal = ({ visible, onClose, accountId, onSubmit }) => {
       setLoading(true);
 
       /* STEP 1 → GET CSRF TOKEN */
-      const csrfRes = await client.get("/api/csrf/");
-      const csrfToken = csrfRes?.csrfToken;
+      let csrfToken = null;
+      try {
+        const csrfRes = await client.get("/api/csrf/");
+        csrfToken = csrfRes?.csrfToken;
+      } catch (csrfError) {
+        console.error("CSRF Token Error:", csrfError);
+        showToast("Failed to get CSRF token", "error");
+        return;
+      }
 
       if (!csrfToken) {
-        alert("Failed to get CSRF token");
+        showToast("Failed to get CSRF token", "error");
         return;
       }
 
@@ -49,29 +62,55 @@ const CreditInModal = ({ visible, onClose, accountId, onSubmit }) => {
         comment: comment || "",
       };
 
-      const creditRes = await apiClient.post(
-        "/admin/credit-in/",
-        payload,
-        {
-          headers: { "X-CSRFToken": csrfToken },
-        }
-      );
-
-      if (creditRes?.error) {
-        alert(creditRes.error);
+      let creditRes;
+      try {
+        creditRes = await apiClient.post(
+          "/admin/credit-in/",
+          payload,
+          {
+            headers: { "X-CSRFToken": csrfToken },
+          }
+        );
+      } catch (postError) {
+        console.error("POST Request Error:", postError);
+        showToast(postError?.message || "Credit In failed. Please try again.", "error");
         return;
       }
 
-      if (onSubmit) onSubmit(creditRes);
+      if (creditRes?.error) {
+        showToast(creditRes.error, "error");
+        return;
+      }
 
-      alert(`Credit In Successful: $${creditRes?.transaction?.amount}`);
+      // Parse response if it's a string
+      let parsedRes = creditRes;
+      if (typeof creditRes === 'string') {
+        try {
+          parsedRes = JSON.parse(creditRes);
+        } catch (e) {
+          console.error("Failed to parse response:", e);
+          parsedRes = creditRes;
+        }
+      }
 
-      setAmount("");
-      setComment("");
-      onClose();
+      if (parsedRes && (parsedRes.status === "approved" || parsedRes.message || parsedRes.transaction)) {
+        showToast(`✅ Credit In Successful: $${parsedRes?.transaction?.amount || parsedRes?.amount}`, "success");
+        
+        try {
+          if (onSubmit) onSubmit(parsedRes);
+        } catch (submitError) {
+          console.error("Submit callback error:", submitError);
+        }
+
+        setAmount("");
+        setComment("");
+        setTimeout(onClose, 1500);
+      } else {
+        showToast("Credit In failed. Please try again.", "error");
+      }
     } catch (err) {
       console.error("CREDIT-IN ERROR:", err);
-      alert("Credit In failed");
+      showToast(typeof err?.message === 'string' ? err.message : "Credit In failed. Please try again.", "error");
     } finally {
       setLoading(false);
     }
@@ -131,6 +170,17 @@ const CreditInModal = ({ visible, onClose, accountId, onSubmit }) => {
       onClose={onClose}
       footer={footer}
     >
+      {/* Toast - positioned at page top-right */}
+      {toast && (
+        <div
+          className={`fixed top-5 right-5 px-4 py-2 rounded-md text-white shadow-lg z-50 ${
+            toast.type === "error" ? "bg-red-600" : toast.type === "warning" ? "bg-yellow-600" : "bg-green-600"
+          }`}
+        >
+          {toast.msg}
+        </div>
+      )}
+
       <form
         onSubmit={handleSubmit}
         className="space-y-5 max-h-[60vh] overflow-y-auto pr-1"
