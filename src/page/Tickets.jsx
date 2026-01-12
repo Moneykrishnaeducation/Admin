@@ -97,29 +97,60 @@ const Tickets = ({ isAdmin = false }) => {
   }, [isAdmin]);
 
   /* =====================================================
-     ACTIONS (FRONTEND ONLY DEMO)
-     NOTE: Replace with API PATCH when backend is ready
+     ACTIONS (API CALLS TO UPDATE TICKET STATUS)
   ===================================================== */
-  const openTicket = (id) => {
-    setTickets((prev) => ({
-      ...prev,
-      open: prev.open.filter((t) => t.id !== id),
-      pending: [
-        ...prev.pending,
-        prev.open.find((t) => t.id === id),
-      ],
-    }));
+  const openTicket = async (id) => {
+    try {
+      const endpoint = isAdmin ? `${ADMIN_TICKETS_API}${id}/` : `${USER_TICKETS_API}${id}/`;
+      
+      await apiCall(endpoint, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "pending" }),
+      });
+
+      // Update frontend state after successful API call
+      setTickets((prev) => {
+        const ticket = prev.open.find((t) => t.id === id);
+        if (!ticket) return prev;
+        
+        return {
+          ...prev,
+          open: prev.open.filter((t) => t.id !== id),
+          pending: [...prev.pending, { ...ticket, status: "pending" }],
+        };
+      });
+    } catch (err) {
+      console.error("Failed to open ticket:", err);
+      setError(`Failed to update ticket: ${err.message}`);
+    }
   };
 
-  const closeTicket = (id) => {
-    setTickets((prev) => ({
-      ...prev,
-      pending: prev.pending.filter((t) => t.id !== id),
-      closed: [
-        ...prev.closed,
-        prev.pending.find((t) => t.id === id),
-      ],
-    }));
+  const closeTicket = async (id) => {
+    try {
+      const endpoint = isAdmin ? `${ADMIN_TICKETS_API}${id}/` : `${USER_TICKETS_API}${id}/`;
+      
+      await apiCall(endpoint, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "closed" }),
+      });
+
+      // Update frontend state after successful API call
+      setTickets((prev) => {
+        const ticket = prev.pending.find((t) => t.id === id);
+        if (!ticket) return prev;
+        
+        return {
+          ...prev,
+          pending: prev.pending.filter((t) => t.id !== id),
+          closed: [...prev.closed, { ...ticket, status: "closed" }],
+        };
+      });
+    } catch (err) {
+      console.error("Failed to close ticket:", err);
+      setError(`Failed to update ticket: ${err.message}`);
+    }
   };
 
   /* =====================================================
