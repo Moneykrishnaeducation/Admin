@@ -17,7 +17,6 @@ class ErrorBoundary extends React.Component {
   componentDidCatch(error, info) {
     console.error("ErrorBoundary:", error, info);
   }
-
   render() {
     if (this.state.hasError) {
       return (
@@ -42,6 +41,7 @@ export default function Transactions() {
   const [tokenMissing, setTokenMissing] = useState(false);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  
 
   /* -------------------- Helper: Get CSRF Token -------------------- */
   const getCsrfToken = () => {
@@ -56,8 +56,9 @@ export default function Transactions() {
       });
     }
     return cookieValue;
-  };
+  }
 
+  /* -------------------- UI -------------------- */
   /* -------------------- Fetch -------------------- */
   const onFetch = useCallback(
     async ({ page: p = 1, pageSize: ps = rowsPerPage, query = "" } = {}) => {
@@ -99,89 +100,36 @@ export default function Transactions() {
         let total = 0;
 
         if (typeFilter === "all") {
-          // Fetch all data from all endpoints (set large pageSize to get all)
-          const allParams = new URLSearchParams(params);
-          allParams.set("pageSize", "10000"); // Fetch up to 10000 records
-          allParams.set("page", "1");
+          // Use server-side merged endpoint to get combined, filtered, paginated transactions
+          const mergedParams = new URLSearchParams();
+          if (fromDate) mergedParams.append("start_date", fromDate);
+          if (toDate) mergedParams.append("end_date", toDate);
+          mergedParams.append("page", p);
+          // backend expects `page_size`
+          mergedParams.append("page_size", ps);
+          if (statusFilter !== "all") mergedParams.append("status", statusFilter);
+          if (query) mergedParams.append("search", query);
 
-          const endpoints = [
-            `/api/admin/deposit/?${allParams}`,
-            `/api/admin/withdraw/?${allParams}`,
-            `/api/admin/internal-transfer/?${allParams}`,
-          ];
-
-          const responses = await Promise.all(
-            endpoints.map((url) =>
-              fetch(url, {
-                credentials: 'include',
-                headers: fetchHeaders,
-              })
-                .then((res) => {
-                  if (!res.ok) {
-                    console.error(`Failed to fetch ${url}: ${res.status} ${res.statusText}`);
-                  }
-                  return res.json();
-                })
-                .catch((err) => {
-                  console.error(`Error fetching ${url}:`, err);
-                  return { results: [], total: 0 };
-                })
-            )
-          );
-
-          responses.forEach((data) => {
-            const resResults = Array.isArray(data.results)
-              ? data.results
-              : Array.isArray(data)
-              ? data
-              : [];
-            results = results.concat(resResults);
-            total += data.total ?? resResults.length;
+          const url = `/api/admin/transactions/?${mergedParams}`;
+          const res = await fetch(url, {
+            credentials: 'include',
+            headers: fetchHeaders,
           });
 
-          // Sort by created_at descending
-          results.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-
-          // Apply client-side search filtering
-          if (query) {
-            const lowerQuery = query.toLowerCase();
-            results = results.filter((item) => {
-              const isInternalTransfer = item.from_account || item.to_account;
-              if (isInternalTransfer) {
-                return (
-                  (item.from_account || "").toLowerCase().includes(lowerQuery) ||
-                  (item.to_account || "").toLowerCase().includes(lowerQuery) ||
-                  (item.it_username || "").toLowerCase().includes(lowerQuery)
-                );
-              } else {
-                return (
-                  (item.trading_account_id || "").toLowerCase().includes(lowerQuery) ||
-                  (item.trading_account_name || "").toLowerCase().includes(lowerQuery) ||
-                  (item.email || "").toLowerCase().includes(lowerQuery)
-                );
-              }
-            });
-            total = results.length; // Update total after filtering
+          if (!res.ok) {
+            console.error(`Failed to fetch ${url}: ${res.status} ${res.statusText}`);
+            throw new Error("Network error");
           }
 
-          // Apply client-side status filtering
-          if (statusFilter !== "all") {
-            results = results.filter((item) => {
-              const itemStatus = (item.status || "").toLowerCase();
-              return itemStatus === statusFilter.toLowerCase();
-            });
-            total = results.length; // Update total after filtering
-          }
-
-          // Apply client-side pagination
-          const startIndex = (p - 1) * ps;
-          const endIndex = startIndex + ps;
-          results = results.slice(startIndex, endIndex);
+          const data = await res.json();
+          const resResults = Array.isArray(data.results) ? data.results : Array.isArray(data) ? data : [];
+          results = resResults;
+          total = data.total ?? data.count ?? results.length;
         } else {
           let url;
-          if (typeFilter === "Deposit") {
+          if (typeFilter === "deposit") {
             url = `/api/admin/deposit/?${params}`;
-          } else if (typeFilter === "Withdrawal") {
+          } else if (typeFilter === "withdrawal") {
             url = `/api/admin/withdraw/?${params}`;
           } else {
             url = `/api/admin/internal-transfer/?${params}`;
@@ -205,6 +153,44 @@ export default function Transactions() {
             : [];
 
           total = data.total ?? results.length;
+
+          // Client-side fallback: apply search and status filtering if server doesn't support them
+          // (keeps combined Type + Status working reliably)
+          let finalResults = results;
+
+          if (query) {
+            const lowerQuery = query.toLowerCase();
+            finalResults = finalResults.filter((item) => {
+              const isInternalTransfer = item.from_account || item.to_account;
+              if (isInternalTransfer) {
+                return (
+                  (item.from_account || "").toLowerCase().includes(lowerQuery) ||
+                  (item.to_account || "").toLowerCase().includes(lowerQuery) ||
+                  (item.it_username || "").toLowerCase().includes(lowerQuery)
+                );
+              } else {
+                return (
+                  (item.trading_account_id || "").toLowerCase().includes(lowerQuery) ||
+                  (item.trading_account_name || "").toLowerCase().includes(lowerQuery) ||
+                  (item.email || "").toLowerCase().includes(lowerQuery)
+                );
+              }
+            });
+            total = finalResults.length;
+          }
+
+          if (statusFilter !== "all") {
+            finalResults = finalResults.filter((item) => {
+              const itemStatus = (item.status || "").toLowerCase();
+              return itemStatus === statusFilter.toLowerCase();
+            });
+            total = finalResults.length;
+          }
+
+          // If server already paginated, slicing here acts as a safe fallback to ensure correct page contents
+          const startIndex = (p - 1) * ps;
+          const endIndex = startIndex + ps;
+          results = finalResults.slice(startIndex, endIndex);
         }
 
         const mapped = results.map((item) => {
@@ -238,7 +224,7 @@ export default function Transactions() {
                   description: item.description || "",
                 };
           } else {
-            return typeFilter === "Internal Transfer"
+            return typeFilter === "internal_transfer"
               ? {
                   id: item.id,
                   dateTime: new Date(item.created_at).toLocaleString(),
@@ -312,7 +298,7 @@ export default function Transactions() {
           { Header: "Admin Comment", accessor: "adminComment" },
           { Header: "Description", accessor: "description" },
         ]
-      : typeFilter === "Internal Transfer"
+      : typeFilter === "internal_transfer"
       ? [
           { Header: "Date/Time", accessor: "dateTime" },
           { Header: "From Account", accessor: "fromAccountId" },
@@ -350,7 +336,7 @@ export default function Transactions() {
       )}
 
       {/* Filters */}
-      <div className="flex flex-wrap gap-4 mb-4">
+        <div className="flex flex-wrap gap-4 mb-4 justify">
         <div>
           <label className={`block text-sm font-medium mb-1 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Type</label>
           <select
@@ -359,9 +345,9 @@ export default function Transactions() {
             className={`px-3 py-2 rounded border ${isDarkMode ? 'bg-gray-800 text-white border-yellow-400' : 'bg-white text-gray-900 border-gray-300'}`}
           >
             <option value="all">All</option>
-            <option value="Deposit">Deposit</option>
-            <option value="Withdrawal">Withdrawal</option>
-            <option value="Internal Transfer">Internal Transfer</option>
+            <option value="deposit">Deposit</option>
+            <option value="withdrawal">Withdrawal</option>
+            <option value="internal_transfer">Internal Transfer</option>
           </select>
         </div>
         <div>
@@ -372,10 +358,10 @@ export default function Transactions() {
             className={`px-3 py-2 rounded border ${isDarkMode ? 'bg-gray-800 text-white border-yellow-400' : 'bg-white text-gray-900 border-gray-300'}`}
           >
             <option value="all">All</option>
-            <option value="pending">Pending</option>
-            <option value="approved">Approved</option>
-            <option value="completed">Completed</option>
-            <option value="failed">Failed</option>
+            <option value="Pending">Pending</option>
+            <option value="Approved">Approved</option>
+            <option value="Completed">Completed</option>
+            <option value="Failed">Failed</option>
           </select>
         </div>
         <div>
