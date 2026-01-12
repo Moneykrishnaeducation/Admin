@@ -13,6 +13,7 @@ const TableStructure = ({
   serverSide = false,
   onFetch, // async ({ page, pageSize, query }) => ({ data: [], total: number })
   topActions = null, // React node to render at top-left of table controls
+  isLoading, // optional external loading override (boolean)
 }) => {
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
@@ -23,6 +24,8 @@ const TableStructure = ({
   const [serverData, setServerData] = useState([]);
   const [total, setTotal] = useState((data && data.length) || 0);
   const [loading, setLoading] = useState(false);
+
+  const effectiveLoading = typeof isLoading === 'boolean' ? isLoading : loading;
 
   // debounce timer for query
   useEffect(() => {
@@ -133,12 +136,25 @@ const TableStructure = ({
           </thead>
 
           <tbody>
-            {loading ? (
-              <tr>
-                <td className="p-4 text-center text-yellow-400" colSpan={columns.length + (actionsColumn ? 1 : 0)}>
-                  Loading...
-                </td>
-              </tr>
+            {effectiveLoading ? (
+              Array.from({ length: Math.min(3, pageSize) }).map((_, rIndex) => (
+                <tr key={`skeleton-${rIndex}`} className={`border-b ${borderClass}`}>
+                  {columns.map((col, cIndex) => {
+                    const widths = ['w-40', 'w-56', 'w-64', 'w-40', 'w-48'];
+                    const w = widths[cIndex] || 'w-32';
+                    return (
+                      <td key={col.accessor} className="p-3">
+                        <div className={`${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'} skeleton-gold h-4 rounded ${w}`} />
+                      </td>
+                    );
+                  })}
+                  {actionsColumn && (
+                    <td className="p-3">
+                      <div className={`${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'} skeleton-gold h-6 w-20 rounded ml-auto`} />
+                    </td>
+                  )}
+                </tr>
+              ))
             ) : paginatedData.length > 0 ? (
               paginatedData.map((row, rowIndex) => (
                 <React.Fragment key={row.id || startIndex + rowIndex}>
