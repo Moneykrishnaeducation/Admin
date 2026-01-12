@@ -19,6 +19,8 @@ import {
   Power,
   Shuffle,
   Award,
+  CheckCircle,
+  AlertTriangle,
 } from "lucide-react";
 import Verify from "../Modals/verify";
 
@@ -30,6 +32,16 @@ import TradingAccountModal from "../Modals/TradingAccountModal";
 
 const ManagerUser = () => {
   const { isDarkMode } = useTheme(); // from your ThemeContext
+  const [notifications, setNotifications] = useState([]);
+
+  // Toast notification function
+  const showToast = (message, type = 'success') => {
+    const id = Date.now();
+    setNotifications(prev => [...prev, { id, message, type }]);
+    setTimeout(() => {
+      setNotifications(prev => prev.filter(n => n.id !== id));
+    }, 3200);
+  };
 
 
   // will be loaded from API
@@ -78,7 +90,7 @@ const ManagerUser = () => {
               ? resJson.count
               : items.length;
         const mapped = items.map((u) => ({
-          userId: u.user_id ?? u.id ?? u.pk,
+          userId: u.user_id ?? u.id?? u.pk,
           name: `${u.first_name || "-"}${u.last_name ? " " + u.last_name : ""}`.trim(),
           email: u.email,
           phone: u.phone_number || u.phone || "-",
@@ -141,7 +153,7 @@ const ManagerUser = () => {
   const handleCreateUser = async (e) => {
     e.preventDefault();
     if (addForm.password !== addForm.confirmPassword) {
-      alert("Passwords do not match");
+      showToast("Passwords do not match","error");
       return;
     }
 
@@ -174,7 +186,7 @@ const ManagerUser = () => {
 
       if (!response.ok) {
         const errorData = await response.json();
-        alert(`Failed to create user: ${errorData.message || response.status}`);
+        showToast(`Failed to create user: ${errorData.message || response.status}`, "error");
         return;
       }
 
@@ -187,7 +199,7 @@ const ManagerUser = () => {
         setData(freshData.data || []);
       }
 
-      alert("User created successfully!");
+      showToast("User created successfully!", "success");
       setShowAddModal(false);
       setAddForm({
         first_name: "",
@@ -201,7 +213,7 @@ const ManagerUser = () => {
       });
     } catch (error) {
       console.error("Error creating user:", error);
-      alert(`Error: ${error.message}`);
+      showToast(`Error: ${error.message}`, "error");
     }
   };
 
@@ -284,7 +296,7 @@ const ManagerUser = () => {
 
   const handleUploadId = async () => {
     if (!idFile) {
-      alert("Select ID proof first");
+      showToast("Select ID proof first", "warning");
       return;
     }
     setUploadingId(true);
@@ -293,13 +305,13 @@ const ManagerUser = () => {
       setTimeout(() => setUploadingId(false), 700);
     } catch (err) {
       setUploadingId(false);
-      alert("Upload failed");
+      showToast("Upload failed", "error");
     }
   };
 
   const handleUploadAddress = async () => {
     if (!addressFile) {
-      alert("Select Address proof first");
+      showToast("Select Address proof first", "warning");
       return;
     }
     setUploadingAddress(true);
@@ -308,7 +320,7 @@ const ManagerUser = () => {
       setTimeout(() => setUploadingAddress(false), 700);
     } catch (err) {
       setUploadingAddress(false);
-      alert("Upload failed");
+      showToast("Upload failed", "error");
     }
   };
 
@@ -531,10 +543,232 @@ const ManagerUser = () => {
                     onChange={handleAddInput}
                     className={`${inputBase} p-2 rounded w-full`}
                   >
+                    <option value="">Select Country</option>
                     <option>Afghanistan</option>
-                    <option>United States</option>
-                    <option>United Kingdom</option>
+                    <option>Albania</option>
+                    <option>Algeria</option>
+                    <option>American Samoa</option>
+                    <option>Andorra</option>
+                    <option>Angola</option>
+                    <option>Anguilla</option>
+                    <option>Antarctica</option>
+                    <option>Antigua and Barbuda</option>
+                    <option>Argentina</option>
+                    <option>Armenia</option>
+                    <option>Aruba</option>
+                    <option>Australia</option>
+                    <option>Austria</option>
+                    <option>Azerbaijan</option>
+                    <option>Bahamas</option>
+                    <option>Bahrain</option>
+                    <option>Bangladesh</option>
+                    <option>Barbados</option>
+                    <option>Belarus</option>
+                    <option>Belgium</option>
+                    <option>Belize</option>
+                    <option>Benin</option>
+                    <option>Bermuda</option>
+                    <option>Bhutan</option>
+                    <option>Bolivia</option>
+                    <option>Bosnia and Herzegovina</option>
+                    <option>Botswana</option>
+                    <option>Brazil</option>
+                    <option>Brunei</option>
+                    <option>Bulgaria</option>
+                    <option>Burkina Faso</option>
+                    <option>Burundi</option>
+                    <option>Cambodia</option>
+                    <option>Cameroon</option>
+                    <option>Canada</option>
+                    <option>Cape Verde</option>
+                    <option>Cayman Islands</option>
+                    <option>Central African Republic</option>
+                    <option>Chad</option>
+                    <option>Chile</option>
+                    <option>China</option>
+                    <option>Colombia</option>
+                    <option>Comoros</option>
+                    <option>Congo</option>
+                    <option>Congo, Democratic Republic</option>
+                    <option>Cook Islands</option>
+                    <option>Costa Rica</option>
+                    <option>Côte d'Ivoire</option>
+                    <option>Croatia</option>
+                    <option>Cuba</option>
+                    <option>Curaçao</option>
+                    <option>Cyprus</option>
+                    <option>Czech Republic</option>
+                    <option>Denmark</option>
+                    <option>Djibouti</option>
+                    <option>Dominica</option>
+                    <option>Dominican Republic</option>
+                    <option>Ecuador</option>
+                    <option>Egypt</option>
+                    <option>El Salvador</option>
+                    <option>Equatorial Guinea</option>
+                    <option>Eritrea</option>
+                    <option>Estonia</option>
+                    <option>Ethiopia</option>
+                    <option>Falkland Islands</option>
+                    <option>Faroe Islands</option>
+                    <option>Fiji</option>
+                    <option>Finland</option>
+                    <option>France</option>
+                    <option>Gabon</option>
+                    <option>Gambia</option>
+                    <option>Georgia</option>
+                    <option>Germany</option>
+                    <option>Ghana</option>
+                    <option>Gibraltar</option>
+                    <option>Greece</option>
+                    <option>Greenland</option>
+                    <option>Grenada</option>
+                    <option>Guam</option>
+                    <option>Guatemala</option>
+                    <option>Guernsey</option>
+                    <option>Guinea</option>
+                    <option>Guinea-Bissau</option>
+                    <option>Guyana</option>
+                    <option>Haiti</option>
+                    <option>Honduras</option>
+                    <option>Hong Kong</option>
+                    <option>Hungary</option>
+                    <option>Iceland</option>
                     <option>India</option>
+                    <option>Indonesia</option>
+                    <option>Iran</option>
+                    <option>Iraq</option>
+                    <option>Ireland</option>
+                    <option>Isle of Man</option>
+                    <option>Israel</option>
+                    <option>Italy</option>
+                    <option>Jamaica</option>
+                    <option>Japan</option>
+                    <option>Jersey</option>
+                    <option>Jordan</option>
+                    <option>Kazakhstan</option>
+                    <option>Kenya</option>
+                    <option>Kiribati</option>
+                    <option>Korea, North</option>
+                    <option>Korea, South</option>
+                    <option>Kuwait</option>
+                    <option>Kyrgyzstan</option>
+                    <option>Laos</option>
+                    <option>Latvia</option>
+                    <option>Lebanon</option>
+                    <option>Lesotho</option>
+                    <option>Liberia</option>
+                    <option>Libya</option>
+                    <option>Liechtenstein</option>
+                    <option>Lithuania</option>
+                    <option>Luxembourg</option>
+                    <option>Macao</option>
+                    <option>Macedonia</option>
+                    <option>Madagascar</option>
+                    <option>Malawi</option>
+                    <option>Malaysia</option>
+                    <option>Maldives</option>
+                    <option>Mali</option>
+                    <option>Malta</option>
+                    <option>Marshall Islands</option>
+                    <option>Mauritania</option>
+                    <option>Mauritius</option>
+                    <option>Mexico</option>
+                    <option>Micronesia</option>
+                    <option>Moldova</option>
+                    <option>Monaco</option>
+                    <option>Mongolia</option>
+                    <option>Montenegro</option>
+                    <option>Montserrat</option>
+                    <option>Morocco</option>
+                    <option>Mozambique</option>
+                    <option>Myanmar</option>
+                    <option>Namibia</option>
+                    <option>Nauru</option>
+                    <option>Nepal</option>
+                    <option>Netherlands</option>
+                    <option>New Caledonia</option>
+                    <option>New Zealand</option>
+                    <option>Nicaragua</option>
+                    <option>Niger</option>
+                    <option>Nigeria</option>
+                    <option>Niue</option>
+                    <option>Norfolk Island</option>
+                    <option>Northern Mariana Islands</option>
+                    <option>Norway</option>
+                    <option>Oman</option>
+                    <option>Pakistan</option>
+                    <option>Palau</option>
+                    <option>Palestine</option>
+                    <option>Panama</option>
+                    <option>Papua New Guinea</option>
+                    <option>Paraguay</option>
+                    <option>Peru</option>
+                    <option>Philippines</option>
+                    <option>Pitcairn</option>
+                    <option>Poland</option>
+                    <option>Portugal</option>
+                    <option>Puerto Rico</option>
+                    <option>Qatar</option>
+                    <option>Romania</option>
+                    <option>Russia</option>
+                    <option>Rwanda</option>
+                    <option>Samoa</option>
+                    <option>San Marino</option>
+                    <option>São Tomé and Príncipe</option>
+                    <option>Saudi Arabia</option>
+                    <option>Senegal</option>
+                    <option>Serbia</option>
+                    <option>Seychelles</option>
+                    <option>Sierra Leone</option>
+                    <option>Singapore</option>
+                    <option>Sint Maarten</option>
+                    <option>Slovakia</option>
+                    <option>Slovenia</option>
+                    <option>Solomon Islands</option>
+                    <option>Somalia</option>
+                    <option>South Africa</option>
+                    <option>South Sudan</option>
+                    <option>Spain</option>
+                    <option>Sri Lanka</option>
+                    <option>Sudan</option>
+                    <option>Suriname</option>
+                    <option>Swaziland</option>
+                    <option>Sweden</option>
+                    <option>Switzerland</option>
+                    <option>Syria</option>
+                    <option>Taiwan</option>
+                    <option>Tajikistan</option>
+                    <option>Tanzania</option>
+                    <option>Thailand</option>
+                    <option>Timor-Leste</option>
+                    <option>Togo</option>
+                    <option>Tokelau</option>
+                    <option>Tonga</option>
+                    <option>Trinidad and Tobago</option>
+                    <option>Tunisia</option>
+                    <option>Turkey</option>
+                    <option>Turkmenistan</option>
+                    <option>Turks and Caicos Islands</option>
+                    <option>Tuvalu</option>
+                    <option>Uganda</option>
+                    <option>Ukraine</option>
+                    <option>United Arab Emirates</option>
+                    <option>United Kingdom</option>
+                    <option>United States</option>
+                    <option>Uruguay</option>
+                    <option>Uzbekistan</option>
+                    <option>Vanuatu</option>
+                    <option>Vatican City</option>
+                    <option>Venezuela</option>
+                    <option>Vietnam</option>
+                    <option>Virgin Islands, British</option>
+                    <option>Virgin Islands, U.S.</option>
+                    <option>Wallis and Futuna</option>
+                    <option>Western Sahara</option>
+                    <option>Yemen</option>
+                    <option>Zambia</option>
+                    <option>Zimbabwe</option>
                   </select>
                 </div>
 
@@ -740,6 +974,26 @@ const ManagerUser = () => {
         />
       )}
 
+      {/* Toast Notifications */}
+      <div className="fixed top-5 right-5 z-[9999] space-y-2">
+        {notifications.map((notification) => (
+          <div
+            key={notification.id}
+            className={`flex items-center gap-2 px-4 py-3 rounded-lg text-white shadow-lg animate-pulse ${
+              notification.type === 'success' ? 'bg-green-500' :
+              notification.type === 'error' ? 'bg-red-500' :
+              notification.type === 'warning' ? 'bg-yellow-500' :
+              'bg-blue-500'
+            }`}
+          >
+            {notification.type === 'success' && <CheckCircle size={18} />}
+            {notification.type === 'error' && <AlertTriangle size={18} />}
+            {notification.type === 'warning' && <AlertTriangle size={18} />}
+            {notification.type === 'info' && <AlertTriangle size={18} />}
+            <span className="text-sm">{notification.message}</span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 };

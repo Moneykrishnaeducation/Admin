@@ -35,11 +35,11 @@ const ChatBot = () => {
         `}
       </style>
 
-      <div className="fixed bottom-5 left-5 z-50 flex flex-col items-end">
+      <div className="fixed bottom-5 right-5 z-50 flex flex-col items-end">
         {/* Chat icon with animated text */}
         <div className="flex items-center space-x-2">
           {!isOpen && (
-            <span className={`${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'} px-3 py-2 rounded-lg shadow-md text-sm font-bold flex space-x-0.5`}>
+            <span className={`hidden md:flex ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'} px-3 py-2 rounded-lg shadow-md text-sm font-bold space-x-0.5`}>
               {text.map((char, index) => (
                 <span
                   key={index}

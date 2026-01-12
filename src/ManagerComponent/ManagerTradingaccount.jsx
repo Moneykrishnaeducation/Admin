@@ -74,6 +74,36 @@ const ManagerTradingaccount = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, pageSize]);
 
+  // Fetch open positions for all accounts
+  React.useEffect(() => {
+    if (data.length === 0) return;
+    
+    const fetchOpenPositions = async () => {
+      try {
+        const apiClient = new AdminAuthenticatedFetch('/api');
+        const updatedData = await Promise.all(
+          data.map(async (item) => {
+            try {
+              const response = await apiClient.get(`/trading-account/${item.accountId}/history/?days_back=30`);
+              return {
+                ...item,
+                openPositions: response.account_summary?.open_positions || 0,
+              };
+            } catch (error) {
+              console.error(`Error fetching positions for account ${item.accountId}:`, error);
+              return item;
+            }
+          })
+        );
+        setData(updatedData);
+      } catch (error) {
+        console.error('Error fetching open positions:', error);
+      }
+    };
+
+    fetchOpenPositions();
+  }, [data.length]);
+
   const fetchHistory = async (accountId, days = 30) => {
     try {
       const apiClient = new AdminAuthenticatedFetch('/api');
@@ -115,7 +145,7 @@ const ManagerTradingaccount = () => {
       accessor: "history",
       Cell: (cellValue, row) => (
         <button
-          className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 transition"
+          className="relative bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600 transition inline-block"
           onClick={async () => {
             setHistoryAccountId(row.accountId);
             setSelectedRowData(row);
@@ -131,6 +161,15 @@ const ManagerTradingaccount = () => {
                   equity: response.account_summary.equity,
                   openPositions: response.account_summary.open_positions,
                 }));
+                
+                // Update the main data table with the fetched open_positions
+                setData(prevData =>
+                  prevData.map(item =>
+                    item.accountId === row.accountId
+                      ? { ...item, openPositions: response.account_summary.open_positions }
+                      : item
+                  )
+                );
               }
             } catch (error) {
               console.error('Error fetching history:', error);
@@ -138,6 +177,11 @@ const ManagerTradingaccount = () => {
           }}
         >
           View
+          {row.openPositions > 0 && (
+            <span className="absolute -top-1 -right-1 inline-flex items-center justify-center w-5 h-5 bg-red-500 text-white text-[9px] font-bold rounded-full shadow-lg animate-pulse">
+              {row.openPositions > 99 ? '99+' : row.openPositions}
+            </span>
+          )}
         </button>
       ),
     },

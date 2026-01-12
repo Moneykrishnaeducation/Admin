@@ -184,10 +184,11 @@ const ChangeStatusModal = ({
                 key={role.value}
                 className={`
                   flex items-center gap-3
-                  px-3 py-2 rounded-lg cursor-pointer
+                  px-4 py-3 rounded-lg cursor-pointer
+                  transition-all duration-200
                   ${status === role.value
-                    ? "bg-yellow-400/10 border border-yellow-400"
-                    : "border border-transparent"}
+                    ? "bg-yellow-400/15 border-2 border-yellow-400 scale-102"
+                    : "border border-transparent hover:border-gray-500"}
                 `}
               >
                 <input
@@ -198,7 +199,9 @@ const ChangeStatusModal = ({
                   onChange={() => setStatus(role.value)}
                   className={radioCls}
                 />
-                <span className={textMain}>{role.label}</span>
+                <span className={`${status === role.value ? "font-semibold" : ""} ${textMain} transition-all`}>
+                  {role.label}
+                </span>
               </label>
             ))
           ) : (
@@ -207,10 +210,11 @@ const ChangeStatusModal = ({
                 key={role}
                 className={`
                   flex items-center gap-3
-                  px-3 py-2 rounded-lg cursor-pointer
+                  px-4 py-3 rounded-lg cursor-pointer
+                  transition-all duration-200
                   ${status === role
-                    ? "bg-yellow-400/10 border border-yellow-400"
-                    : "border border-transparent"}
+                    ? "bg-yellow-400/15 border-2 border-yellow-400 scale-102"
+                    : "border border-transparent hover:border-gray-500"}
                 `}
               >
                 <input
@@ -221,7 +225,7 @@ const ChangeStatusModal = ({
                   onChange={() => setStatus(role)}
                   className={radioCls}
                 />
-                <span className={textMain}>
+                <span className={`${status === role ? "font-semibold" : ""} ${textMain} transition-all`}>
                   {role.charAt(0).toUpperCase() + role.slice(1)}
                 </span>
               </label>

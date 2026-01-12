@@ -161,7 +161,7 @@ const Partnership = () => {
     withdrawalReject: "/api/admin/transaction/",
     tradingAccounts: "/ib-user/",
     commissionBalance: "/api/admin/ib-user/",
-    partnerProfile: "/partner-profile/",
+    partnerProfile: "/api/partner-profile/",
     unassignedClients: "/api/admin/unassigned-clients/",
     statistics: "/api/admin/ib-user/",
   };
@@ -438,12 +438,68 @@ const Partnership = () => {
     }
   };
 
-  const handleSaveClick = () => {
-    setCommissionProfiles(prev =>
-      prev.map(item => (item.id === editRowId ? { ...item, ...editedRowData } : item))
-    );
-    setEditRowId(null);
-    setEditedRowData({});
+  const handleSaveClick = async () => {
+    if (!editRowId) return;
+    setError(null);
+
+    // Optimistically prepare updated item
+    const existing = commissionProfiles.find((c) => c.id === editRowId) || {};
+    const profileId = editedRowData.profileId ?? existing.profileId ?? editRowId;
+
+    // Build payload mapping UI fields -> backend fields
+    const payload = {
+      name: editedRowData.profileName ?? existing.profileName,
+      use_percentage_based: (editedRowData.type ?? existing.type) === "Variable",
+      approved_groups: editedRowData.groupsList ?? existing.groupsList ?? [],
+    };
+
+    try {
+      const url = `${API_ENDPOINTS.commissionProfiles}${profileId}/`;
+      const res = await fetch(url, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify(payload),
+      });
+
+      if (res.status === 401) {
+        setError("Unauthorized: please log in to perform this action.");
+        return;
+      }
+
+      if (!res.ok) {
+        // Try to read error body
+        let msg = `Save failed: ${res.status}`;
+        try {
+          const err = await res.json();
+          msg = err.detail || err.error || JSON.stringify(err);
+        } catch (e) {}
+        throw new Error(msg);
+      }
+
+      const json = await res.json();
+
+      // Map server response back to UI fields
+      const updated = {
+        ...existing,
+        profileName: json.profileName ?? payload.name,
+        profileId: json.profileId ?? profileId,
+        commissionDetails: json.displayText ?? existing.commissionDetails,
+        type: json.usePercentageBased ? "Variable" : "Fixed",
+        groupsList: json.approvedGroups ?? payload.approved_groups,
+        id: existing.id ?? profileId,
+      };
+
+      setCommissionProfiles((prev) => prev.map((item) => (item.id === editRowId ? updated : item)));
+      setEditRowId(null);
+      setEditedRowData({});
+      alert("Profile saved successfully");
+    } catch (err) {
+      setError(err.message || "Failed to save profile");
+    }
   };
 
   const handleCancelClick = () => {
@@ -644,12 +700,13 @@ const Partnership = () => {
     }
     setError(null);
     try {
-      const endpoint = `/update-partner-profile/${selectedId}/`;
+      const endpoint = `/api/update-partner-profile/${selectedId}/`;
       // Tokens are now in HttpOnly cookies - no need to manually add Authorization header
       const res = await fetch(endpoint, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Accept: "application/json",
         },
         credentials: "include",
         body: JSON.stringify({ profile_id: selectedNewProfile }),
@@ -883,7 +940,7 @@ const Partnership = () => {
   const handleDisableIBSubmit = async () => {
     setError(null);
     try {
-      const endpoint = `/api/admin/disable-ib/${selectedId}/`;
+      const endpoint = `/api/admin/ib-users/${selectedId}/disable/`;
       // Tokens are now in HttpOnly cookies - no need to manually add Authorization header
       const res = await fetch(endpoint, {
         method: "POST",

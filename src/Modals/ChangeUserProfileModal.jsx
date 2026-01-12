@@ -7,6 +7,7 @@ const apiClient = new AdminAuthenticatedFetch("");
 const ChangeUserProfileModal = ({
   visible,
   onClose,
+  accountId,
   onSubmit,
 }) => {
   const { isDarkMode } = useTheme();
@@ -33,13 +34,29 @@ const ChangeUserProfileModal = ({
   };
 
   /* ================= ACTIONS ================= */
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!selectedGroup) {
       alert("Please select a group");
       return;
     }
-    onSubmit(selectedGroup);
-    setSelectedGroup("");
+
+    setLoading(true);
+    try {
+      // Call the update-trading-group API
+      await apiClient.post('/api/update-trading-group/', {
+        account_id: accountId,
+        group_id: selectedGroup,
+      });
+      
+      alert("Trading group updated successfully");
+      onSubmit(selectedGroup);
+      setSelectedGroup("");
+    } catch (err) {
+      console.error("Failed to update trading group:", err);
+      alert("Failed to update trading group: " + (err?.message || "Unknown error"));
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleClose = () => {

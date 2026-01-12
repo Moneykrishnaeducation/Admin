@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { X, TrendingUp, Play } from "lucide-react";
+import { X, TrendingUp, Play, CheckCircle, AlertTriangle } from "lucide-react";
 import { AdminAuthenticatedFetch } from "../utils/fetch-utils.js";
 
 /**
@@ -17,6 +17,7 @@ const AddTradingAccountModal = ({
   isDarkMode = false,
 }) => {
   const [activeTab, setActiveTab] = useState("Live");
+  const [notifications, setNotifications] = useState([]);
 
   const [liveForm, setLiveForm] = useState({
     accountName: "",
@@ -36,6 +37,17 @@ const AddTradingAccountModal = ({
   const [error, setError] = useState(null);
 
   /* ======================================================
+   * TOAST NOTIFICATIONS
+   * ====================================================== */
+  const showToast = (message, type = 'success') => {
+    const id = Date.now();
+    setNotifications(prev => [...prev, { id, message, type }]);
+    setTimeout(() => {
+      setNotifications(prev => prev.filter(n => n.id !== id));
+    }, 3200);
+  };
+
+  /* ======================================================
    * LOAD OPTIONS
    * ====================================================== */
   useEffect(() => {
@@ -47,12 +59,16 @@ const AddTradingAccountModal = ({
     setError(null);
     try {
       const [leverageData, groupsData] = await Promise.all([
-        apiClient.get("/available-leverage/"),
-        apiClient.get("/available-groups/"),
+        apiClient.get("/api/available-leverage/"),
+        apiClient.get("/api/available-groups/"),
       ]);
 
+      // Extract leverage value - if format is "1:1", take the part after the colon
       setLeverageOptions(
-        (leverageData?.leverage_options || []).map((o) => o.value)
+        (leverageData?.leverage_options || []).map((o) => {
+          const value = typeof o === 'string' ? o : o.value;
+          return value.includes(':') ? value.split(':')[1] : value;
+        })
       );
 
       setTradingGroups(
@@ -62,7 +78,9 @@ const AddTradingAccountModal = ({
         }))
       );
     } catch (err) {
+      console.error('Error fetching options:', err);
       setError("Failed to load options");
+      showToast("Failed to load options", "error");
     } finally {
       setLoading(false);
     }
@@ -90,16 +108,20 @@ const AddTradingAccountModal = ({
     setError(null);
 
     try {
-      await apiClient.post("/create-trading-account/", {
+      await apiClient.post("/api/create-trading-account/", {
         userId: String(userId),
         accountName: liveForm.accountName || userName,
         leverage: String(parseInt(liveForm.leverage, 10)),
         group: liveForm.tradingGroup,
       });
 
-      onClose();
+      showToast("Live trading account created successfully!", "success");
+      setLiveForm({ accountName: "", leverage: "", tradingGroup: "" });
+      setTimeout(() => onClose(), 1000);
     } catch (err) {
+      console.error('Error creating live account:', err);
       setError("Failed to create live account");
+      showToast("Failed to create live account", "error");
     } finally {
       setLoading(false);
     }
@@ -111,16 +133,20 @@ const AddTradingAccountModal = ({
     setError(null);
 
     try {
-      await apiClient.post("/create-demo-account/", {
+      await apiClient.post("/api/create-demo-account/", {
         userId: String(userId),
         accountName: demoForm.accountName || userName,
         leverage: String(parseInt(demoForm.leverage, 10)),
         balance: parseFloat(demoForm.initialDeposit),
       });
 
-      onClose();
+      showToast("Demo account created successfully!", "success");
+      setDemoForm({ accountName: "", leverage: "", initialDeposit: "10000" });
+      setTimeout(() => onClose(), 1000);
     } catch (err) {
+      console.error('Error creating demo account:', err);
       setError("Failed to create demo account");
+      showToast("Failed to create demo account", "error");
     } finally {
       setLoading(false);
     }
@@ -313,6 +339,36 @@ const AddTradingAccountModal = ({
             </form>
           )}
         </div>
+      </div>
+
+      {/* Toast Notifications */}
+      <div className="fixed top-20 right-4 z-50 space-y-2">
+        {notifications.map((notification) => (
+          <div
+            key={notification.id}
+            className={`flex items-center gap-3 p-4 rounded-lg shadow-lg text-white transition-all duration-300 border
+              ${
+                notification.type === 'success'
+                  ? 'bg-green-600/90 border-green-500'
+                  : notification.type === 'error'
+                  ? 'bg-red-600/90 border-red-500'
+                  : notification.type === 'warning'
+                  ? 'bg-yellow-600/90 border-yellow-500'
+                  : 'bg-blue-600/90 border-blue-500'
+              }`}
+          >
+            {notification.type === 'success' && <CheckCircle className="w-5 h-5 flex-shrink-0" />}
+            {notification.type === 'error' && <AlertTriangle className="w-5 h-5 flex-shrink-0" />}
+            {notification.type === 'warning' && <AlertTriangle className="w-5 h-5 flex-shrink-0" />}
+            <span className="text-sm font-medium flex-1">{notification.message}</span>
+            <button
+              onClick={() => setNotifications(prev => prev.filter(n => n.id !== notification.id))}
+              className="text-white hover:text-gray-200 transition-colors flex-shrink-0"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        ))}
       </div>
     </div>
   );

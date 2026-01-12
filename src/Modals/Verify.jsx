@@ -49,7 +49,7 @@ const Verify = ({
 
   async function loadUser() {
     try {
-      const resp = await fetch(`/users/${userId}/`, {
+      const resp = await fetch(`/api/admin/user-info/${userId}/`, {
         method: "GET",
         credentials: "include",
         headers: await authHeaders(),
@@ -115,7 +115,7 @@ const Verify = ({
     updateDoc(type, { uploading: true });
 
     try {
-      const resp = await fetch("/upload-document/", {
+      const resp = await fetch("/api/upload-document/", {
         method: "POST",
         headers: await authHeaders(),
         body: formData,
@@ -144,7 +144,7 @@ const Verify = ({
     updateDoc(type, { verifying: true });
 
     try {
-      const resp = await fetch(`/verify-document/${serverType}/`, {
+      const resp = await fetch(`/api/verify-document/${serverType}/`, {
         method: "POST",
         headers: {
           ...(await authHeaders()),
@@ -299,24 +299,23 @@ function DocumentBlock({
 
       <div className="flex gap-2 mt-2">
         <button
-          className="flex-1 bg-blue-600 text-white py-2 rounded"
-          disabled={doc.uploading || doc.status === "verified"}
-          onClick={onUpload}
+          className={`flex-1 py-2 rounded transition ${
+            doc.status === "verified" || doc.status === "approved"
+              ? "bg-green-600 text-white cursor-not-allowed opacity-75"
+              : "bg-blue-600 text-white hover:bg-blue-700"
+          }`}
+          disabled={!doc.file && (doc.status !== "verified" && doc.status !== "approved") || doc.verifying || doc.status === "verified" || doc.status === "approved"}
+          onClick={async () => {
+            await onUpload();
+            await onVerify();
+          }}
         >
-          {doc.uploading
-            ? `Uploading ${type === "id" ? "ID Proof" : "Address Proof"}...`
-            : "📤 Upload"}
+          {doc.verifying 
+            ? "Verifying..." 
+            : (doc.status === "verified" || doc.status === "approved")
+              ? "✅ Verified" 
+              : "✅ Verify"}
         </button>
-
-        {doc.status !== "verified" && (
-          <button
-            className="flex-1 bg-green-600 text-white py-2 rounded"
-            disabled={doc.verifying}
-            onClick={onVerify}
-          >
-            {doc.verifying ? "Verifying..." : "✅ Verify"}
-          </button>
-        )}
       </div>
     </div>
   );

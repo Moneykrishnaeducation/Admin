@@ -39,6 +39,18 @@ const [originalForm, setOriginalForm] = useState(null); // To restore on cancel
 
   const [editMode, setEditMode] = useState(false); // VIEW → EDIT toggle
 
+  // read user role from cookie (userRole or user_role)
+  const getCookie = (name) => {
+    const match = document.cookie.match(new RegExp('(?:^|; )' + name + '=([^;]*)'));
+    return match ? decodeURIComponent(match[1]) : null;
+  };
+
+  const [userRole, setUserRole] = useState(null);
+  useEffect(() => {
+    const role = (getCookie('userRole') || getCookie('user_role') || '').toString().toLowerCase();
+    setUserRole(role || null);
+  }, []);
+
   // ===========================================================
   // FETCH USER DETAILS
   // ===========================================================
@@ -96,7 +108,7 @@ const [originalForm, setOriginalForm] = useState(null); // To restore on cancel
         parentIbId: "",
         parentIbError: "",
       }));
-      return;
+      return null;
     }
 
     setLoadingParent(true);
@@ -110,12 +122,18 @@ const [originalForm, setOriginalForm] = useState(null); // To restore on cancel
           parentIbId: "",
           parentIbError: "User not found for this email.",
         }));
+        setLoadingParent(false);
+        return null;
       } else {
+        const parentIbId = data?.user_id || "";
         setForm((prev) => ({
           ...prev,
-          parentIbId: data?.user_id || "",
+          parentIbId: parentIbId,
+          parentEmail: data?.email || "",
           parentIbError: "",
         }));
+        setLoadingParent(false);
+        return parentIbId;
       }
     } catch (err) {
       console.error("Error fetching parent IB:", err);
@@ -124,9 +142,9 @@ const [originalForm, setOriginalForm] = useState(null); // To restore on cancel
         parentIbId: "",
         parentIbError: "User not found for this email.",
       }));
+      setLoadingParent(false);
+      return null;
     }
-
-    setLoadingParent(false);
   };
 
   const handleParentEmailBlur = () => {
@@ -136,7 +154,7 @@ const [originalForm, setOriginalForm] = useState(null); // To restore on cancel
   // ===========================================================
   // PATCH UPDATE REQUEST
   // ===========================================================
-  const submitPatchUpdate = async () => {
+  const submitPatchUpdate = async (parentIbId) => {
     if (!userId) return alert("User ID missing");
 
     setSaving(true);
@@ -153,10 +171,13 @@ const [originalForm, setOriginalForm] = useState(null); // To restore on cancel
       formData.append("address", form.address);
 
       formData.append("created_by_email", form.createdBy);
-      formData.append("parent_ib_email", form.parentEmail);
 
-      if (form.parentIbId) {
-        formData.append("parent_ib", form.parentIbId);
+      // Use the parentIbId passed as parameter (from the lookup)
+      if (parentIbId) {
+        formData.append("parent_ib", parentIbId);
+      } else {
+        // Clear parent_ib if no email is provided
+        formData.append("parent_ib", "");
       }
 
       // PROFILE IMAGE FIELD NAME FIXED
@@ -183,15 +204,15 @@ const [originalForm, setOriginalForm] = useState(null); // To restore on cancel
   const handleSave = async (e) => {
     e.preventDefault();
 
-    await fetchParentIb(form.parentEmail); // FIRST
+    const parentIbId = await fetchParentIb(form.parentEmail);
 
-    // Check if there's an error with parent IB
-    if (form.parentIbError) {
+    // Check if lookup failed (no parentIbId returned)
+    if (form.parentEmail && !parentIbId) {
       alert("Please fix the Parent IB Email error before saving.");
       return;
     }
 
-    await submitPatchUpdate();             // THEN update
+    await submitPatchUpdate(parentIbId);
   };
 
   // ===========================================================
@@ -280,7 +301,7 @@ const [originalForm, setOriginalForm] = useState(null); // To restore on cancel
       title="Edit Profile"
       visible={visible}
       onClose={onClose}
-      footer={footer}
+      footer={userRole === 'admin' ? footer : null}
     >
       {loading ? (
         <div className="text-center py-8">Loading...</div>

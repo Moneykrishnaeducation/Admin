@@ -121,14 +121,37 @@ const Header = ({ isSidebarOpen, setIsSidebarOpen }) => {
   const handleLogout = async () => {
     setLogoutLoading(true);
     try {
-      // Tokens and user data are in HttpOnly cookies - they'll be cleared by the backend
-      // Just clear sessionStorage and navigate to login
+      // Call backend logout API to clear cookies and blacklist tokens
+      try {
+        const response = await fetch('/api/logout/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include', // Include cookies in the request
+          body: JSON.stringify({})
+        });
+        
+        if (!response.ok) {
+          console.warn('Logout API returned status:', response.status);
+          // Continue with logout even if API fails - cookies will be cleared by the backend response
+        }
+      } catch (error) {
+        console.error('Failed to call logout API:', error);
+        // Continue with logout even if API fails
+      }
+
+      // Clear all client-side storage
       sessionStorage.clear();
+      localStorage.clear();
 
       // Trigger cross-tab logout notification
       import('../utils/api.js').then(({ triggerCrossTabLogout }) => {
         triggerCrossTabLogout();
       });
+
+      // Small delay to ensure Set-Cookie headers are processed
+      await new Promise(resolve => setTimeout(resolve, 100));
 
       // Navigate to login page
       navigate("/");
@@ -178,20 +201,30 @@ const Header = ({ isSidebarOpen, setIsSidebarOpen }) => {
 
       {/* CENTER PROFILE SECTION (REPLACES LOGO) */}
 <div className="flex-1 flex justify-center">
-  <div  className="flex flex-col items-center">
-    {/* <FaUserCircle
-      className={`text-3xl md:text-4xl ${
-        isDarkMode ? "text-white" : "text-black"
-      }`}
-    /> */}
-   <span
-  className={`text-base md:text-xl mt-1 ${
-    isDarkMode ? "text-white" : "text-black"
-  }`}
->
-  {userName}
-</span>
+  <div className="group flex items-center space-x-3 px-5 py-2.5 transition-all duration-300 cursor-pointer">
+    {/* User Avatar with Glow */}
+    <div className="relative flex items-center justify-center w-8 h-8 md:w-9 md:h-9 rounded-full bg-gradient-to-br from-yellow-300 via-yellow-400 to-yellow-600 shadow-md group-hover:shadow-lg group-hover:shadow-yellow-400/50 transition-all duration-300">
+      <FaUserCircle 
+        className={`text-base md:text-lg ${isDarkMode ? "text-black" : "text-white"}`}
+      />
+      <span className="absolute inset-0 rounded-full bg-gradient-to-r from-yellow-300/30 to-transparent animate-pulse"></span>
+    </div>
+    
+    {/* Username Card */}
+    <div className="flex flex-col items-start justify-center">
+      <span className="text-xs font-bold text-yellow-500 tracking-wider uppercase opacity-70 group-hover:opacity-100 transition-opacity">Welcome</span>
+      <span
+        className={`text-sm md:text-base font-bold bg-gradient-to-r from-yellow-300 via-yellow-400 to-yellow-500 bg-clip-text text-transparent group-hover:from-yellow-200 group-hover:to-yellow-500 transition-all duration-300 line-clamp-1`}
+      >
+        {userName}
+      </span>
+    </div>
 
+    {/* Status Badge */}
+    {/* <div className="hidden sm:flex items-center space-x-1.5 ml-2 pl-2 group-hover:border-yellow-400/60 transition-colors">
+      <span className="inline-block w-2.5 h-2.5 bg-emerald-400 rounded-full shadow-md shadow-emerald-400/50 animate-pulse"></span>
+      <span className="text-xs font-semibold text-emerald-400 tracking-wide">Online</span>
+    </div> */}
   </div>
 </div>
 
@@ -324,7 +357,7 @@ const Header = ({ isSidebarOpen, setIsSidebarOpen }) => {
       )}
 
        {showLogoutPopup && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 animate-fadeIn">
+        <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50 animate-fadeIn">
           <div
             className={`w-[90%] sm:w-[350px] p-6 rounded-xl shadow-xl ${
               isDarkMode ? "bg-gray-900 text-white" : "bg-white text-black"

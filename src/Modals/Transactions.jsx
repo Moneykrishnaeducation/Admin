@@ -42,7 +42,7 @@ const Transactions = ({ visible, onClose, accountId, isDarkMode }) => {
   const fetchTransactions = async () => {
     setLoading(true);
     try {
-      const data = await client.get(`/ib-user/${accountId}/transactions/`);
+      const data = await client.get(`/api/ib-user/${accountId}/transactions/`);
 
       setCompletedData(data.completed || []);
       setPendingData(data.pending || []);

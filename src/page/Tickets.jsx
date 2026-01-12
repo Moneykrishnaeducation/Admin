@@ -6,8 +6,8 @@ import { apiCall } from "../utils/api";
 /* =====================================================
    CONFIG
 ===================================================== */
-const USER_TICKETS_API = "/tickets/";
-const ADMIN_TICKETS_API = "/admin-tickets/";
+const USER_TICKETS_API = "/api/tickets/";
+const ADMIN_TICKETS_API = "/api/admin-tickets/";
 
 const Tickets = ({ isAdmin = false }) => {
   const { isDarkMode } = useTheme();

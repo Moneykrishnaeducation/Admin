@@ -4,6 +4,7 @@
 import React from "react";
 import { useState, useCallback } from "react";
 import TableStructure from "../commonComponent/TableStructure";
+import { AdminAuthenticatedFetch } from "../utils/fetch-utils.js";
 import { jsPDF } from "jspdf";
 import { Download, FileText } from "lucide-react";
 
@@ -52,12 +53,25 @@ function convertToCSV(data, columns) {
 
 export default function ManagerTransactions() {
   const [statusFilter, setStatusFilter] = useState("all");
-  const [typeFilter, setTypeFilter] = useState("Deposit");
+  const [typeFilter, setTypeFilter] = useState("IB Clients Deposit");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const [tokenMissing, setTokenMissing] = useState(false);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+
+  // Format date to DD-MM-YYYY HH:MM:SS
+  const formatDate = (dateString) => {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const seconds = String(date.getSeconds()).padStart(2, '0');
+    return `${day}-${month}-${year} ${hours}:${minutes}:${seconds}`;
+  };
 
 const onFetch = useCallback(
   async ({ page: p = 1, pageSize: ps = 10, query = "" } = {}) => {
@@ -67,32 +81,9 @@ const onFetch = useCallback(
       // UPDATE LOCAL STATE SO TABLE KNOWS ACTIVE PAGE
       setPage(p);
       setPageSize(ps);
-      if (!window.authUtils) {
-        console.error("window.authUtils is undefined");
-        setTokenMissing(true);
-        return { data: [], total: 0 };
-      }
 
-      const isAuthed = await window.authUtils.checkAuth().catch((err) => {
-        console.error("Error in authUtils.checkAuth:", err);
-        return false;
-      });
-
-      if (!isAuthed) {
-        console.error("No authentication token found");
-        setTokenMissing(true);
-        return { data: [], total: 0 };
-      }
+      const apiClient = new AdminAuthenticatedFetch("");
       setTokenMissing(false);
-
-      let token = "";
-      try {
-        token = window.authUtils.getToken();
-      } catch (err) {
-        console.error("Error calling authUtils.getToken:", err);
-        setTokenMissing(true);
-        return { data: [], total: 0 };
-      }
 
       const params = new URLSearchParams();
       if (fromDate) params.append("start_date", fromDate);
@@ -106,16 +97,11 @@ const onFetch = useCallback(
       if (query) params.append("search", query);
 
       let url = "";
-      if (typeFilter === "Deposit") url = "/api/admin/deposit/?" + params.toString();
-      else if (typeFilter === "Withdrawal") url = "/api/admin/withdraw/?" + params.toString();
-      else if (typeFilter === "Internal Transfer") url = "/api/admin/internal-transfer/?" + params.toString();
+      if (typeFilter === "IB Clients Deposit") url = `/api/admin/ib-clients-deposit/?${params.toString()}`;
+      else if (typeFilter === "IB Clients Withdrawal") url = `/api/admin/ib-clients-withdraw/?${params.toString()}`;
+      else if (typeFilter === "IB Clients Internal Transfer") url = `/api/admin/ib-clients-internal-transfer/?${params.toString()}`;
 
-      const response = await fetch(url, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (!response.ok) throw new Error("Network response was not ok");
-      const data = await response.json();
+      const data = await apiClient.get(url);
 
       let results = [];
       let totalCount = 0;
@@ -123,12 +109,14 @@ const onFetch = useCallback(
       if (Array.isArray(data.results)) {
         results = data.results;
         totalCount = data.total ?? results.length;
+      } else if (Array.isArray(data.data)) {
+        // Handle IB clients deposit API response
+        results = data.data;
+        totalCount = data.total ?? results.length;
       } else if (Array.isArray(data)) {
         results = data;
         totalCount = data.length;
       }
-
-    
 
       results = applyStatusFilter(results, statusFilter);
 
@@ -143,10 +131,10 @@ const onFetch = useCallback(
       const paginatedResults = results.slice(startIndex, startIndex + ps);
 
       const mappedData = paginatedResults.map((item) => {
-        if (typeFilter === "Internal Transfer") {
+        if (typeFilter === "IB Clients Internal Transfer") {
           return {
             id: item.id,
-            dateTime: item.created_at ? new Date(item.created_at).toLocaleString() : "",
+            dateTime: formatDate(item.created_at),
             fromAccountId: item.from_account || "",
             toAccountId: item.to_account || "",
             accountHolder: item.it_username || "",
@@ -165,7 +153,7 @@ const onFetch = useCallback(
 
         return {
           id: item.id,
-          dateTime: item.created_at ? new Date(item.created_at).toLocaleString() : "",
+          dateTime: formatDate(item.created_at),
           accountId: item.trading_account_id || "",
           accountName: item.trading_account_name || "",
           amountUSD: item.amount ? Number(item.amount) : 0,
@@ -213,7 +201,7 @@ const onFetch = useCallback(
   };
 
   const columns =
-    typeFilter === "Internal Transfer"
+    typeFilter === "IB Clients Internal Transfer"
       ? [
           { Header: "Date/Time", accessor: "dateTime" },
           { Header: "From Account ID", accessor: "fromAccountId" },
@@ -257,28 +245,7 @@ const onFetch = useCallback(
 
   const fetchAllData = async () => {
     try {
-      if (!window.authUtils) {
-        console.error("window.authUtils is undefined");
-        return [];
-      }
-
-      const isAuthed = await window.authUtils.checkAuth().catch((err) => {
-        console.error("Error in authUtils.checkAuth:", err);
-        return false;
-      });
-
-      if (!isAuthed) {
-        console.error("No authentication token found");
-        return [];
-      }
-
-      let token = "";
-      try {
-        token = window.authUtils.getToken();
-      } catch (err) {
-        console.error("Error calling authUtils.getToken:", err);
-        return [];
-      }
+      const apiClient = new AdminAuthenticatedFetch("");
 
       const params = new URLSearchParams();
       if (fromDate) params.append("start_date", fromDate);
@@ -288,20 +255,18 @@ const onFetch = useCallback(
       if (statusFilter !== "all") params.append("status", statusFilter);
 
       let url = "";
-      if (typeFilter === "Deposit") url = "/api/admin/deposit/?" + params.toString();
-      else if (typeFilter === "Withdrawal") url = "/api/admin/withdraw/?" + params.toString();
-      else if (typeFilter === "Internal Transfer") url = "/api/admin/internal-transfer/?" + params.toString();
+      if (typeFilter === "IB Clients Deposit") url = `/api/admin/ib-clients-deposit/?${params.toString()}`;
+      else if (typeFilter === "IB Clients Withdrawal") url = `/api/admin/ib-clients-withdraw/?${params.toString()}`;
+      else if (typeFilter === "IB Clients Internal Transfer") url = `/api/admin/ib-clients-internal-transfer/?${params.toString()}`;
 
-      const response = await fetch(url, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (!response.ok) throw new Error("Network response was not ok");
-      const data = await response.json();
+      const data = await apiClient.get(url);
 
       let results = [];
       if (Array.isArray(data.results)) {
         results = data.results;
+      } else if (Array.isArray(data.data)) {
+        // Handle IB clients deposit API response
+        results = data.data;
       } else if (Array.isArray(data)) {
         results = data;
       }
@@ -309,10 +274,10 @@ const onFetch = useCallback(
       results = applyStatusFilter(results, statusFilter);
 
       const mappedData = results.map((item) => {
-        if (typeFilter === "Internal Transfer") {
+        if (typeFilter === "IB Clients Internal Transfer") {
           return {
             id: item.id,
-            dateTime: item.created_at ? new Date(item.created_at).toLocaleString() : "",
+            dateTime: formatDate(item.created_at),
             fromAccountId: item.from_account || "",
             toAccountId: item.to_account || "",
             accountHolder: item.it_username || "",
@@ -331,7 +296,7 @@ const onFetch = useCallback(
 
         return {
           id: item.id,
-          dateTime: item.created_at ? new Date(item.created_at).toLocaleString() : "",
+          dateTime: formatDate(item.created_at),
           accountId: item.trading_account_id || "",
           accountName: item.trading_account_name || "",
           amountUSD: item.amount ? Number(item.amount) : 0,
@@ -442,9 +407,9 @@ const handleExportPDF = () => {
             onChange={(e) => setTypeFilter(e.target.value)}
             value={typeFilter}
           >
-            <option value="Deposit">Deposit</option>
-            <option value="Withdrawal">Withdrawal</option>
-            <option value="Internal Transfer">Internal Transfer</option>
+            <option value="IB Clients Deposit">IB Clients Deposit</option>
+            <option value="IB Clients Withdrawal">IB Clients Withdrawal</option>
+            <option value="IB Clients Internal Transfer">IB Clients Internal Transfer</option>
           </select>
         </div>
 

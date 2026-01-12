@@ -24,6 +24,7 @@ import AlgoTradingModal from './AlgoTradingModal';
 import HistoryModal from './HistoryModal';
 import ChangeUserProfileModal from './ChangeUserProfileModal';
 import SubRowButtons from "../commonComponent/SubRowButtons";
+import { AdminAuthenticatedFetch } from "../utils/fetch-utils.js";
 
 const TradingAccountModal = ({
   visible,
@@ -37,6 +38,17 @@ const TradingAccountModal = ({
   const [activeOperation, setActiveOperation] = useState(null);
   const [selectedAccount, setSelectedAccount] = useState(null);
   const { isDarkMode } = useTheme();
+  // read user role from cookie (userRole or user_role)
+  const getCookie = (name) => {
+    const match = document.cookie.match(new RegExp('(?:^|; )' + name + '=([^;]*)'));
+    return match ? decodeURIComponent(match[1]) : null;
+  };
+
+  const [userRole, setUserRole] = useState(null);
+  useEffect(() => {
+    const role = (getCookie('userRole') || getCookie('user_role') || '').toString().toLowerCase();
+    setUserRole(role || null);
+  }, []);
 
   // Operation form states
   const [depositAmount, setDepositAmount] = useState("");
@@ -46,7 +58,7 @@ const TradingAccountModal = ({
   const [algoEnabled, setAlgoEnabled] = useState(false);
   const [disableAction, setDisableAction] = useState("Disable");
   const [historyTab, setHistoryTab] = useState("transactions");
-  const [availableGroups, setAvailableGroups] = useState([]);
+  const [availableGroups] = useState([]);
   const [accountsState, setAccountsState] = useState([]);
   const [filterAccountType, setFilterAccountType] = useState('all');
 
@@ -67,21 +79,26 @@ const TradingAccountModal = ({
     if (!visible || !userId) return;
 
     let cancelled = false;
+    const apiClient = new AdminAuthenticatedFetch("");
 
     (async () => {
       try {
-        let endpoint = `ib-user/${userId}/trading-accounts/`;
-        // Add server-side account_type filter if set
+        let endpoint = `/api/ib-user/${userId}/trading-accounts/`;
         if (filterAccountType && filterAccountType !== 'all') {
           endpoint += `?account_type=${encodeURIComponent(filterAccountType)}`;
         }
-        const headers = { "Content-Type": "application/json" };
-        const res = await fetch(endpoint, { credentials: "include", headers });
-        if (!res.ok) throw new Error(`Failed to fetch ${endpoint}: ${res.status}`);
-        const json = await res.json();
-        const items = json?.data || json?.accounts || [];
+
+        const data = await apiClient.get(endpoint);
+
+        // apiClient.get may return parsed JSON (object/array) or plain text (string)
+        if (typeof data === 'string') {
+          console.error('Expected JSON from apiClient.get but received text. Snippet:', data.slice(0,800));
+          if (!cancelled) setAccountsState([]);
+          return;
+        }
+
+        const items = data?.data || data?.accounts || data || [];
         const mapped = (Array.isArray(items) ? items : []).map((u) => ({
-          // map API fields to component expected shape
           id: u.id ?? u.pk,
           userId: u.user_id ?? u.userId ?? u.user,
           name: u.account_name || u.username || u.name || "-",
@@ -93,6 +110,7 @@ const TradingAccountModal = ({
           availableGroups: u.group_name ? [u.group_name] : [],
           raw: u,
         }));
+
         if (!cancelled) setAccountsState(mapped);
       } catch (err) {
         console.error("Failed to fetch trading accounts for user", userId, err);
@@ -333,16 +351,29 @@ const TradingAccountModal = ({
                       <td className={`p-3 border ${borderColor}`}>{row.balance || "$0"}</td>
                       <td className={`p-3 border ${borderColor}`}>{row.accountType}</td>
                       <td className={`p-3 border ${borderColor}`}>
-                        <button
-                          className={`inline-flex items-center justify-center px-3 py-1 rounded ${isDarkMode ? "bg-yellow-400 text-black" : "bg-yellow-500 text-black"} hover:bg-yellow-600`}
-                          onClick={() =>
-                            setExpandedRowId((p) =>
-                              p === row.accountId ? null : row.accountId
-                            )
-                          }
-                        >
-                          Actions
-                        </button>
+                        {userRole === 'admin' ? (
+                          <button
+                            className={`inline-flex items-center justify-center px-3 py-1 rounded ${isDarkMode ? "bg-yellow-400 text-black" : "bg-yellow-500 text-black"} hover:bg-yellow-600`}
+                            onClick={() =>
+                              setExpandedRowId((p) =>
+                                p === row.accountId ? null : row.accountId
+                              )
+                            }
+                          >
+                            Actions
+                          </button>
+                        ) : userRole === 'manager' ? (
+                          <button
+                            className={`inline-flex items-center justify-center px-3 py-1 rounded ${isDarkMode ? "bg-yellow-400 text-black" : "bg-yellow-500 text-black"} hover:bg-yellow-600`}
+                            onClick={() => {
+                              setSelectedAccount(row);
+                              setActiveOperation('history');
+                              setExpandedRowId(null);
+                            }}
+                          >
+                            History
+                          </button>
+                        ) : null}
                       </td>
                     </tr>
 
@@ -432,6 +463,7 @@ const TradingAccountModal = ({
         <ChangeUserProfileModal
           visible={activeOperation === 'profile' && !!selectedAccount}
           onClose={resetOperationForm}
+          accountId={selectedAccount?.accountId}
           groups={selectedAccount?.availableGroups || availableGroups}
           onSubmit={(groupId) => handleProfileSubmit(groupId)}
           isDarkMode={isDarkMode}

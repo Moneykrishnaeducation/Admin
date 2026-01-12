@@ -71,8 +71,21 @@ class AdminAuthenticatedFetch {
 
     // Generic fetch wrapper with authentication
     async fetchWithAuth(url, options = {}) {
-        // Prevent double /api if url already starts with /api/
-        const fullUrl = url.startsWith('/api/') ? url : this.baseURL + url;
+        // Build the full URL ensuring /api prefix
+        let fullUrl;
+        if (url.startsWith('/api/')) {
+            // Already has /api prefix
+            fullUrl = url;
+        } else if (url.startsWith('http://') || url.startsWith('https://')) {
+            // Absolute URL
+            fullUrl = url;
+        } else {
+            // Relative URL - prepend baseURL (which is /api)
+            const prefix = this.baseURL.endsWith('/') ? this.baseURL : this.baseURL + '/';
+            fullUrl = prefix + (url.startsWith('/') ? url.slice(1) : url);
+        }
+
+        console.debug(`[AdminAuthenticatedFetch] ${options.method || 'GET'} ${fullUrl}`);
 
         let headers;
         // For FormData, don't use default headers to avoid Content-Type conflict

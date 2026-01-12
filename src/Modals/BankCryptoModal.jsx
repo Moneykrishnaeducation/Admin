@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from "react";
 import ModalWrapper from "./ModalWrapper";
-import { AdminAuthenticatedFetch } from "../utils/fetch-utils.js";
-
-const apiClient = new AdminAuthenticatedFetch("");
+import { adminApiClient } from "../utils/fetch-utils.js";
 
 const BankCryptoModal = ({
   visible,
@@ -25,6 +23,18 @@ const BankCryptoModal = ({
   const [isEditMode, setIsEditMode] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  // read user role from cookie (userRole or user_role)
+  const getCookie = (name) => {
+    const match = document.cookie.match(new RegExp('(?:^|; )' + name + '=([^;]*)'));
+    return match ? decodeURIComponent(match[1]) : null;
+  };
+
+  const [userRole, setUserRole] = useState(null);
+  useEffect(() => {
+    const role = (getCookie('userRole') || getCookie('user_role') || '').toString().toLowerCase();
+    setUserRole(role || null);
+  }, []);
+
   /* ================= LOAD DETAILS ================= */
   useEffect(() => {
     if (!visible || !userId) return;
@@ -34,19 +44,31 @@ const BankCryptoModal = ({
     const fetchData = async () => {
       setLoading(true);
       try {
-        const bankData = await apiClient.get(
-          `/ib-user/${userId}/bank-details/`
-        );
+        const endpoint = `/ib-user/${userId}/bank-details/`;
+        console.log("Fetching bank details from:", endpoint);
+        const bankData = await adminApiClient.get(endpoint);
 
         if (cancelled) return;
 
         const newData = {
-          bankName: String(bankData?.bank_name || ""),
-          accountNumber: String(bankData?.account_number || ""),
-          branch: String(bankData?.branch_name || ""),
-          ifsc: String(bankData?.ifsc_code || ""),
-          walletAddress: String(bankData?.wallet_address || ""),
-          exchangeName: String(bankData?.exchange_name || ""),
+          bankName: String(
+            bankData?.['bank-details-name'] ?? bankData?.bank_name ?? ''
+          ),
+          accountNumber: String(
+            bankData?.['bank-details-account'] ?? bankData?.account_number ?? ''
+          ),
+          branch: String(
+            bankData?.['bank-details-branch'] ?? bankData?.branch_name ?? bankData?.branch ?? ''
+          ),
+          ifsc: String(
+            bankData?.['bank-details-ifsc'] ?? bankData?.ifsc_code ?? bankData?.ifsc ?? ''
+          ),
+          walletAddress: String(
+            bankData?.['crypto-wallet'] ?? bankData?.wallet_address ?? ''
+          ),
+          exchangeName: String(
+            bankData?.['crypto-exchange'] ?? bankData?.exchange_name ?? bankData?.currency ?? ''
+          ),
         };
 
         setData(newData);
@@ -88,7 +110,9 @@ const BankCryptoModal = ({
 
     setLoading(true);
     try {
-      await apiClient.patch(`/ib-user/${userId}/bank-details/`, {
+      const endpoint = `/ib-user/${userId}/bank-details/`;
+      console.log("Saving bank details to:", endpoint);
+      await adminApiClient.post(endpoint, {
         bank_name: data.bankName,
         account_number: data.accountNumber,
         branch_name: data.branch,
@@ -128,7 +152,8 @@ const BankCryptoModal = ({
     : "bg-white text-black border-yellow-400";
 
   /* ================= FOOTER ================= */
-  const footer = (
+  // Show footer buttons only to admin role. Managers and other roles see no footer buttons.
+  const footer = (userRole && userRole.includes('admin')) ? (
     <div className="flex justify-center gap-4">
       {!isEditMode ? (
         <button
@@ -155,7 +180,7 @@ const BankCryptoModal = ({
         </>
       )}
     </div>
-  );
+  ) : null;
 
   /* ================= RENDER ================= */
   return (

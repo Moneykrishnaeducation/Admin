@@ -35,10 +35,23 @@ export default function IbStatusModal({
   };
 
   const fetchPATCH = async (payload) => {
-    return await apiClient.patch(
-      `/ib-user/${userId}/ib-status/`,
-      payload
-    );
+    try {
+      console.log("Patching to /api/ib-user/" + userId + "/ib-status/ with:", payload);
+      const result = await apiClient.patch(
+        `/api/ib-user/${userId}/ib-status/`,
+        payload
+      );
+      console.log("PATCH response:", result);
+      return result;
+    } catch (err) {
+      console.error("PATCH error details:", {
+        message: err.message,
+        status: err.status,
+        response: err.response,
+        url: `/api/ib-user/${userId}/ib-status/`,
+      });
+      throw err;
+    }
   };
 
   /* ===================== LOAD DATA ===================== */
@@ -52,8 +65,8 @@ export default function IbStatusModal({
         setLoading(true);
 
         const [profilesRes, statusRes] = await Promise.all([
-          fetchGET(`/ib-user/${userId}/ib-profiles/`),
-          fetchGET(`/ib-user/${userId}/ib-status/`),
+          fetchGET(`/api/ib-user/${userId}/ib-profiles/`),
+          fetchGET(`/api/ib-user/${userId}/ib-status/`),
         ]);
 
         if (cancelled) return;
@@ -120,7 +133,7 @@ export default function IbStatusModal({
     <div className="fixed inset-0 flex items-center justify-center z-50">
       {/* OVERLAY */}
       <div
-        className="absolute inset-0 bg-black bg-opacity-50"
+        className="absolute inset-0 bg-black/20 backdrop-blur-md"
         onClick={onClose}
       />
 

@@ -199,8 +199,9 @@ const Dashboard = () => {
                 shadow-md
                 border-l-4 border-yellow-500
                 transition-all duration-300
-                ${isDarkMode ? "bg-gray-800" : "bg-white"}
+                ${isDarkMode ? "" : "bg-white"}
               `}
+                style={isDarkMode ? { backgroundColor: 'oklch(0.20 0 0)' } : {}}
               >
                 <p className={`text-sm sm:text-base ${isDarkMode ? "text-white" : "text-gray-900"}`}>
                   {activity.message}

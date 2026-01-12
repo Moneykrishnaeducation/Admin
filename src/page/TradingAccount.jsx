@@ -412,6 +412,7 @@ const TradingAccountPage = () => {
       <ChangeUserProfileModal
         visible={changeProfileOpen}
         onClose={() => setChangeProfileOpen(false)}
+	accountId={profileAccountId}
         groups={Array.from(new Set(data.map(d => d.group))).map(g => ({ id: g, name: g }))}
         onSubmit={(selectedGroup) => {
           setChangeProfileOpen(false);

@@ -116,7 +116,7 @@ const TableStructure = ({
         <div className="flex items-center gap-2">&nbsp;</div>
       </div>
 
-      <div className="w-full lg:w-[calc(100vw-20vw)] overflow-x-auto overflow-y-auto rounded-lg">
+      <div className="w-full overflow-x-auto overflow-y-auto rounded-lg">
         <table className={`w-full text-left text-sm md:text-base ${tableBg}`}>
           <thead>
             <tr className="border-b-2 border-yellow-400">

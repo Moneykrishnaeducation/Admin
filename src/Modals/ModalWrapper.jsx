@@ -25,7 +25,7 @@ const ModalWrapper = ({ title, visible, onClose, children, footer }) => {
      THEME CLASSES
   =============================== */
   const overlayCls = `
-    fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-3
+    fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-3
   `;
 
   const modalCls = isDarkMode
