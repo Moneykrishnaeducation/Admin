@@ -153,6 +153,7 @@ const Partnership = () => {
     commissionProfiles: "/api/commissioning-profiles/",
     createCommissionProfile: "/api/create-commissioning-profile/",
     tradingGroups: "/api/trading-groups/",
+    tradingGroupsNonDemo: "/api/trading-groups-non-demo/",
     partnerList: "/api/admin/ib-users/",
     withdrawalRequest: "/api/admin/commission-withdrawal-history",
     withdrawalPending: "/api/admin/pending-withdrawal-requests",
@@ -1050,7 +1051,7 @@ const Partnership = () => {
   };
 
   const fetchAvailableGroups = async () => {
-    const endpoint = API_ENDPOINTS.tradingGroups;
+    const endpoint = API_ENDPOINTS.tradingGroupsNonDemo;
     if (!endpoint) return;
     setModalLoading(true);
     setError(null);
