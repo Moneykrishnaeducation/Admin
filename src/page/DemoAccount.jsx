@@ -1,14 +1,14 @@
-import React, { useState, useMemo, useCallback } from "react";
+import React, { useState, useMemo, useCallback, useEffect } from "react";
 import TableStructure from "../commonComponent/TableStructure";
 import SubRowButtons from "../commonComponent/SubRowButtons";
 import { get, post } from "../utils/api-config"; // Ensure post is available
-
+import { useTheme } from '../context/ThemeContext';
 const Modal = ({ open, onClose, title, children, actions, width = "w-80" }) => {
   if (!open) return null;
 
   return (
     <div
-      className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50"
+      className="fixed inset-0 flex items-center justify-center z-50  bg-black/60 backdrop-blur-sm"
       onClick={onClose}
     >
       <div
@@ -24,6 +24,7 @@ const Modal = ({ open, onClose, title, children, actions, width = "w-80" }) => {
 };
 
 const DemoAccount = () => {
+  const { isDarkMode } = useTheme();
   const [refreshKey, setRefreshKey] = useState(0);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
 
@@ -49,17 +50,45 @@ const DemoAccount = () => {
   // View modal tabs
   const [viewTab, setViewTab] = useState("history");
   const [viewData, setViewData] = useState(null);
-
+  // Helper: safe currency formatter for view modal
+  const formatCurrency = useCallback((v) => {
+    try {
+      if (v == null || v === '') return '0.00';
+      const n = Number(String(v).replace(/[^0-9.-]+/g, ''));
+      return isFinite(n) ? n.toFixed(2) : '0.00';
+    } catch (e) {
+      return '0.00';
+    }
+  }, []);
   // Table columns
   const columns = useMemo(() => [
     { Header: "User ID", accessor: "user_id" },
     { Header: "Name", accessor: "name" },
     { Header: "Email", accessor: "email" },
-    { Header: "Phone", accessor: "phone" },
+    // { Header: "Phone", accessor: "phone" },
     { Header: "Account ID", accessor: "account_id" },
-    { Header: "Registered Date", accessor: "registered_date" },
-    { Header: "Country", accessor: "country" },
-  ], []);
+    { Header: "Balance", accessor: "balance" },
+    { Header: "Leverage", accessor: "leverage" },
+    {
+      Header: "Status",
+      accessor: "is_active",
+      Cell: (cell) => {
+        const raw = (cell && typeof cell === 'object' && 'value' in cell) ? cell.value : cell;
+        const str = raw == null ? "" : String(raw).toLowerCase();
+        const isActive = raw === true 
+        || str === "true" || str === "1" || str === "active" || str === "running";
+        const label = isActive ? "Active" : "Inactive";
+        const colorClass = isActive ? "bg-green-500" : "bg-red-500";
+
+        return (
+          <span className="inline-flex items-center gap-2">
+            <span className={`${colorClass} w-3 h-3 rounded-full inline-block`} />
+            <span className={`text-xs font-semibold ${isDarkMode ? 'text-white' : 'text-black'}`}>{label}</span>
+          </span>
+        );
+      },
+    },
+  ], [isDarkMode]);
 
   const historyColumns = [
     { Header: "Date", accessor: "created_at" },
@@ -125,12 +154,9 @@ const DemoAccount = () => {
       console.error("Failed to fetch demo accounts page:", err);
       return { data: [], total: 0 };
     }
-  }, [refreshKey]);
+  }, [isInitialLoading]);
 
-  // when refresh is triggered, show initial loading indicator again
-  React.useEffect(() => {
-    setIsInitialLoading(true);
-  }, [refreshKey]);
+
 
   // Modals
   const openLeverageModal = (row) => {
@@ -182,6 +208,7 @@ const DemoAccount = () => {
 
       alert("Leverage updated successfully");
       setLeverageModal(false);
+      setIsInitialLoading(true);
       setRefreshKey((k) => k + 1);
     } catch (err) {
       console.error(err);
@@ -199,6 +226,7 @@ const DemoAccount = () => {
       setSelectedRow(null);
 
       // trigger table refresh
+      setIsInitialLoading(true);
       setRefreshKey((k) => k + 1);
     } catch (err) {
       console.error(err);
@@ -316,17 +344,18 @@ const DemoAccount = () => {
         open={leverageModal}
         onClose={() => setLeverageModal(false)}
         title="Reset Leverage"
+        isDarkMode={isDarkMode}
         actions={[
-          <button key="cancel" className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600 text-white" onClick={() => setLeverageModal(false)}>Cancel</button>,
+          <button key="cancel" className={`px-4 py-2 rounded ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-white' : 'bg-gray-300 hover:bg-gray-400 text-black'}`} onClick={() => setLeverageModal(false)}>Cancel</button>,
           <button key="ok" className="bg-yellow-500 px-4 py-2 rounded text-black hover:bg-yellow-600" onClick={handleLeverageSubmit}>OK</button>,
         ]}
       >
-        <p className="mb-2 text-white">Current Leverage: {leverage}</p>
-        <label htmlFor="leverageInput" className="block mb-1 text-white">Select or enter leverage</label>
+        <p className={`mb-2 ${isDarkMode ? 'text-white' : 'text-black'}`}>Current Leverage: {leverage}</p>
+        <label htmlFor="leverageInput" className={`block mb-1 ${isDarkMode ? 'text-white' : 'text-black'}`}>Select or enter leverage</label>
         <input
           list="leverageOptions"
           id="leverageInput"
-          className="border border-gray-300 rounded px-3 py-2 w-full mb-4 bg-gray-800 text-white"
+          className={`border border-gray-300 rounded px-3 py-2 w-full mb-4 ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-black'}`}
           value={leverage}
           onChange={(e) => setLeverage(e.target.value)}
         />
@@ -339,18 +368,19 @@ const DemoAccount = () => {
       <Modal
         open={balanceModal}
         onClose={() => setBalanceModal(false)}
-        title="Reset Balance"
+        title={<h2 className="text-[#d4af37] font-semibold">Reset Balance</h2>}
+        isDarkMode={isDarkMode}
         actions={[
-          <button key="cancel" className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600 text-white" onClick={() => setBalanceModal(false)}>Cancel</button>,
+          <button key="cancel" className={`px-4 py-2 rounded ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-white' : 'bg-gray-300 hover:bg-gray-400 text-black'}`} onClick={() => setBalanceModal(false)}>Cancel</button>,
           <button key="ok" className="bg-yellow-500 px-4 py-2 rounded text-black hover:bg-yellow-600" onClick={handleBalanceSubmit}>OK</button>,
         ]}
       >
-        <p className="mb-2 text-white">Current Balance: $10000.00</p>
-        <label htmlFor="balanceInput" className="block mb-1 text-white">Enter new balance</label>
+        <p className={`mb-2 text-lg ${isDarkMode ? 'text-white' : 'text-black'}`}>Current Balance: <span className="text-[#d4af37] font-semibold">${formatCurrency(selectedRow?.balance ?? selectedRow?.current_balance ?? selectedRow?.account_summary?.balance ?? newBalance)}</span></p>
+        <label htmlFor="balanceInput" className={`block mb-1 ${isDarkMode ? 'text-white' : 'text-black'}`}>Enter new balance</label>
         <input
           type="number"
           id="balanceInput"
-          className="border border-gray-300 rounded px-3 py-2 w-full mb-4 bg-gray-800 text-white"
+          className={`border border-gray-300 rounded px-3 py-2 w-full mb-4 ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-black'}`}
           value={newBalance}
           onChange={(e) => setNewBalance(e.target.value)}
           min="0"
@@ -362,32 +392,52 @@ const DemoAccount = () => {
       <Modal
         open={viewModal}
         onClose={() => setViewModal(false)}
-        title="View Account Details"
-        width="w-150"
+        title={<h2 className="text-[#d4af37] font-semibold">View Account Details</h2>}
+        width="w-[70%]"
+        isDarkMode={isDarkMode}
         actions={[
-          <button key="close" className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600 text-white" onClick={() => setViewModal(false)}>Close</button>,
+          <button key="close" className={`px-4 py-2 rounded ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-white' : 'bg-gray-300 hover:bg-gray-400 text-black'}`} onClick={() => setViewModal(false)}>Close</button>,
         ]}
       >
         {/* Account Summary */}
         {viewData && (
-          <div className="flex justify-between text-white mb-4 space-x-6">
-            <h3 className="text-lg font-semibold">Balance: ${viewData.account_summary?.balance || 0}</h3>
-            <h3 className="text-lg font-semibold">Equity: ${viewData.account_summary?.equity || 0}</h3>
-            <h3 className="text-lg font-semibold">Open Positions: {viewData.account_summary?.open_positions || 0}</h3>
+          <div className="mb-4">
+            <div className={`p-4 rounded-lg border border-yellow-500/30 mb-3 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
+              <div className={`grid grid-cols-1 sm:grid-cols-3 gap-4 ${isDarkMode ? 'text-white' : 'text-black'}`}>
+                <div>
+                  <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Balance</p>
+                  <p className="text-yellow-400 text-lg font-semibold">${formatCurrency(viewData.account_summary?.balance)}</p>
+                </div>
+
+                <div>
+                  <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Equity</p>
+                  <p className="text-yellow-400 text-lg font-semibold">${formatCurrency(viewData.account_summary?.equity)}</p>
+                </div>
+
+                <div>
+                  <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Open Positions</p>
+                  <p className="text-yellow-400 text-lg font-semibold">{viewData.account_summary?.open_positions || 0}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Controls: History / Positions (left) and Search (right) on one line */}
+            <div className="flex items-center justify-between gap-4 mb-4 flex-nowrap whitespace-nowrap">
+              <div className="flex gap-3 mt-2">
+                <button
+                  className={`px-4 py-2 rounded ${viewTab === 'history' ? 'bg-yellow-600 text-black' : (isDarkMode ? 'bg-gray-700 text-white' : 'bg-gray-300 text-black')}`}
+                  onClick={() => setViewTab('history')}
+                >History</button>
+                <button
+                  className={`px-4 py-2 rounded ${viewTab === 'positions' ? 'bg-yellow-600 text-black' : (isDarkMode ? 'bg-gray-700 text-white' : 'bg-gray-300 text-black')}`}
+                  onClick={() => setViewTab('positions')}
+                >Positions</button>
+              </div>
+
+              {/* search handled by table below; removed duplicate top-right search */}
+            </div>
           </div>
         )}
-
-        {/* Tabs */}
-        <div className="flex gap-4 mb-4">
-          <button
-            className={`px-4 py-2 rounded ${viewTab === 'history' ? 'bg-yellow-600 text-black' : 'bg-gray-700 text-white'}`}
-            onClick={() => setViewTab('history')}
-          >History</button>
-          <button
-            className={`px-4 py-2 rounded ${viewTab === 'positions' ? 'bg-yellow-600 text-black' : 'bg-gray-700 text-white'}`}
-            onClick={() => setViewTab('positions')}
-          >Positions</button>
-        </div>
 
         {/* Tables */}
         {viewTab === 'history' && viewData && (
