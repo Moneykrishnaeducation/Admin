@@ -50,12 +50,21 @@ const TradingAccountPage = () => {
   const [creditInModalOpen, setCreditInModalOpen] = useState(false);
   const [creditOutModalOpen, setCreditOutModalOpen] = useState(false);
   const [disableModalOpen, setDisableModalOpen] = useState(false);
+  const [disableModalClosed, setDisableModalClosed] = useState(false);
   const [historyModalOpen, setHistoryModalOpen] = useState(false);
   const [algoModalOpen, setAlgoModalOpen] = useState(false);
   const [leverageModalOpen, setLeverageModalOpen] = useState(false);
 
   const [selectedAccountId, setSelectedAccountId] = useState("");
   const [selectedLeverage, setSelectedLeverage] = useState("1:500");
+
+  // Toast state
+  const [toast, setToast] = useState(null);
+
+  const showToast = (message, type = 'error') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 4000);
+  };
 
   // Change Profile modal state and data
   const [changeProfileOpen, setChangeProfileOpen] = useState(false);
@@ -94,17 +103,21 @@ const TradingAccountPage = () => {
             : typeof resJson.count === "number"
               ? resJson.count
               : items.length;
-        const mapped = items.map((u) => ({
-          userId: u.user_id ?? u.id ?? u.pk,
-          name: `${u.username || "-"}`.trim(),
-          email: u.email,
-          accountId: u.account_id || "-",
-          balance: typeof u.balance === "number" ? u.balance : 0,
-          leverage: u.leverage || "-",
-          status: u.status ? "Running" : "Stopped",
-          country: u.country || "-",
-          isEnabled: Boolean(u.is_is_enabled ?? u.enabled ?? u.is_enabled),
-        }));
+        const mapped = items.map((u) => {
+          // Use is_enabled field from API
+          const isEnabled = Boolean(u.is_enabled);
+          return {
+            userId: u.user_id ?? u.id ?? u.pk,
+            name: `${u.username || "-"}`.trim(),
+            email: u.email,
+            accountId: u.account_id || "-",
+            balance: typeof u.balance === "number" ? u.balance : 0,
+            leverage: u.leverage || "-",
+            status: u.status ? "Running" : "Stopped",
+            country: u.country || "-",
+            isEnabled: isEnabled,
+          };
+        });
         setData(mapped);
         return { data: mapped, total };
       } catch (err) {
@@ -116,7 +129,7 @@ const TradingAccountPage = () => {
   );
 
   React.useEffect(() => {
-    fetchUsers(page, pageSize);
+    fetchUsers({ page, pageSize, query: "" });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, pageSize]);
 
@@ -223,12 +236,50 @@ const TradingAccountPage = () => {
 
   const handleOpenDisableModal = (row) => {
     setDisableAccountId(row.accountId);
-    setDisableAction("Enable Account");
+    setDisableAction(row.isEnabled ? "Disable Account" : "Enable Account");
     setDisableModalOpen(true);
   };
 
+  // Direct toggle function for expand row button
+  const handleToggleAccountStatus = async (account) => {
+    try {
+      const payload = {
+        accountId: account.accountId,
+        action: account.isEnabled ? "disable" : "enable",
+      };
+
+      const response = await fetch(`/api/admin/toggle-account-status/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to update account status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      
+      // Update state with the response data
+      setData(prevData =>
+        prevData.map(acc =>
+          acc.accountId === account.accountId
+            ? { ...acc, isEnabled: result.is_enabled }
+            : acc
+        )
+      );
+
+      showToast(`Account ${account.accountId} ${result.is_enabled ? 'Enabled' : 'Disabled'}`, 'success');
+    } catch (error) {
+      console.error('Error updating account status:', error);
+      showToast('Failed to update account status: ' + error.message, 'error');
+    }
+  };
+
+  // Keep this for the modal
   const handleDisableProceed = () => {
-    alert(`${disableAction} for Account ${disableAccountId}`);
+    handleToggleAccountStatus({ accountId: disableAccountId });
     setDisableModalOpen(false);
   };
 
@@ -276,6 +327,9 @@ const TradingAccountPage = () => {
 
   const renderRowSubComponent = (row) => {
     const isExpanded = expandedId === row.accountId;
+    
+    // Get the latest account data from the state to ensure we have current isEnabled status
+    const currentAccount = data.find(acc => acc.accountId === row.accountId) || row;
 
 
     const actionItems = [
@@ -298,11 +352,6 @@ const TradingAccountPage = () => {
         icon: <MinusCircle size={18} />,
         label: "Credit Out",
         onClick: () => handleOpenCreditOutModal(row),
-      },
-      {
-        icon: <Ban size={18} />,
-        label: "Disable",
-        onClick: () => handleOpenDisableModal(row),
       },
       {
         icon: <CheckCircle size={18} />,
@@ -346,9 +395,24 @@ const TradingAccountPage = () => {
               transition: "max-height 0.3s ease, opacity 0.3s ease",
               opacity: isExpanded ? 1 : 0,
             }}
-            className="text-yellow-400 rounded p-2 flex gap-3 flex-wrap"
+            className="text-yellow-400 rounded p-2 flex gap-3 flex-wrap items-center justify-between"
           >
             <SubRowButtons actionItems={actionItems} />
+            <div className="flex items-center gap-2 ml-auto">
+              <span className={`text-sm font-semibold ${currentAccount.isEnabled ? "text-green-400" : "text-red-400"}`}>
+                {currentAccount.isEnabled ? "Enabled" : "Disabled"}
+              </span>
+              <button
+                onClick={() => handleToggleAccountStatus(currentAccount)}
+                className={`relative w-14 h-7 rounded-full transition-colors duration-300 ${currentAccount.isEnabled ? "bg-green-500" : "bg-red-500"
+                  } hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-400`}
+              >
+                <div
+                  className={`absolute top-1 h-5 w-5 bg-white rounded-full transition-transform duration-300 ${currentAccount.isEnabled ? "translate-x-7" : "translate-x-1"
+                    }`}
+                />
+              </button>
+            </div>
           </div>
         </td>
       </tr>
@@ -358,6 +422,20 @@ const TradingAccountPage = () => {
   return (
     <div className="p-4 relative">
       {error && <div className="text-red-400 mb-2">{error}</div>}
+
+      {/* Toast Notification */}
+      {toast && (
+        <div
+          className={`fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg z-[999] animate-pulse ${
+            toast.type === 'success'
+              ? 'bg-green-500 text-white'
+              : 'bg-red-500 text-white'
+          }`}
+          role="alert"
+        >
+          {toast.message}
+        </div>
+      )}
 
       {/* Internal Transfer Button */}
       <div className="flex justify-center md:absolute md:top-4 md:right-4 md:left-auto mb-4 md:mb-0 z-10">

@@ -99,9 +99,9 @@ const TableStructure = ({
   return (
     <div className="w-full overflow-auto">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-3">
-        <div className="flex items-center gap-3 ">
+        <div className="flex items-center gap-3 w-full md:w-auto">
           {topActions && <div className="mr-2">{topActions}</div>}
-          <span className="flex items-center relative min-w-80"><Search className="text-yellow-600 absolute left-1" size={18} />
+          <span className="flex items-center relative w-full md:min-w-80"><Search className="text-yellow-600 absolute left-1" size={18} />
           <input
             value={query}
             onChange={(e) => {
