@@ -60,6 +60,7 @@ const MamAccount = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("mam"); // "mam" or "investor"
   const [expandedRows, setExpandedRows] = useState(new Set());
+  const [data, setData] = useState([]);
   const [modalAccountId, setModalAccountId] = useState("");
   const [disableAccountId, setDisableAccountId] = useState("");
   const [disableAction, setDisableAction] = useState("Enable Account");
@@ -73,6 +74,14 @@ const MamAccount = () => {
   const [creditOutModalOpen, setCreditOutModalOpen] = useState(false);
   const [disableModalOpen, setDisableModalOpen] = useState(false);
   const [historyModalOpen, setHistoryModalOpen] = useState(false);
+
+  // Toast state
+  const [toast, setToast] = useState(null);
+
+  const showToast = (message, type = 'error') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 2500);
+  };
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -95,7 +104,8 @@ const MamAccount = () => {
   };
 
   const handleOpenDepositModal = (row) => {
-    setModalAccountId(row.accountId || "");
+    const acctId = activeTab === 'mam' ? (row.accountId || "") : (row.tradingAccountId || "");
+    setModalAccountId(acctId);
     setDepositModalOpen(true);
   };
 
@@ -104,7 +114,8 @@ const MamAccount = () => {
   };
 
   const handleOpenWithdrawModal = (row) => {
-    setModalAccountId(row.accountId || "");
+    const acctId = activeTab === 'mam' ? (row.accountId || "") : (row.tradingAccountId || "");
+    setModalAccountId(acctId);
     setWithdrawModalOpen(true);
   };
 
@@ -113,7 +124,8 @@ const MamAccount = () => {
   };
 
   const handleOpenCreditInModal = (row) => {
-    setModalAccountId(row.accountId || "");
+    const acctId = activeTab === 'mam' ? (row.accountId || "") : (row.tradingAccountId || "");
+    setModalAccountId(acctId);
     setCreditInModalOpen(true);
   };
 
@@ -122,7 +134,8 @@ const MamAccount = () => {
   };
 
   const handleOpenCreditOutModal = (row) => {
-    setModalAccountId(row.accountId || "");
+    const acctId = activeTab === 'mam' ? (row.accountId || "") : (row.tradingAccountId || "");
+    setModalAccountId(acctId);
     setCreditOutModalOpen(true);
   };
 
@@ -140,13 +153,53 @@ const MamAccount = () => {
     setDisableModalOpen(false);
   };
 
+  const handleToggleAccountStatus = async (account) => {
+    try {
+      const acctId = activeTab === 'mam' ? account.accountId : account.tradingAccountId;
+      const payload = {
+        accountId: acctId,
+        action: account.isEnabled ? "disable" : "enable",
+      };
+
+      const response = await fetch(`/api/admin/toggle-account-status/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to update account status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      
+      // Update state with the response data
+      setData(prevData =>
+        prevData.map(acc => {
+          if (activeTab === 'mam') {
+            return acc.accountId === acctId ? { ...acc, isEnabled: result.is_enabled } : acc;
+          } else {
+            return acc.tradingAccountId === acctId ? { ...acc, isEnabled: result.is_enabled } : acc;
+          }
+        })
+      );
+
+      showToast(`Account ${acctId} ${result.is_enabled ? 'Enabled' : 'Disabled'}`, 'success');
+    } catch (error) {
+      console.error('Error updating account status:', error);
+      showToast('Failed to update account status: ' + error.message, 'error');
+    }
+  };
+
   const handleDisableProceed = () => {
-    alert(`${disableAction} for Account ${disableAccountId}`);
+    handleToggleAccountStatus({ accountId: disableAccountId, isEnabled: true });
     setDisableModalOpen(false);
   };
 
   const handleOpenHistoryModal = (row) => {
-    setHistoryAccountId(row.accountId || "");
+    const acctId = activeTab === 'mam' ? (row.accountId || "") : (row.tradingAccountId || "");
+    setHistoryAccountId(acctId);
     setHistoryModalOpen(true);
   };
 
@@ -180,6 +233,11 @@ const MamAccount = () => {
 
   const renderRowSubComponent = (row) => {
     const isExpanded = expandedRows.has(row.id);
+    
+    // Get the latest account data from the state to ensure we have current isEnabled status
+    const acctId = activeTab === 'mam' ? row.accountId : row.tradingAccountId;
+    const currentAccount = data.find(acc => (activeTab === 'mam' ? acc.accountId === acctId : acc.tradingAccountId === acctId)) || row;
+
     const actionItems = [
       {
         icon: "💰",
@@ -201,8 +259,7 @@ const MamAccount = () => {
         label: "Credit Out",
         onClick: () => handleOpenCreditOutModal(row),
       },
-      { icon: "🛑", label: "Disable", onClick: () => handleOpenDisableModal(row) },
-      { icon: "🕒", label: "History", onClick: () => handleOpenHistoryModal(row) },
+      { icon: "", label: "History", onClick: () => handleOpenHistoryModal(row) },
     ];
 
     return (
@@ -210,14 +267,31 @@ const MamAccount = () => {
         <td colSpan={columns.length} className="p-0 m-0 border-0">
           <div
             style={{
-              maxHeight: isExpanded ? 100 : 0,
+              maxHeight: isExpanded ? 120 : 0,
               overflow: "hidden",
               transition: "max-height 0.3s ease, opacity 0.3s ease",
               opacity: isExpanded ? 1 : 0,
             }}
-            className="bg-gray-800 text-yellow-400 rounded p-2 flex gap-4 flex-wrap"
+            className="bg-gray-800 text-yellow-400 rounded p-2 flex gap-4 flex-wrap items-center justify-between"
           >
             <SubRowButtons actionItems={actionItems} />
+            <div className="flex items-center gap-2 ml-auto">
+              <span className={`text-sm font-semibold ${currentAccount.isEnabled ? "text-green-400" : "text-red-400"}`}>
+                {currentAccount.isEnabled ? "Enabled" : "Disabled"}
+              </span>
+              <button
+                onClick={() => handleToggleAccountStatus(currentAccount)}
+                className={`relative w-14 h-7 rounded-full transition-colors duration-300 ${
+                  currentAccount.isEnabled ? "bg-green-500" : "bg-red-500"
+                } hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-400`}
+              >
+                <div
+                  className={`absolute top-1 h-5 w-5 bg-white rounded-full transition-transform duration-300 ${
+                    currentAccount.isEnabled ? "translate-x-7" : "translate-x-1"
+                  }`}
+                />
+              </button>
+            </div>
           </div>
         </td>
       </tr>
@@ -236,8 +310,6 @@ const MamAccount = () => {
       params.set('search', String(query.trim()));
     }
 
-    console.log('MAM Fetch URL:', `${endpoint}?${params.toString()}`);
-
     try {
       const client = window && window.adminApiClient ? window.adminApiClient : null;
       let resJson;
@@ -250,14 +322,13 @@ const MamAccount = () => {
         resJson = await res.json();
       }
 
-      console.log('MAM Fetch Response:', resJson);
-
       // Expect { data: [...], total: N } or fallback to array
       const items = Array.isArray(resJson.data) ? resJson.data : (Array.isArray(resJson) ? resJson : (resJson.results || []));
       const total = typeof resJson.total === 'number' ? resJson.total : (typeof resJson.count === 'number' ? resJson.count : items.length);
 
       const mapped = items.map((item, idx) => {
         if (activeTab === 'mam') {
+          const isEnabled = Boolean(item.is_enabled ?? true);
           return {
             id: item.id ?? item.pk ?? idx,
             userId: item.user_id ?? item.user ?? item.userId ?? '',
@@ -270,10 +341,12 @@ const MamAccount = () => {
             riskLevel: item.risk_level ?? item.riskLevel ?? '',
             payoutFrequency: item.payout_frequency ?? item.payoutFrequency ?? '',
             accountId: item.account_id ?? item.accountId ?? '',
+            isEnabled: isEnabled,
           };
         }
 
         // investor mapping
+        const isEnabled = Boolean(item.is_enabled ?? true);
         return {
           id: item.id ?? item.pk ?? idx,
           userId: item.user_id ?? item.user ?? item.userId ?? '',
@@ -286,9 +359,11 @@ const MamAccount = () => {
             Number(item.balance ?? item.equity ?? 0)
           ),
           profit: item.profit ?? item.total_profit ?? 0,
+          isEnabled: isEnabled,
         };
       });
 
+      setData(mapped);
       return { data: mapped, total };
     } catch (err) {
       console.error('MAM fetch error', err);
@@ -348,13 +423,27 @@ const MamAccount = () => {
         <TableStructure
           key={activeTab}
           columns={columns}
-          data={[]}
+          data={data}
           serverSide={true}
           onFetch={handleFetch}
           onRowClick={toggleRowExpanded}
           renderRowSubComponent={renderRowSubComponent}
         />
       </div>
+
+      {/* Toast Notification */}
+      {toast && (
+        <div
+          className={`fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg z-[999] animate-pulse ${
+            toast.type === 'success'
+              ? 'bg-green-500 text-white'
+              : 'bg-red-500 text-white'
+          }`}
+          role="alert"
+        >
+          {toast.message}
+        </div>
+      )}
 
       <DepositModal
         visible={depositModalOpen}
