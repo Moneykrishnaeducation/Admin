@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import { useTheme } from "../context/ThemeContext";
 
-const ModalWrapper = ({ title, visible, onClose, children, footer }) => {
+const ModalWrapper = ({ title, visible, onClose, children, footer, maxWidthClass = 'max-w-3xl' }) => {
   const { isDarkMode } = useTheme();
 
   /* ===============================
@@ -64,7 +64,7 @@ const ModalWrapper = ({ title, visible, onClose, children, footer }) => {
         <div
           onClick={(e) => e.stopPropagation()}
           className={`
-            relative w-full max-w-3xl min-w-[320px]
+            relative w-full ${maxWidthClass} min-w-[320px]
             rounded-xl shadow-2xl
             ${modalCls}
             flex flex-col

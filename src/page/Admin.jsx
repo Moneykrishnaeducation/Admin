@@ -2,6 +2,9 @@ import React, { useState, useEffect } from "react";
 import { Pencil, Trash2, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "../context/ThemeContext";
+import ChangeStatusModal from "../Modals/ChangeStatusModal";
+import ConfirmModal from "../Modals/ConfirmModal";
+import MessageModal from "../Modals/MessageModal";
 
 const AdminManagerList = () => {
   const navigate = useNavigate();
@@ -12,6 +15,21 @@ const AdminManagerList = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1); // Pagination state
+
+  const [statusModalOpen, setStatusModalOpen] = useState(false);
+  const [selectedUserRow, setSelectedUserRow] = useState(null);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [pendingDeleteItem, setPendingDeleteItem] = useState(null);
+  const [createLoading, setCreateLoading] = useState(false);
+  const [messageOpen, setMessageOpen] = useState(false);
+  const [messageTitle, setMessageTitle] = useState('');
+  const [messageText, setMessageText] = useState('');
+
+  const showMessage = (title, text) => {
+    setMessageTitle(title || 'Message');
+    setMessageText(text || '');
+    setMessageOpen(true);
+  };
 
   const rowsPerPage = 10; // 10 rows per page
 
@@ -73,6 +91,8 @@ const AdminManagerList = () => {
 
       const mapped = items.map((user) => ({
         id: user.id,
+        userId: user.userId ?? user.id ?? user.pk,
+        raw: user,
         name: `${user.first_name || ""} ${user.last_name || ""}`.trim(),
         email: user.email || "-",
         role: user.role || "-",
@@ -115,28 +135,120 @@ const AdminManagerList = () => {
   };
 
   // TEMPORARY Create New (Until POST API is connected)
-  const handleAdd = () => {
-    const newEntry = {
-      id: list.length + 1,
-      name: `${form.firstName} ${form.lastName}`,
-      email: form.email,
-      role: form.role,
-      elevated: new Date().toLocaleString(),
-    };
-    setList([...list, newEntry]);
-    setShowCreateModal(false);
-    setForm({
-      firstName: "",
-      lastName: "",
-      email: "",
-      phone: "",
-      address: "",
-      role: "Admin",
-    });
+  const handleAdd = async () => {
+    // Basic validation
+    if (!form.email || !form.firstName || !form.lastName) {
+      showMessage('Validation', 'Please provide first name, last name and email');
+      return;
+    }
+
+    setCreateLoading(true);
+    try {
+      const payload = {
+        email: form.email,
+        first_name: form.firstName,
+        last_name: form.lastName,
+        role: (form.role || 'Admin').toLowerCase(),
+        manager_admin_status: (form.role || 'Admin'),
+        phone_number: form.phone || '',
+        address: form.address || '',
+      };
+
+      const res = await fetch('/api/create-admin-manager/', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(body?.message || body?.error || `Failed with status ${res.status}`);
+      }
+
+      // Backend returns user_id and temp_password
+      const newId = body?.user_id || body?.id || Date.now();
+      const newEntry = {
+        id: newId,
+        userId: newId,
+        raw: null,
+        name: `${form.firstName} ${form.lastName}`,
+        email: form.email,
+        role: form.role,
+        manager_admin_status: form.role,
+        elevated: new Date().toLocaleString(),
+      };
+
+      setList((prev) => [...prev, newEntry]);
+      setShowCreateModal(false);
+      setForm({ firstName: '', lastName: '', email: '', phone: '', address: '', role: 'Admin', manager_admin_status: 'admin' });
+
+      if (body?.temp_password) {
+        showMessage('Created', `Created user. Temporary password: ${body.temp_password}`);
+      } else {
+        showMessage('Created', body?.message || 'Admin/manager created');
+      }
+    } catch (err) {
+      console.error('Create admin error:', err);
+      showMessage('Error creating admin', err.message);
+    } finally {
+      setCreateLoading(false);
+    }
+  };
+
+  const handleOpenStatusModal = (user) => {
+    setSelectedUserRow(user);
+    setStatusModalOpen(true);
+  };
+
+  const handleDeleteUser = (item) => {
+    setPendingDeleteItem(item);
+    setConfirmDeleteOpen(true);
+  };
+
+  const performDeleteConfirmed = async () => {
+    const item = pendingDeleteItem;
+    setConfirmDeleteOpen(false);
+    setPendingDeleteItem(null);
+    if (!item) return;
+
+    const userId = item.userId ?? item.id ?? item.raw?.id ?? item.raw?.pk;
+    if (!userId) {
+      showMessage('Error', 'User ID missing');
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/user/${userId}/`, {
+        method: 'DELETE',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}));
+        throw new Error(errBody?.error || `Failed with status ${res.status}`);
+      }
+
+      // Remove from list
+      setList((prev) => prev.filter((u) => u.id !== item.id));
+    } catch (err) {
+      console.error('Delete user error:', err);
+      showMessage('Error deleting user', err.message);
+    }
+  };
+
+  const handleStatusUpdate = (updated) => {
+    const id = updated?.id ?? updated?.userId ?? selectedUserRow?.id;
+    const newRole = updated?.new_role || updated?.role;
+    if (!id) return;
+    setList((prev) =>
+      prev.map((u) => (u.id === id ? { ...u, role: newRole || u.role } : u))
+    );
   };
 
   return (
-    <div className={`font-sans ${isDarkMode ? 'bg-gray-900 text-gray-200' : 'bg-white text-black'} p-6 max-w-[1200px] mx-auto rounded-lg`}>
+    <div className={`font-sans ${isDarkMode ? 'text-gray-200' : 'bg-white text-black'} p-6 max-w-[1200px] mx-auto rounded-lg`}>
       <h1 className="text-3xl font-bold text-yellow-400 mb-4 text-center">
         Admin Management Panel
       </h1>
@@ -223,10 +335,10 @@ const AdminManagerList = () => {
                 </td>
                 <td className="p-3">{item.elevated}</td>
                 <td className="p-3 flex gap-2">
-                  <button className="p-2 rounded-md bg-yellow-500 hover:bg-yellow-600 text-black">
+                  <button onClick={() => handleOpenStatusModal(item)} className="p-2 rounded-md bg-yellow-500 hover:bg-yellow-600 text-black">
                     <Pencil size={16} />
                   </button>
-                  <button className={`p-2 rounded-md bg-red-600 hover:bg-red-700 ${isDarkMode ? 'text-white' : 'text-white'}`}>
+                  <button onClick={() => handleDeleteUser(item)} className={`p-2 rounded-md bg-red-600 hover:bg-red-700 ${isDarkMode ? 'text-white' : 'text-white'}`}>
                     <Trash2 size={16} />
                   </button>
                 </td>
@@ -357,14 +469,43 @@ const AdminManagerList = () => {
       <div className="mt-6">
         <button
           onClick={handleAdd}
-          className="w-full py-2.5 bg-yellow-500 hover:bg-yellow-400 text-black font-semibold rounded-md transition"
+          disabled={createLoading}
+          className={`w-full py-2.5 bg-yellow-500 hover:bg-yellow-400 text-black font-semibold rounded-md transition disabled:opacity-60`}
         >
-          Create
+          {createLoading ? 'Creating...' : 'Create'}
         </button>
       </div>
     </div>
   </div>
 )}
+
+      {statusModalOpen && (
+        <ChangeStatusModal
+          isOpen={statusModalOpen}
+          userRow={selectedUserRow}
+          currentStatus={selectedUserRow?.role}
+          onClose={() => { setStatusModalOpen(false); setSelectedUserRow(null); }}
+          onUpdate={handleStatusUpdate}
+        />
+      )}
+
+      <ConfirmModal
+        visible={confirmDeleteOpen}
+        title="Confirm Delete"
+        message={`Are you sure you want to delete ${pendingDeleteItem?.name || pendingDeleteItem?.email || ''}? This action cannot be undone.`}
+        onCancel={() => { setConfirmDeleteOpen(false); setPendingDeleteItem(null); }}
+        onConfirm={performDeleteConfirmed}
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+      />
+
+      <MessageModal
+        visible={messageOpen}
+        title={messageTitle}
+        message={messageText}
+        onClose={() => setMessageOpen(false)}
+        okLabel="OK"
+      />
 
     </div>
   );
