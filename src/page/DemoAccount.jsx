@@ -6,6 +6,7 @@ import { useTheme } from '../context/ThemeContext';
 const Modal = ({ open, onClose, title, children, actions, width = "w-80" }) => {
   if (!open) return null;
 
+  
   return (
     <div
       className="fixed inset-0 flex items-center justify-center z-50  bg-black/60 backdrop-blur-sm"
