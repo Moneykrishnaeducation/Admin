@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect, useCallback } from "react";
 import TableStructure from "../commonComponent/TableStructure";
 
 const Activities = () => {
-  const [activeLog, setActiveLog] = useState("client"); // "client" or "staff"
+  const [activeLog, setActiveLog] = useState("client"); // "client", "staff", or "error"
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -11,7 +11,14 @@ const Activities = () => {
   // Server-side fetch handler for TableStructure
   const handleFetch = useCallback(async ({ page = 1, pageSize = 100, query = "" } = {}) => {
     setError(null);
-    const endpoint = activeLog === "client" ? "/api/activity/client-logs/" : "/api/activity/staff/";
+    let endpoint;
+    if (activeLog === "error") {
+      endpoint = "/api/activity/error-logs/";
+    } else if (activeLog === "client") {
+      endpoint = "/api/activity/client-logs/";
+    } else {
+      endpoint = "/api/activity/staff/";
+    }
 
     try {
       const client = typeof window !== "undefined" && window.adminApiClient ? window.adminApiClient : null;
@@ -43,6 +50,7 @@ const Activities = () => {
         time: item.time ?? item.created_at ?? item.timestamp ?? item.date ?? null,
         user: item.user ?? item.username ?? item.email ?? item.name ?? "Unknown",
         activity: item.activity ?? item.action ?? item.event ?? "",
+        statusCode: item.status_code ?? item.statusCode ?? "-",
         ipAddress: item.ip_address ?? item.ip ?? item.ipAddress ?? "",
         userAgent: item.user_agent ?? item.userAgent ?? "",
       }));
@@ -88,6 +96,16 @@ const Activities = () => {
     },
     { Header: "User", accessor: "user" },
     { Header: "Activity", accessor: "activity" },
+    {
+      Header: "Status Code",
+      accessor: "statusCode",
+      Cell: (value) => {
+        if (value === "-") return value;
+        const code = parseInt(value);
+        const color = code >= 200 && code < 300 ? "text-green-600" : code >= 400 ? "text-red-600" : "text-yellow-600";
+        return <span className={color}>{value}</span>;
+      },
+    },
     { Header: "IP Address", accessor: "ipAddress" },
     { Header: "User Agent", accessor: "userAgent" },
   ];
@@ -114,6 +132,16 @@ const Activities = () => {
           onClick={() => setActiveLog("staff")}
         >
           Staff Logs
+        </button>
+        <button
+          className={`px-4 py-2 rounded-md font-semibold ${
+            activeLog === "error"
+              ? "bg-red-500 text-white"
+              : "bg-gray-300 dark:bg-gray-700 text-gray-900 dark:text-gray-300"
+          }`}
+          onClick={() => setActiveLog("error")}
+        >
+          Error Logs
         </button>
       </div>
 
