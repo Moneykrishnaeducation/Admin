@@ -433,7 +433,50 @@ const changeDefault = (id, type) => {
     setGroups((prev) => prev.map((g) => ({ ...g, enabled: !selectAll })));
 
   if (loading)
-    return <div className={`${isDarkMode ? 'text-white' : 'text-black'}`}>Loading group configuration...</div>;
+    return (
+      <div className={`p-6 max-w-[1050px] mx-auto`}>
+        <div className="animate-pulse space-y-4">
+          <div className={`${isDarkMode ? 'bg-yellow-400/30' : 'bg-yellow-400/20'} h-8 rounded w-1/3 mx-auto`} />
+
+          <div className={`${isDarkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white shadow-sm'} rounded-xl p-4`}> 
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className={`flex items-center mb-3 border-b pb-2 ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+                {/* ID + MT5 badge placeholder */}
+                <div className="flex items-center gap-3 flex-1">
+                  <div className={`${isDarkMode ? 'bg-gray-700' : 'bg-gray-300'} skeleton-gold h-5 w-12 rounded`} />
+                  <div className={`${isDarkMode ? 'bg-sky-700' : 'bg-sky-300'} skeleton-gold h-5 w-12 rounded text-white flex items-center justify-center text-xs font-semibold`}> </div>
+                </div>
+
+                {/* Enable checkbox placeholder */}
+                <div className="ml-3">
+                  <div className={`${isDarkMode ? 'bg-gray-700' : 'bg-gray-300'} skeleton-gold h-4 w-4 rounded`} />
+                </div>
+
+                {/* Default radio placeholder */}
+                <div className="ml-3">
+                  <div className={`${isDarkMode ? 'bg-gray-700' : 'bg-gray-300'} skeleton-gold h-4 w-4 rounded-full`} />
+                </div>
+
+                {/* Demo Default radio placeholder */}
+                <div className="ml-3">
+                  <div className={`${isDarkMode ? 'bg-gray-700' : 'bg-gray-300'} skeleton-gold h-4 w-4 rounded-full`} />
+                </div>
+
+                {/* Alias input placeholder */}
+                <div className="ml-3">
+                  <div className={`${isDarkMode ? 'bg-gray-700' : 'bg-gray-300'} skeleton-gold h-6 w-36 rounded`} />
+                </div>
+
+                {/* Action placeholder */}
+                <div className="ml-auto">
+                  <div className={`${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'} skeleton-gold h-8 w-20 rounded`} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
 
   return (
     <div className={`font-sans ${isDarkMode ? 'bg-gray-900 text-gray-200' : 'bg-white text-black'} p-5 max-w-[1050px] mx-auto rounded-lg`}>

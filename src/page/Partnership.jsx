@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from "react";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import TableStructure from "../commonComponent/TableStructure";
 import PartnershipModals from "../Modals/PartnershipModals";
 
@@ -160,7 +162,7 @@ const Partnership = () => {
     // Actions - base path; handlers will append the transaction id and action
     withdrawalApprove: "/api/admin/transaction/",
     withdrawalReject: "/api/admin/transaction/",
-    tradingAccounts: "/ib-user/",
+    tradingAccounts: "api/ib-user/",
     commissionBalance: "/api/admin/ib-user/",
     partnerProfile: "/api/partner-profile/",
     unassignedClients: "/api/admin/unassigned-clients/",
@@ -316,6 +318,13 @@ const Partnership = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [commissionLevelFilter, commissionDateFrom, commissionDateTo, selectedId, showStatisticsModal, statisticsTab]);
+
+  // Show toast notifications for errors (keeps existing `error` state for logic)
+  useEffect(() => {
+    if (error) {
+      toast.error(String(error));
+    }
+  }, [error]);
 
   // Commission profiles data and columns for modal
   const [commissionProfiles, setCommissionProfiles] = useState([
@@ -1328,7 +1337,7 @@ const Partnership = () => {
 
       {/* Top pagination removed per request */}
 
-      {error && <div className="text-red-400 mb-2">{error}</div>}
+      <ToastContainer position="top-right" autoClose={5000} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
 
       <TableStructure
         columns={columns}

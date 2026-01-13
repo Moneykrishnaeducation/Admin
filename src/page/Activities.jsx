@@ -145,7 +145,6 @@ const Activities = () => {
         </button>
       </div>
 
-      {loading && <div className="mb-4">Loading {activeLog} logs...</div>}
       {error && <div className="mb-4 text-red-600">Error: {error}</div>}
 
       <TableStructure
@@ -153,6 +152,7 @@ const Activities = () => {
         columns={columns}
         data={data}
         serverSide={false}
+        isLoading={loading}
       />
     </div>
   );
