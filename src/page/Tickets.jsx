@@ -126,6 +126,35 @@ const Tickets = ({ isAdmin = false }) => {
     }
   };
 
+  const viewTicket = (id) => {
+    // Open inline detail modal for the ticket
+    openDetailModal(id);
+  };
+
+  const [detailVisible, setDetailVisible] = useState(false);
+  const [selectedTicket, setSelectedTicket] = useState(null);
+  const [ticketDetail, setTicketDetail] = useState(null);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [detailError, setDetailError] = useState(null);
+
+  const openDetailModal = async (id) => {
+    setSelectedTicket(id);
+    setDetailVisible(true);
+    setDetailLoading(true);
+    setDetailError(null);
+    setTicketDetail(null);
+    try {
+      const res = await apiCall(`${isAdmin ? ADMIN_TICKETS_API : USER_TICKETS_API}${id}/`, { method: 'GET' });
+      setTicketDetail(res);
+    } catch (err) {
+      console.warn('Failed to load ticket detail', err);
+      setDetailError('Failed to load ticket details');
+    } finally {
+      setDetailLoading(false);
+    }
+  };
+
+
   const closeTicket = async (id) => {
     try {
       const endpoint = isAdmin ? `${ADMIN_TICKETS_API}${id}/` : `${USER_TICKETS_API}${id}/`;
@@ -190,7 +219,9 @@ const Tickets = ({ isAdmin = false }) => {
     },
     { Header: "Ticket ID", accessor: "id" },
     { Header: "User ID", accessor: "user_id" },
+    { Header: "User Name", accessor: "username" },
     { Header: "Subject", accessor: "subject" },
+    { Header: "Description", accessor: "description" },
     { Header: "Status", accessor: "status" },
   ];
 
@@ -257,12 +288,21 @@ const Tickets = ({ isAdmin = false }) => {
             actionsColumn={(row) => {
               if (activeTab === "Waiting") {
                 return (
-                  <button
-                    onClick={() => openTicket(row.id)}
-                    className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded"
-                  >
-                    Open
-                  </button>
+                  <div className="flex items-center justify-center gap-2">
+                    <button
+                      onClick={() => openTicket(row.id)}
+                      className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded"
+                    >
+                      Open
+                    </button>
+
+                    <button
+                      onClick={() => viewTicket(row.id)}
+                      className="bg-yellow-300 hover:bg-gray-600 text-white px-3 py-1 rounded"
+                    >
+                      View
+                    </button>
+                  </div>
                 );
               }
 
@@ -280,6 +320,58 @@ const Tickets = ({ isAdmin = false }) => {
               return null;
             }}
           />
+        )}
+        {detailVisible && (
+          <div className="fixed inset-0 z-60 flex items-center justify-center bg-black bg-opacity-50">
+            <div className={`relative w-full max-w-2xl mx-4 rounded-lg shadow-xl ${isDarkMode ? 'bg-gray-900 text-yellow-300' : 'bg-white text-black'} border ${isDarkMode ? 'border-yellow-700' : 'border-gray-200'}`}>
+              <div className="flex items-center justify-between p-4 border-b" style={{ borderColor: isDarkMode ? '#b8860b33' : '#e5e7eb' }}>
+                <h3 className={`text-lg font-bold ${isDarkMode ? 'text-yellow-400' : 'text-yellow-600'}`}>Ticket Details</h3>
+                <button onClick={() => { setDetailVisible(false); setTicketDetail(null); setSelectedTicket(null); }} className="p-1" aria-label="Close detail">X</button>
+              </div>
+              <div className="p-4">
+                {detailLoading ? (
+                  <div className="text-center py-8">Loading...</div>
+                ) : detailError ? (
+                  <div className="text-center py-8 text-red-500">{detailError}</div>
+                ) : ticketDetail ? (
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div className={`p-3 rounded ${isDarkMode ? 'bg-gray-800' : 'bg-gray-50'}`}><div className="font-semibold">User Name</div><div>{ticketDetail.username || (ticketDetail.created_by && ticketDetail.created_by.username) || '-'}</div></div>
+                    <div className={`p-3 rounded ${isDarkMode ? 'bg-gray-800' : 'bg-gray-50'}`}><div className="font-semibold">User ID</div><div>{ticketDetail.user_id ?? (ticketDetail.created_by && (ticketDetail.created_by.id ?? ticketDetail.created_by.pk)) ?? '-'}</div></div>
+                    <div className={`p-3 rounded ${isDarkMode ? 'bg-gray-800' : 'bg-gray-50'}`}><div className="font-semibold">Subject</div><div>{ticketDetail.subject || '-'}</div></div>
+                    <div className={`p-3 rounded ${isDarkMode ? 'bg-gray-800' : 'bg-gray-50'}`}><div className="font-semibold">Status</div><div>{ticketDetail.status || '-'}</div></div>
+                    <div className={`col-span-2 p-3 rounded ${isDarkMode ? 'bg-gray-800' : 'bg-gray-50'}`}><div className="font-semibold">Description</div><div className="mt-1 whitespace-pre-wrap">{ticketDetail.description || '-'}</div></div>
+
+                    <div className={`col-span-2 p-3 rounded ${isDarkMode ? 'bg-gray-800' : 'bg-gray-50'}`}>
+                      <div className="font-semibold">Attachments</div>
+                      <div className="mt-2">
+                        {Array.isArray(ticketDetail.messages) && ticketDetail.messages.length > 0 ? (
+                          <ul className="list-disc list-inside">
+                            {ticketDetail.messages.map((m) => (
+                              m.file ? (
+                                <li key={m.id} className="mt-1">
+                                  <a href={m.file} target="_blank" rel="noopener noreferrer" download className="text-blue-500 hover:underline">
+                                    {m.file.split('/').pop() || 'attachment'}
+                                  </a>
+                                  <span className="ml-2 text-xs text-gray-400">— uploaded by {m.sender_name || (m.sender && m.sender.username) || 'user'}</span>
+                                </li>
+                              ) : null
+                            ))}
+                          </ul>
+                        ) : (
+                          <div className="text-sm text-gray-500">No attachments</div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-8">No details available.</div>
+                )}
+              </div>
+              <div className="flex justify-end gap-2 p-4 border-t" style={{ borderColor: isDarkMode ? '#b8860b33' : '#e5e7eb' }}>
+                <button onClick={() => { setDetailVisible(false); setTicketDetail(null); setSelectedTicket(null); }} className={`px-4 py-2 rounded ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-gray-200 text-black'}`}>Close</button>
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </div>
