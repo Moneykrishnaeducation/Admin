@@ -96,8 +96,41 @@ const Dashboard = () => {
 
   if (loading) {
     return (
-      <div className={`flex justify-center items-center min-h-screen ${isDarkMode ? "text-yellow-400" : "text-yellow-600"}`}>
-        Loading dashboard...
+      <div className={`flex flex-col m-6 items-center ${isDarkMode ? "text-yellow-400" : "text-yellow-600"}`}>
+       {/* Top action skeletons */}
+        <div className="w-full max-w-6xl flex justify-between gap-4 mb-6">
+          <div className={`${isDarkMode ? 'bg-yellow-500/20' : 'bg-yellow-600/20'} skeleton-gold h-10 w-36 rounded`} />
+          <div className={`${isDarkMode ? 'bg-yellow-500/20' : 'bg-yellow-600/20'} skeleton-gold h-10 w-36 rounded`} />
+          <div className={`${isDarkMode ? 'bg-yellow-500/20' : 'bg-yellow-600/20'} skeleton-gold h-10 w-36 rounded`} />
+        </div>
+
+        {/* Stats cards skeleton */}
+        <div className="w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className={`p-4 sm:p-5 rounded-xl ${isDarkMode ? 'bg-gray-800' : 'bg-white'} shadow-md`}>
+              <div className="mb-3">
+                <div className={`${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'} skeleton-gold h-4 rounded w-2/3`} />
+              </div>
+              <div>
+                <div className={`${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'} skeleton-gold h-8 rounded w-1/2`} />
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Recent activity skeleton */}
+        <div className="w-full max-w-6xl space-y-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className={`rounded-xl p-3 ${isDarkMode ? 'bg-gray-800' : 'bg-white'} shadow-md border-l-4 border-yellow-500`}>
+              <div className="mb-2">
+                <div className={`${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'} skeleton-gold h-4 rounded w-3/4`} />
+              </div>
+              <div>
+                <div className={`${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'} skeleton-gold h-3 rounded w-1/4`} />
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     );
   }

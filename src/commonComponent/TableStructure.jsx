@@ -206,7 +206,7 @@ const TableStructure = ({
             <button
               onClick={handlePrev}
               disabled={page <= 1}
-              className={`px-3 py-1 rounded-md ${page <= 1 ? "opacity-50 cursor-not-allowed" : "bg-yellow-400 text-black"}`}
+              className={`px-3 py-1 hidden md:block rounded-md ${page <= 1 ? "opacity-50 cursor-not-allowed" : "bg-yellow-400 text-black"}`}
             >
               Prev
             </button>
@@ -228,7 +228,7 @@ const TableStructure = ({
             <button
               onClick={handleNext}
               disabled={page >= totalPages}
-              className={`px-3 py-1 rounded-md ${page >= totalPages ? "opacity-50 cursor-not-allowed" : "bg-yellow-400 text-black"}`}
+              className={`px-3 py-1 rounded-md hidden md:block ${page >= totalPages ? "opacity-50 cursor-not-allowed" : "bg-yellow-400 text-black"}`}
             >
               Next
             </button>

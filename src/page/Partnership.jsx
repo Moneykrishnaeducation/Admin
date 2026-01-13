@@ -3,6 +3,7 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import TableStructure from "../commonComponent/TableStructure";
 import PartnershipModals from "../Modals/PartnershipModals";
+import { useTheme } from "../context/ThemeContext";
 
 const Partnership = () => {
   const [activeTab, setActiveTab] = useState("partnerList");
@@ -16,7 +17,8 @@ const Partnership = () => {
   const [commissionBalance, setCommissionBalance] = useState(0);
   const [editRowId, setEditRowId] = useState(null);
   const [editedRowData, setEditedRowData] = useState({});
-
+  const theme = useTheme() || {};
+  const { isDarkMode = true } = theme;
   // New states for button modals
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showAddClientModal, setShowAddClientModal] = useState(false);
@@ -857,10 +859,14 @@ const Partnership = () => {
       const json = await res.json();
       const items = json.results ?? json.items ?? json.data ?? (Array.isArray(json) ? json : []);
       const transformed = items.map((it) => ({
-        transactionId: it.id ?? it.transaction_id ?? "",
-        date: it.created_at ?? it.date ?? "",
+        id: it.id ?? it.transaction_id ?? "",
+        created_at: it.created_at ?? it.date ?? "",
         amount: it.amount ?? "",
-        tradingAccount: it.trading_account_id ?? it.trading_account ?? "",
+        status: it.status ?? "",
+        date: it.created_at ?? it.date ?? "",
+        approved_at: it.approved_at ?? null,
+        approved_by_username: it.approved_by_username ?? it.approved_by ?? it.approved_by_email ?? "",
+        tradingAccount: it.trading_account ?? it.trading_account_id ?? "",
       }));
       setHistoryData(transformed);
     } catch (err) {
@@ -1207,7 +1213,7 @@ const Partnership = () => {
   // Subrow component for Partner List
   const renderPartnerSubRow = (row, rowIndex) => {
     return (
-      <tr key={`sub-${rowIndex}`} className="bg-gray-50 dark:bg-gray-800">
+      <tr key={`sub-${rowIndex}`} className={`${isDarkMode ? 'bg-gray-800 text-gray-200' : 'bg-gray-100 text-gray-600'}`}>
         <td colSpan={partnerListColumns.length} className="p-4">
           <div className="flex flex-wrap gap-2">
             <button
@@ -1340,6 +1346,7 @@ const Partnership = () => {
       <ToastContainer position="top-right" autoClose={5000} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
 
       <TableStructure
+      style
         columns={columns}
         data={data}
         actionsColumn={actionsColumn}

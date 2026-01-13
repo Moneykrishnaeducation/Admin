@@ -81,7 +81,7 @@ const PartnershipModals = ({
     <>
       {showCommissionModal && (
         <div className={`fixed inset-0 z-50 flex items-center justify-center ${isDarkMode ? 'bg-black-50' : 'bg-gray-50'} backdrop-blur-sm animate-fadeIn p-4`}>
-          <div className={`bg-gradient-to-br ${isDarkMode ? 'from-gray-900 via-black to-gray-800 text-white' : 'from-gray-100 via-white to-gray-200 text-black'} rounded-2xl shadow-2xl w-full max-w-4xl p-8 relative border border-yellow-400/20 transform transition-all duration-300 overflow-auto p-6 h-[80vh]`}>
+          <div className={`${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'} rounded-2xl shadow-2xl w-full max-w-4xl p-8 relative border border-yellow-400/20 transform transition-all duration-300 p-6 max-h-[80vh]`}>
             <div className="flex items-center mb-6">
               <IconWrapper>
                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -97,7 +97,7 @@ const PartnershipModals = ({
                 setShowCommissionModal(false);
                 setIsCreateMode(false);
               }}
-              className="absolute top-3 right-3 text-yellow hover:text-yellow-500 font-bold text-2xl"
+              className={`absolute top-3 right-3 ${isDarkMode ? 'text-white hover:text-gray-300' : 'text-yellow hover:text-yellow-500'} font-bold text-2xl`}
               aria-label="Close modal"
             >
               &times;
@@ -108,7 +108,7 @@ const PartnershipModals = ({
                 className="h-full"
               >
                 {/* Profile Name */}
-                <div className={`py-2 px-3 ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-gray-100 text-black'} rounded shadow-sm`}>
+                <div className={`py-2 px-3  rounded shadow-sm`}>
                   <label className="block font-semibold mb-1">Profile Name</label>
                   <input
                     type="text"
@@ -120,7 +120,7 @@ const PartnershipModals = ({
                 </div>
 
                 {/* Commission Type */}
-                <div className={`py-2 px-3 ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-gray-100 text-black'} rounded shadow-sm mt-3`}>
+                <div className={`py-2 px-3  rounded shadow-sm`}>
                   <label className="block font-semibold mb-1">Commission Type</label>
                   <div className="flex gap-4 mt-1">
                     <label className="inline-flex items-center">
@@ -148,7 +148,7 @@ const PartnershipModals = ({
 
                 {/* Conditional Inputs */}
                 {newProfile.isPercentageBased ? (
-                  <div className={`py-2 px-3 ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-gray-100 text-black'} rounded shadow-sm mt-3`}>
+                  <div className={`py-2 px-3  rounded shadow-sm`}>
                     <label className="block font-semibold mb-1">Level Percentages (e.g., 50,20,20,10)</label>
                     <input
                       type="text"
@@ -160,7 +160,7 @@ const PartnershipModals = ({
                     />
                   </div>
                 ) : (
-                  <div className={`py-2 px-3 ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-gray-100 text-black'} rounded shadow-sm mt-3`}>
+                  <div className={`py-2 px-3  rounded shadow-sm`}>
                     <label className="block font-semibold mb-1">USD per Lot</label>
                     <input
                       type="text"
@@ -173,7 +173,7 @@ const PartnershipModals = ({
                 )}
 
                 {/* Select Groups */}
-                <div className={`py-2 px-3 ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-gray-100 text-black'} rounded shadow-sm mt-3`}>
+                <div className={`py-2 px-3  rounded shadow-sm`}>
                   <label className="block font-semibold mb-1">Select Groups</label>
                   <div className={`border rounded ${isDarkMode ? 'bg-gray-700 text-white border-gray-600' : 'bg-white text-black border-gray-300'} p-2 overflow-auto`} style={{ maxHeight: 150 }}>
                     {availableGroups.length > 0 ? (
@@ -223,7 +223,7 @@ const PartnershipModals = ({
                 </div>
 
                 {/* Buttons */}
-                <div className="flex gap-4 justify-end mt-4">
+                <div className="flex gap-4 justify-end mt-2">
                   <button
                     type="button"
                     className="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-500"
@@ -244,11 +244,13 @@ const PartnershipModals = ({
               </form>
             ) : (
               <>
-                <TableStructure
-                  columns={commissionProfileColumns}
-                  data={commissionProfiles}
-                  actionsColumn={commissionActionsColumn}
-                />
+                <div className="fixed-tbody-wrapper overflow-auto max-h-[60vh]">
+                  <TableStructure
+                    columns={commissionProfileColumns}
+                    data={commissionProfiles}
+                    actionsColumn={commissionActionsColumn}
+                  />
+                </div>
                 {viewingGroups && (
                   <div className="fixed inset-0 z-60 flex items-center justify-center bg-black bg-opacity-60">
                     <div className="bg-black text-white rounded-lg shadow-lg w-3/4 max-w-2xl p-4 relative">
@@ -275,7 +277,7 @@ const PartnershipModals = ({
                     setEditRowId(null);
                     setEditedRowData({});
                   }}
-                  className="absolute top-3 right-3 text-white hover:text-gray-300 font-bold text-2xl"
+                  className={`absolute top-3 right-3 ${isDarkMode ? 'text-white hover:text-gray-300' : 'text-yellow hover:text-yellow-500'} font-bold text-2xl`}
                   aria-label="Close modal"
                 >
                   &times;
@@ -287,8 +289,8 @@ const PartnershipModals = ({
       )}
 
       {showTransferModal && (
-        <div className={`fixed inset-0 z-50 flex items-center justify-center ${isDarkMode ? 'bg-gradient-to-br from-black via-gray-900 to-black bg-opacity-80' : 'bg-gradient-to-br from-gray-100 via-white to-gray-200 bg-opacity-80'} backdrop-blur-sm animate-fadeIn`}>
-          <div className={`bg-gradient-to-br ${isDarkMode ? 'from-gray-900 via-black to-gray-800 text-white' : 'from-gray-100 via-white to-gray-200 text-black'} rounded-2xl shadow-2xl w-11/12 max-w-2xl p-8 relative border border-yellow-400/20 transform transition-all duration-300 hover:scale-105`}>
+        <div className={`fixed inset-0 z-50 flex items-center justify-center ${isDarkMode ? 'bg-black/70' : 'bg-white/70'} backdrop-blur-sm animate-fadeIn`}>
+          <div className={` ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'} rounded-2xl shadow-2xl w-11/12 max-w-2xl p-8 relative border border-yellow-400/20 transform transition-all duration-300`}>
             <div className="flex items-center mb-6">
               <IconWrapper>
                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -309,7 +311,7 @@ const PartnershipModals = ({
               }}
               className="space-y-4"
             >
-              <div className={`py-2 px-3 ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-gray-100 text-black'} rounded shadow-sm`}>
+              <div className={`py-2 px-3 ${isDarkMode ? 'bg-black/70 text-white' : 'bg-gray-100 text-black'} rounded shadow-sm`}>
                 <label className="block font-semibold mb-1">Select Account</label>
                 <select
                   value={selectedAccount}
@@ -326,7 +328,7 @@ const PartnershipModals = ({
                 </select>
               </div>
 
-              <div className={`py-2 px-3 ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-gray-100 text-black'} rounded shadow-sm`}>
+              <div className={`py-2 px-3 ${isDarkMode ? 'bg-black/70 text-white' : 'bg-gray-100 text-black'} rounded shadow-sm`}>
                 <label className="block font-semibold mb-1">Withdraw Amount</label>
                 <input
                   type="number"
@@ -338,7 +340,7 @@ const PartnershipModals = ({
                 />
               </div>
 
-              <div className={`py-2 px-3 ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-gray-100 text-black'} rounded shadow-sm`}>
+              <div className={`py-2 px-3 ${isDarkMode ? 'bg-black/70 text-white' : 'bg-gray-100 text-black'} rounded shadow-sm`}>
                 <label className="inline-flex items-center">
                   <input
                     type="checkbox"
@@ -374,7 +376,7 @@ const PartnershipModals = ({
             </form>
             <button
               onClick={() => setShowTransferModal(false)}
-              className="absolute top-3 right-3 text-white hover:text-gray-300 font-bold text-2xl"
+              className={`absolute top-3 right-3 ${isDarkMode ? 'text-white hover:text-gray-300' : 'text-yellow hover:text-yellow-500'} font-bold text-2xl`}
               aria-label="Close modal"
             >
               &times;
@@ -384,8 +386,8 @@ const PartnershipModals = ({
       )}
 
       {showProfileModal && (
-        <div className={`fixed inset-0 z-50 flex items-center justify-center ${isDarkMode ? 'bg-gradient-to-br from-black via-gray-900 to-black bg-opacity-80' : 'bg-gradient-to-br from-gray-100 via-white to-gray-200 bg-opacity-80'} backdrop-blur-sm animate-fadeIn`}>
-          <div className={`bg-gradient-to-br ${isDarkMode ? 'from-gray-900 via-black to-gray-800 text-white' : 'from-gray-100 via-white to-gray-200 text-black'} rounded-2xl shadow-2xl w-11/12 max-w-2xl p-8 relative border border-yellow-400/20 transform transition-all duration-300 hover:scale-105`}>
+        <div className={`fixed inset-0 z-50 flex items-center justify-center ${isDarkMode ? 'bg-black/70' : 'bg-white/70'} backdrop-blur-sm animate-fadeIn`}>
+          <div className={` ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'} rounded-2xl shadow-2xl w-11/12 max-w-2xl p-8 relative border border-yellow-400/20 transform transition-all duration-300`}>
             <div className="flex items-center mb-6">
               <IconWrapper>
                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -411,12 +413,12 @@ const PartnershipModals = ({
                 <select
                   value={selectedNewProfile}
                   onChange={(e) => setSelectedNewProfile(e.target.value)}
-                  className="border border-gray-600 rounded px-3 py-2 w-full bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-yellow-400 transition-colors duration-200"
+                  className="border border-gray-600 rounded px-3 py-2 w-full bg-black text-white focus:outline-none focus:ring-2 focus:ring-yellow-400 transition-colors duration-200"
                   required
                 >
-                  <option value="" className="bg-gray-800 text-white">Select a profile</option>
+                  <option value="" className="bg-black text-white">Select a profile</option>
                   {availableProfiles.map((profile) => (
-                    <option key={profile.id} value={profile.id} className="bg-gray-800 text-white">
+                    <option key={profile.id} value={profile.id} className="bg-black text-white">
                       {profile.name}
                     </option>
                   ))}
@@ -440,7 +442,7 @@ const PartnershipModals = ({
             </form>
             <button
               onClick={() => setShowProfileModal(false)}
-              className="absolute top-3 right-3 text-white hover:text-gray-300 font-bold text-2xl"
+              className={`absolute top-3 right-3 ${isDarkMode ? 'text-white hover:text-gray-300' : 'text-yellow hover:text-yellow-500'} font-bold text-2xl`}
               aria-label="Close modal"
             >
               &times;
@@ -450,8 +452,8 @@ const PartnershipModals = ({
       )}
 
       {showAddClientModal && (
-        <div className={`fixed inset-0 z-50 flex items-center justify-center ${isDarkMode ? 'bg-gradient-to-br from-black via-gray-900 to-black bg-opacity-80' : 'bg-gradient-to-br from-gray-100 via-white to-gray-200 bg-opacity-80'} backdrop-blur-sm animate-fadeIn`}>
-          <div className={`bg-gradient-to-br ${isDarkMode ? 'from-gray-900 via-black to-gray-800 text-white' : 'from-gray-100 via-white to-gray-200 text-black'} rounded-2xl shadow-2xl w-11/12 max-w-2xl p-8 relative border border-yellow-400/20 transform transition-all duration-300 hover:scale-105`}>
+        <div className={`fixed inset-0 z-50 flex items-center justify-center ${isDarkMode ? 'bg-black/70' : 'bg-white/70'} backdrop-blur-sm animate-fadeIn`}>
+          <div className={` ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'} rounded-2xl shadow-2xl w-11/12 max-w-2xl p-8 relative border border-yellow-400/20 transform transition-all duration-300`}>
             <div className="flex items-center mb-6">
               <IconWrapper>
                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -469,7 +471,7 @@ const PartnershipModals = ({
               }}
               className="space-y-4"
             >
-              <div className={`py-2 px-3 ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-gray-100 text-black'} rounded shadow-sm`}>
+              <div className={`py-2 px-3 ${isDarkMode ? 'bg-black text-white' : 'bg-gray-100 text-black'} rounded shadow-sm`}>
                 <label className="block font-semibold mb-1">Search Clients</label>
                 <input
                   type="text"
@@ -479,7 +481,7 @@ const PartnershipModals = ({
                   placeholder="Search by name or ID"
                 />
               </div>
-              <div className={`py-2 px-3 ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-gray-100 text-black'} rounded shadow-sm`}>
+              <div className={`py-2 px-3 ${isDarkMode ? 'bg-black text-white' : 'bg-gray-100 text-black'} rounded shadow-sm`}>
                 <label className="block font-semibold mb-1">Select Client</label>
                 <select
                   value={selectedClient}
@@ -519,7 +521,7 @@ const PartnershipModals = ({
             </form>
             <button
               onClick={() => setShowAddClientModal(false)}
-              className="absolute top-3 right-3 text-white hover:text-gray-300 font-bold text-2xl"
+              className={`absolute top-3 right-3 ${isDarkMode ? 'text-white hover:text-gray-300' : 'text-yellow hover:text-yellow-500'} font-bold text-2xl`}
               aria-label="Close modal"
             >
               &times;
@@ -529,8 +531,8 @@ const PartnershipModals = ({
       )}
 
       {showHistoryModal && (
-        <div className={`fixed inset-0 z-50 flex items-center justify-center ${isDarkMode ? 'bg-gradient-to-br from-black via-gray-900 to-black bg-opacity-80' : 'bg-gradient-to-br from-gray-100 via-white to-gray-200 bg-opacity-80'} backdrop-blur-sm animate-fadeIn`}>
-          <div className={`bg-gradient-to-br ${isDarkMode ? 'from-gray-900 via-black to-gray-800 text-white' : 'from-gray-100 via-white to-gray-200 text-black'} rounded-2xl shadow-2xl w-11/12 max-w-4xl p-8 relative border border-yellow-400/20 transform transition-all duration-300 hover:scale-105`}>
+        <div className={`fixed inset-0 z-50 flex items-center justify-center ${isDarkMode ? 'bg-black/70' : 'bg-white/70'} backdrop-blur-sm animate-fadeIn`}>
+          <div className={`${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'} rounded-2xl shadow-2xl w-11/12 max-w-4xl p-8 relative border border-yellow-400/20 transform transition-all duration-300`}>
             <div className="flex items-center mb-6">
               <IconWrapper>
                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -541,15 +543,20 @@ const PartnershipModals = ({
                 History - {selectedId}
               </h2>
             </div>
-            <TableStructure
-              columns={[
-                { Header: "Transaction ID", accessor: "transactionId" },
-                { Header: "Date", accessor: "date" },
-                { Header: "Amount", accessor: "amount" },
-                { Header: "Trading Account", accessor: "tradingAccount" },
-              ]}
-              data={historyData}
-            />
+            <div className="fixed-tbody-wrapper">
+              <TableStructure
+                columns={[
+                  { Header: "Transaction ID", accessor: "id" },
+                  { Header: "Amount", accessor: "amount" },
+                  { Header: "Trading Account ID", accessor: "tradingAccount" },
+                  { Header: "Status", accessor: "status" },
+                  { Header: "Created At", accessor: "created_at" },
+                  { Header: "Approved At", accessor: "approved_at" },
+                  { Header: "Approved By", accessor: "approved_by_username" },
+                ]}
+                data={historyData}
+              />
+            </div>
             <div className="flex justify-end mt-4">
               <button
                 onClick={() => setShowHistoryModal(false)}
@@ -560,7 +567,7 @@ const PartnershipModals = ({
             </div>
             <button
               onClick={() => setShowHistoryModal(false)}
-              className="absolute top-3 right-3 text-white hover:text-gray-300 font-bold text-2xl"
+              className={`absolute top-3 right-3 ${isDarkMode ? 'text-white hover:text-gray-300' : 'text-yellow hover:text-yellow-500'} font-bold text-2xl`}
               aria-label="Close modal"
             >
               &times;
@@ -570,8 +577,8 @@ const PartnershipModals = ({
       )}
 
       {showStatisticsModal && (
-        <div className={`fixed inset-0 z-50 flex items-center justify-center ${isDarkMode ? 'bg-gradient-to-br from-black via-gray-900 to-black bg-opacity-80' : 'bg-gradient-to-br from-gray-100 via-white to-gray-200 bg-opacity-80'} backdrop-blur-sm animate-fadeIn`}>
-          <div className={`bg-gradient-to-br ${isDarkMode ? 'from-gray-900 via-black to-gray-800 text-white' : 'from-gray-100 via-white to-gray-200 text-black'} rounded-2xl shadow-2xl w-11/12 max-w-4xl p-8 relative border border-yellow-400/20 transform transition-all duration-300 hover:scale-105`}>
+        <div className={`fixed inset-0 z-50 flex items-center justify-center ${isDarkMode ? 'bg-black/70' : 'bg-white/70'} backdrop-blur-sm animate-fadeIn`}>
+          <div className={` ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'} rounded-2xl shadow-2xl w-11/12 max-w-4xl p-8 relative border border-yellow-400/20 transform transition-all duration-300`}>
             <div className="flex items-center mb-6">
               <IconWrapper>
                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -582,7 +589,7 @@ const PartnershipModals = ({
                 Statistics - {selectedId}
               </h2>
             </div>
-            <div className="flex gap-4 mb-4">
+            <div className="flex justify-center items-center gap-4 mb-4">
               <button
                 className={`px-4 py-2 rounded-md font-semibold ${statisticsTab === "summary" ? "bg-yellow-400 text-black" : "bg-gray-600 text-white"
                   }`}
@@ -631,7 +638,7 @@ const PartnershipModals = ({
                             </thead>
                             <tbody>
                               {statisticsData.levels.map((level, index) => (
-                                <tr key={index} className="bg-gray-800">
+                                <tr key={index} className="bg-black">
                                   <td className="border border-gray-600 px-4 py-2">{level.level}</td>
                                   <td className="border border-gray-600 px-4 py-2">{level.client_count}</td>
                                   <td className="border border-gray-600 px-4 py-2">${level.total_commission}</td>
@@ -646,13 +653,13 @@ const PartnershipModals = ({
                     </div>
                   ) : statisticsTab === "commissionStats" ? (
                     <div>
-                      <div className="mb-4 flex gap-4 items-center">
-                        <div>
+                      <div className="mb-4 grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                        <div className="flex flex-col">
                           <label className="block font-semibold mb-1">Commission Level</label>
                           <select
                             value={commissionLevelFilter}
                             onChange={(e) => setCommissionLevelFilter(e.target.value)}
-                            className="border rounded px-2 py-1 bg-black text-white"
+                            className="border rounded px-2 py-1 bg-black text-white w-full"
                           >
                             <option value="">All</option>
                             <option value="1">1</option>
@@ -662,40 +669,56 @@ const PartnershipModals = ({
                             <option value="5">5</option>
                           </select>
                         </div>
-                        <div>
+                        <div className="flex flex-col">
                           <label className="block font-semibold mb-1">Date From</label>
                           <input
                             type="date"
                             value={commissionDateFrom}
                             onChange={(e) => setCommissionDateFrom(e.target.value)}
-                            className="border rounded px-2 py-1 bg-black text-white"
+                            className="border rounded px-2 py-1 bg-black text-white w-full"
                           />
                         </div>
-                        <div>
+                        <div className="flex flex-col">
                           <label className="block font-semibold mb-1">Date To</label>
                           <input
                             type="date"
                             value={commissionDateTo}
                             onChange={(e) => setCommissionDateTo(e.target.value)}
-                            className="border rounded px-2 py-1 bg-black text-white"
+                            className="border rounded px-2 py-1 bg-black text-white w-full"
                           />
                         </div>
                       </div>
-                      {commissionDetailsData && commissionDetailsData.length > 0 ? (
+                        {commissionDetailsData && commissionDetailsData.length > 0 ? (
                         <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
-                          <TableStructure
-                            columns={[
-                              { Header: "Symbols", accessor: "symbol" },
-                              { Header: "Position", accessor: "position_id" },
-                              { Header: "Created Date", accessor: "created_at" },
-                              { Header: "Volume", accessor: "lot_size" },
-                              { Header: "partner Earned", accessor: "commission" },
-                              { Header: "Profit/Loss", accessor: "profit" },
-                              { Header: "IB Level", accessor: "level" },
-                              { Header: "Client", accessor: "client_email" },
-                            ]}
-                            data={commissionDetailsData}
-                          />
+                          <div className="fixed-tbody-wrapper">
+                            <TableStructure
+                              columns={[
+                                { Header: "Symbols", accessor: "symbol" },
+                                { Header: "Position", accessor: "position_id" },
+                                { Header: "Created Date", accessor: "created_at" },
+                                { Header: "Volume", accessor: "lot_size" },
+                                { Header: "partner Earned", accessor: "commission" },
+                                {
+                                  Header: "Profit/Loss",
+                                  accessor: "profit",
+                                  Cell: (cellValue) => {
+                                    const num = Number(cellValue);
+                                    const isNum = !Number.isNaN(num);
+                                    const cls = isNum && num < 0 ? 'text-red-400' : 'text-green-400';
+                                    return (
+                                      <span className={cls}>
+                                        {isNum ? num.toFixed(2) : cellValue}
+                                      </span>
+                                    );
+                                  },
+                                },
+                                { Header: "Position Type", accessor: "position_type" },
+                                { Header: "IB Level", accessor: "level" },
+                                { Header: "Client", accessor: "client_email" },
+                              ]}
+                              data={commissionDetailsData}
+                            />
+                          </div>
                         </div>
                       ) : (
                         <p>No commission details available.</p>
@@ -719,7 +742,7 @@ const PartnershipModals = ({
             </div>
             <button
               onClick={() => setShowStatisticsModal(false)}
-              className="absolute top-3 right-3 text-white hover:text-gray-300 font-bold text-2xl"
+              className={`absolute top-3 right-3 ${isDarkMode ? 'text-white hover:text-gray-300' : 'text-yellow hover:text-yellow-500'} font-bold text-2xl`}
               aria-label="Close modal"
             >
               &times;
@@ -729,8 +752,8 @@ const PartnershipModals = ({
       )}
 
       {showDisableIBModal && (
-        <div className={`fixed inset-0 z-50 flex items-center justify-center ${isDarkMode ? 'bg-gradient-to-br from-black via-gray-900 to-black bg-opacity-80' : 'bg-gradient-to-br from-gray-100 via-white to-gray-200 bg-opacity-80'} backdrop-blur-sm animate-fadeIn`}>
-          <div className={`bg-gradient-to-br ${isDarkMode ? 'from-gray-900 via-black to-gray-800 text-white' : 'from-gray-100 via-white to-gray-200 text-black'} rounded-2xl shadow-2xl w-11/12 max-w-2xl p-8 relative border border-yellow-400/20 transform transition-all duration-300 hover:scale-105`}>
+        <div className={`fixed inset-0 z-50 flex items-center justify-center ${isDarkMode ? 'bg-black/70' : 'bg-white/70'} backdrop-blur-sm animate-fadeIn`}>
+          <div className={` ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'} rounded-2xl shadow-2xl w-11/12 max-w-2xl p-8 relative border border-yellow-400/20 transform transition-all duration-300`}>
             <div className="flex items-center mb-6">
               <IconWrapper>
                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -761,7 +784,7 @@ const PartnershipModals = ({
             </div>
             <button
               onClick={() => setShowDisableIBModal(false)}
-              className="absolute top-3 right-3 text-white hover:text-gray-300 font-bold text-2xl"
+              className={`absolute top-3 right-3 ${isDarkMode ? 'text-white hover:text-gray-300' : 'text-yellow hover:text-yellow-500'} font-bold text-2xl`}
               aria-label="Close modal"
             >
               &times;
@@ -771,8 +794,8 @@ const PartnershipModals = ({
       )}
 
       {showClientListModal && (
-        <div className={`fixed inset-0 z-50 flex items-center justify-center ${isDarkMode ? 'bg-gradient-to-br from-black via-gray-900 to-black bg-opacity-80' : 'bg-gradient-to-br from-gray-100 via-white to-gray-200 bg-opacity-80'} backdrop-blur-sm animate-fadeIn`}>
-          <div className={`bg-gradient-to-br ${isDarkMode ? 'from-gray-900 via-black to-gray-800 text-white' : 'from-gray-100 via-white to-gray-200 text-black'} rounded-2xl shadow-2xl w-11/12 max-w-4xl p-8 relative border border-yellow-400/20 transform transition-all duration-300 hover:scale-105`}>
+        <div className={`fixed inset-0 z-50 flex items-center justify-center ${isDarkMode ? 'bg-black/70 ' : 'bg-white/70 '}  animate-fadeIn`}>
+          <div className={`h-[80vh] ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'} rounded-2xl shadow-2xl w-11/12 max-w-4xl p-8 relative border border-yellow-400/20 transform transition-all duration-300`}>
             <div className="flex items-center mb-6">
               <IconWrapper>
                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -783,14 +806,16 @@ const PartnershipModals = ({
                 Client List - {selectedId}
               </h2>
             </div>
-            <TableStructure
-              columns={[
-                { Header: "Name", accessor: "name" },
-                { Header: "Email", accessor: "email" },
-                { Header: "User ID", accessor: "user_id" },
-              ]}
-              data={clientListData}
-            />
+            <div className="fixed-tbody-wrapper">
+              <TableStructure
+                columns={[
+                  { Header: "Name", accessor: "name" },
+                  { Header: "Email", accessor: "email" },
+                  { Header: "User ID", accessor: "user_id" },
+                ]}
+                data={clientListData}
+              />
+            </div>
             <div className="flex justify-end mt-4">
               <button
                 onClick={() => setShowClientListModal(false)}
@@ -801,7 +826,7 @@ const PartnershipModals = ({
             </div>
             <button
               onClick={() => setShowClientListModal(false)}
-              className="absolute top-3 right-3 text-white hover:text-gray-300 font-bold text-2xl"
+              className={`absolute top-3 right-3 ${isDarkMode ? 'text-white hover:text-gray-300' : 'text-yellow hover:text-yellow-500'} font-bold text-2xl`}
               aria-label="Close modal"
             >
               &times;
