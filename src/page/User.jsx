@@ -1044,6 +1044,7 @@ const User = () => {
             setTicketsModalVisible(false);
             setTicketsRow(null);
           }}
+          userId={ticketsRow?.userId}
           userName={ticketsRow?.name}
           isDarkMode={isDarkMode}
         />

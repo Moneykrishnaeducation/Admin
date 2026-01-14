@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { AdminAuthenticatedFetch } from '../utils/fetch-utils';
 
-const TicketsModal = ({ visible, onClose, userName, isDarkMode = false }) => {
+const TicketsModal = ({ visible, onClose, userId: userIdProp, userName, isDarkMode = false }) => {
   const [activeTab, setActiveTab] = useState('open');
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -12,7 +12,7 @@ const TicketsModal = ({ visible, onClose, userName, isDarkMode = false }) => {
 
   const apiClient = new AdminAuthenticatedFetch({ baseURL: '' });
   const fetchedCacheRef = React.useRef({});
-  const [userId, setUserId] = useState(null);
+  const [userId, setUserId] = useState(userIdProp || null);
   const [userLoading, setUserLoading] = useState(false);
   const [userError, setUserError] = useState(null);
   const [detailVisible, setDetailVisible] = useState(false);
@@ -36,7 +36,6 @@ const TicketsModal = ({ visible, onClose, userName, isDarkMode = false }) => {
       // Helper to build user-aware cache keys
       const getCacheKey = (status) => {
         if (userId) return `user:${userId}:${status}`;
-        if (userName) return `user:${userName}:${status}`;
         return `all:${status}`;
       };
 
@@ -88,42 +87,12 @@ const TicketsModal = ({ visible, onClose, userName, isDarkMode = false }) => {
     setPage(1);
   }, [activeTab, visible]);
 
-  // If we have a userName prop, fetch the user's id from backend for server-side filtering
+  // If we have a userId prop, use it directly
   useEffect(() => {
-    if (!visible || !userName) return;
-    let mounted = true;
-    const controller = new AbortController();
-    const fetchUser = async () => {
-      setUserLoading(true);
-      setUserError(null);
-      try {
-        const res = await apiClient.get(`/api/users/?username=${encodeURIComponent(userName)}`, { signal: controller.signal });
-        if (typeof res === 'string') throw new Error('Non-JSON response');
-        let users = null;
-        if (Array.isArray(res)) users = res;
-        else if (res && Array.isArray(res.results)) users = res.results;
-        else if (res && Array.isArray(res.data)) users = res.data;
-        if (users && users.length) {
-          if (!mounted) return;
-          setUserId(users[0].id ?? users[0].pk ?? null);
-        }
-      } catch (err) {
-        if (err.name === 'AbortError') return;
-        console.warn('Failed to fetch user id for TicketsModal', err);
-        setUserError('Failed to load user info');
-      } finally {
-        if (!mounted) return;
-        setUserLoading(false);
-      }
-    };
-
-    fetchUser();
-
-    return () => {
-      mounted = false;
-      controller.abort();
-    };
-  }, [visible, userName]);
+    if (userIdProp) {
+      setUserId(userIdProp);
+    }
+  }, [userIdProp, visible]);
 
   const totalPages = Math.max(1, Math.ceil(filteredTickets.length / pageSize));
   const pageItems = filteredTickets.slice((page - 1) * pageSize, page * pageSize);
@@ -136,7 +105,6 @@ const TicketsModal = ({ visible, onClose, userName, isDarkMode = false }) => {
     // Build user-aware cache key
     const getCacheKey = (status) => {
       if (userId) return `user:${userId}:${status}`;
-      if (userName) return `user:${userName}:${status}`;
       return `all:${status}`;
     };
 
@@ -154,9 +122,8 @@ const TicketsModal = ({ visible, onClose, userName, isDarkMode = false }) => {
       setLoading(true);
       setError(null);
       let endpoint = `/api/tickets/?status=${encodeURIComponent(activeTab)}`;
-      // When userName prop is provided, prefer filtering by numeric user id but include
-      // multiple param name variants for backend compatibility (`user`, `userid`, `userId`).
-      if (userId) endpoint += `&user=${encodeURIComponent(userId)}&userid=${encodeURIComponent(userId)}&userId=${encodeURIComponent(userId)}`;
+      // Only send the userId parameter if it exists (backend accepts 'userId' or 'userid')
+      if (userId) endpoint += `&userId=${encodeURIComponent(userId)}`;
       let got = null;
       try {
         const res = await apiClient.get(endpoint, { Accept: 'application/json', signal: controller.signal });
@@ -192,30 +159,13 @@ const TicketsModal = ({ visible, onClose, userName, isDarkMode = false }) => {
         };
 
         got = extractTickets(res, activeTab) || [];
-
-        // Fallback: sometimes filtering by numeric user id returns empty but filtering by username works.
-        // If we got no results and we have both `userId` and `userName`, try the username filter.
-        if (Array.isArray(got) && got.length === 0 && userId && userName) {
-          try {
-            // If filtering by numeric id returned nothing, try filtering by username as a fallback
-            const urlByName = `/api/tickets/?status=${encodeURIComponent(activeTab)}&username=${encodeURIComponent(userName)}`;
-            const resName = await apiClient.get(urlByName, { Accept: 'application/json', signal: controller.signal });
-            if (typeof resName !== 'string') {
-              const gotName = extractTickets(resName, activeTab) || [];
-              if (gotName.length) {
-                got = gotName;
-                // cache under both keys so subsequent opens use the cached response
-                const usernameKey = `user:${userName}:${activeTab}`;
-                fetchedCacheRef.current[usernameKey] = got;
-              }
-            }
-          } catch (e2) {
-            /* ignore fallback error */
-          }
-        }
       } catch (err) {
         if (err.name === 'AbortError') return;
         console.warn('Tickets fetch failed:', err.message || err);
+        const errMsg = err.message || 'Failed to load tickets';
+        if (mounted) {
+          setError(errMsg);
+        }
       }
 
       if (!mounted) return;
@@ -295,8 +245,11 @@ const TicketsModal = ({ visible, onClose, userName, isDarkMode = false }) => {
                 <table className={`w-full text-sm rounded`}>
               <thead className={tableHeaderBg}>
                 <tr>
-                  <th className="px-4 py-3 text-left font-semibold">ID</th>
+                  <th className="px-4 py-3 text-left font-semibold">Ticket ID</th>
+                  <th className="px-4 py-3 text-left font-semibold">User ID</th>
+                  <th className="px-4 py-3 text-left font-semibold">User Name</th>
                   <th className="px-4 py-3 text-left font-semibold">Subject</th>
+                  <th className="px-4 py-3 text-left font-semibold">Description</th>
                   <th className="px-4 py-3 text-left font-semibold">Status</th>
                   <th className="px-4 py-3 text-left font-semibold">Created</th>
                   <th className="px-4 py-3 text-center font-semibold">Actions</th>
@@ -315,7 +268,10 @@ const TicketsModal = ({ visible, onClose, userName, isDarkMode = false }) => {
                       style={{ borderColor: isDarkMode ? '#4b5563' : '#e5e7eb' }}
                     >
                       <td className="px-4 py-3 font-semibold">{ticket.id ?? ticket.pk ?? ticket.ticket_id}</td>
+                      <td className="px-4 py-3">{ticket.user_id || '-'}</td>
+                      <td className="px-4 py-3">{ticket.username || '-'}</td>
                       <td className="px-4 py-3">{ticket.subject || ticket.title || '-'}</td>
+                      <td className="px-4 py-3 text-sm truncate max-w-xs">{ticket.description || '-'}</td>
                       <td className="px-4 py-3">
                         <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusBadgeColors[ticket.status]}`}>
                           {ticket.status || ticket.state || '-'}
