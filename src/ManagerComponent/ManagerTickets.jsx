@@ -163,6 +163,7 @@ const ManagerTickets = () => {
     { Header: "User ID", accessor: "user_id" },
     { Header: "Username", accessor: "username" },
     { Header: "Subject", accessor: "subject" },
+    { Header: "Description", accessor: "description" },
     { Header: "Status", accessor: "status" },
   ];
 
@@ -254,6 +255,7 @@ const ManagerTickets = () => {
                           >
                             Open
                           </button>
+                          
                         );
                       }
                       if (activeTab === "pending") {
