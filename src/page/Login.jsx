@@ -76,6 +76,26 @@ const Login = () => {
 
   const navigate = useNavigate();
 
+  // Toast notifications state
+  const [toasts, setToasts] = useState([]);
+
+  const showToast = (type, message, timeout = 4000) => {
+    if (!message) return;
+    const id = Date.now() + Math.random();
+    setToasts((t) => [{ id, type, message }, ...t]);
+    setTimeout(() => {
+      setToasts((t) => t.filter((x) => x.id !== id));
+    }, timeout);
+  };
+
+  // Navigate after a short delay so toasts can be seen before route change
+  const navigateAfterDelay = (path, delay = 700) => {
+    setTimeout(() => {
+      navigate(path);
+    }, delay);
+  };
+
+
     // Helper to handle login response
     // Note: Tokens are now stored in HttpOnly cookies by the backend
     // Frontend should NOT try to read or store JWT tokens
@@ -183,14 +203,15 @@ const Login = () => {
           setShowVerificationModal(true);
         } else {
           saveAuthData(response.data);
+          showToast('success', response.data.message || 'Signed in successfully');
           const userData = getUserFromCookies();
           const role = userData?.role || 'manager';
-          if (role === 'admin') navigate('/dashboard');
-          else navigate('/manager/dashboard');
+          navigateAfterDelay(role === 'admin' ? '/dashboard' : '/manager/dashboard');
         }
       } catch (error) {
-        if (error.response) setErrorMessage(error.response.data.error || 'Something went wrong.');
-        else setErrorMessage('Something went wrong.');
+        const msg = error.response?.data?.error || 'Something went wrong.';
+        setErrorMessage(msg);
+        showToast('error', msg);
       } finally {
         setIsLoading(false);
       }
@@ -213,10 +234,10 @@ const Login = () => {
         if (response.data?.access && response.data?.refresh) {
           saveAuthData(response.data);
           setShowVerificationModal(false);
+          showToast('success', response.data.message || 'Verified — signing in');
           const userData = getUserFromCookies();
           const role = userData?.role || 'manager';
-          if (role === 'admin') navigate('/dashboard');
-          else navigate('/manager/dashboard');
+          navigateAfterDelay(role === 'admin' ? '/dashboard' : '/manager/dashboard');
           return;
         }
 
@@ -228,9 +249,9 @@ const Login = () => {
         );
         saveAuthData(loginResp.data);
         setShowVerificationModal(false);
+        showToast('success', loginResp.data.message || 'Signed in successfully');
         const role = getUserFromCookies()?.role || 'manager';
-        if (role === 'admin') navigate('/dashboard');
-        else navigate('/manager/dashboard');
+        navigateAfterDelay(role === 'admin' ? '/dashboard' : '/manager/dashboard');
       } catch (err) {
         console.debug('[verify] document.cookie=', document.cookie);
         console.debug('[verify] response headers=', err.response?.headers);
@@ -254,6 +275,7 @@ const Login = () => {
           { headers: { 'X-CSRFToken': getCookie('csrftoken') }, withCredentials: true }
         );
         setResendCooldown(60);
+        showToast('success', 'OTP resent');
         const interval = setInterval(() => {
           setResendCooldown((c) => {
             if (c <= 1) {
@@ -274,55 +296,105 @@ const Login = () => {
 
     return (
       <StyledWrapper>
-        <div className="box">
-          <div className="login">
-            <form className="loginBx" method="POST" action="" id="signinForm" onSubmit={handleSubmit}>
-              <h2>
-                <i className="fa-solid fa-right-to-bracket"></i>
-                Login
-                <i className="fa-solid fa-heart"></i>
-              </h2>
+    {/* Toast container */}
+    <div className="toast-container" aria-live="polite" aria-atomic="true">
+      {toasts.map((t) => (
+        <div key={t.id} className={"toast " + t.type} role="status">
+          <div className="toast-message">{t.message}</div>
+          <button className="toast-close" onClick={() => setToasts((s) => s.filter(x => x.id !== t.id))} aria-label="Dismiss">×</button>
+        </div>
+      ))}
+    </div>
+    <div className="login-container">
+        <div className="login-card">
+            <div className="login-header">
+                <div className="neu-icon">
+                    <div className="icon-inner">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                            <circle cx="12" cy="7" r="4"/>
+                        </svg>
+                    </div>
+                </div>
+                <h2>Welcome back</h2>
+                <p>Please sign in to continue</p>
+            </div>
+            
+            <form className="login-form" id="loginForm" noValidate onSubmit={handleSubmit}>
+                <div className="form-group">
+                    <div className="input-group neu-input">
+                        <input
+                          type="email"
+                          id="email"
+                          name="email"
+                          required
+                          autoComplete="email"
+                          placeholder=" "
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                        />
+                        <label htmlFor="email">Email address</label>
+                        <div className="input-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                                <polyline points="22,6 12,13 2,6"/>
+                            </svg>
+                        </div>
+                    </div>
+                    <span className="error-message" id="emailError"></span>
+                </div>
 
-              <label htmlFor="username">Email</label>
-              <input
-                type="email"
-                id="username"
-                name="email"
-                placeholder="Email"
-                autoComplete="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
+                {/* Notifications are now shown via toasts */}
 
-              <label htmlFor="signinPassword">Password</label>
-              <div className="password-wrapper">
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  id="signinPassword"
-                  name="password"
-                  placeholder="Password"
-                  autoComplete="current-password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-              </div>
+                <div className="form-group">
+                    <div className="input-group neu-input password-group">
+                        <input
+                          type={showPassword ? 'text' : 'password'}
+                          id="password"
+                          name="password"
+                          required
+                          autoComplete="current-password"
+                          placeholder=" "
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                        />
+                        <label htmlFor="password">Password</label>
+                        <div className="input-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                                <path d="M7 11V7a5 5 0 0110 0v4"/>
+                            </svg>
+                        </div>
+                        <button
+                          type="button"
+                          className={"password-toggle neu-toggle" + (showPassword ? ' show-password' : '')}
+                          id="passwordToggle"
+                          aria-label="Toggle password visibility"
+                          aria-pressed={showPassword}
+                          onClick={() => setShowPassword((s) => !s)}
+                        >
+                            <svg className="eye-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                <circle cx="12" cy="12" r="3"/>
+                            </svg>
+                            <svg className="eye-closed" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+                                <line x1="1" y1="1" x2="23" y2="23"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <span className="error-message" id="passwordError"></span>
+                </div>
 
-              <button type="submit" disabled={isLoading}>
-                {isLoading ? '' : 'Sign in'}
-                <span
-                  className="spinner"
-                  id="loadingSpinner"
-                  style={{ display: isLoading ? 'inline-block' : 'none' }}
-                />
-              </button>
+                {/* Removed remember-me and forgot-password per request */}
 
-              <div id="error-message" style={{ color: 'red', display: errorMessage ? 'block' : 'none' }}>
-                {errorMessage}
-              </div>
-
-              {verificationRequired && (
+                <button type="submit" className="neu-button login-btn">
+                    <span className="btn-text">Sign In</span>
+                    <div className="btn-loader">
+                        <div className="neu-spinner"></div>
+                    </div>
+                </button>
+                             {verificationRequired && (
                 <div id="verification-message" style={{ color: '#FFD36D', marginTop: '10px' }}>
                   Please check your email for the OTP to verify your login.
                 </div>
@@ -434,185 +506,558 @@ const Login = () => {
   const StyledWrapper = styled.div`
 
   * {
-    font-family: "Poppins", sans-serif;
-    box-sizing: border-box;
     margin: 0;
     padding: 0;
-  }
+    box-sizing: border-box;
+}
 
-    /* Ensure the wrapper fills the viewport and centers the login box */
-    position: fixed;
-    inset: 0;
-    width: 100vw;
-    height: 100vh;
+/* Dark black & gold theme */
+    --bg: #08070a;
+    --card: #0f0f12;
+    --muted: #bfb38a;
+    --text: #e6e6e9;
+    --gold: #D4AF37;
+
     display: flex;
-    justify-content: center;
     align-items: center;
-    background: #000;
-    color: #fff;
-    overflow: hidden;
+    justify-content: center;
+    min-height: 100vh;
+    width: 100%;
+    padding: 20px;
+    background: radial-gradient(circle at 10% 10%, rgba(212,175,55,0.03), transparent 20%), var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    line-height: 1.6;
 
-  @property --a {
-    syntax: "<angle>";
-    inherits: false;
-    initial-value: 0deg;
-  }
+.login-container {
+    width: 100%;
+    max-width: 420px;
+}
 
-  .box {
+.login-card {
+    background: linear-gradient(180deg, #0b0b0d 0%, #121216 100%);
+    border-radius: 30px;
+    padding: 50px 40px;
+    box-shadow: 0 10px 30px rgba(212, 175, 55, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.02);
+    border: 1px solid rgb(212, 175, 55);
     position: relative;
-    width: 400px;
-    height: 200px;
-    background: repeating-conic-gradient(
-      from var(--a),
-      #D4AF37 0%,
-      #D4AF37 5%,
-      transparent 5%,
-      transparent 40%,
-      #FFD36D 50%
-    );
-    filter: drop-shadow(0 15px 50px rgba(0,0,0,0.9));
-    border-radius: 20px;
-    animation: rotating 6s linear infinite;
+    transition: all 0.3s ease;
+}
+
+.login-card:hover {
+    transform: translateY(-5px);
+}
+
+.login-header {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.neu-icon {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 24px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.25));
+    border-radius: 50%;
     display: flex;
-    justify-content: center;
     align-items: center;
-    transition: 0.5s;
-  }
+    justify-content: center;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.7), inset 0 4px 8px rgba(255,255,255,0.02);
+    transition: all 0.3s ease;
+}
 
-  @keyframes rotating {
-    0% { --a: 0deg; }
-    100% { --a: 360deg; }
-  }
+.neu-icon:hover {
+    box-shadow: inset 0 10px 20px rgba(212, 175, 55, 0.6),  0 1px 0 rgba(255, 255, 255, 0.02);
+}
 
-  .box::before {
-    content: "";
-    position: absolute;
+.icon-inner {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--muted);
+}
+
+.icon-inner svg {
     width: 100%;
     height: 100%;
-    background: repeating-conic-gradient(
-      from var(--a),
-      rgba(212,175,55,0.9) 0%,
-      rgba(212,175,55,0.85) 6%,
-      transparent 6%,
-      transparent 42%,
-      rgba(255,211,109,0.25) 52%
-    );
-    filter: drop-shadow(0 15px 50px rgba(0,0,0,0.9));
-    border-radius: 20px;
-    animation: rotating 6s linear infinite;
-    animation-delay: -1s;
-  }
+    stroke: var(--muted);
+}
 
-  .box::after {
-    content: "";
-    position: absolute;
-    inset: 4px;
-    background: #0f0f10;
-    filter: drop-shadow(0 8px 30px rgba(0,0,0,0.8));
-    border-radius: 15px;
-  }
+.login-header h2 {
+    color: var(--text);
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
 
-  .box:hover { width: 450px; height: 500px; }
-  .box:hover .login { inset: 40px; }
-  .box:hover .loginBx { transform: translateY(0px); }
+.login-header p {
+    color: var(--muted);
+    font-size: 15px;
+    font-weight: 400;
+}
 
-  .login {
-    position: absolute;
-    inset: 40px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-direction: column;
-    border-radius: 10px;
-    background: linear-gradient(180deg, rgba(0,0,0,0.55), rgba(10,10,10,0.35));
-    color: #fff;
-    z-index: 1000;
-    box-shadow: inset 0 10px 20px rgba(0,0,0,0.8);
-    border-bottom: 2px solid rgba(212,175,55,0.12);
-    transition: 0.5s;
-    overflow: hidden;
-    padding-top: 40px;
-  }
-
-  .loginBx {
+/* Neumorphic Input Styles */
+.form-group {
+    margin-bottom: 28px;
     position: relative;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-direction: column;
-    padding-top: 60px;
-    gap: 20px;
-    width: 70%;
-    transform: translateY(0px);
-    transition: 0.5s;
-  }
+}
 
-  h2 { text-transform: uppercase; font-weight: 600; letter-spacing: 0.2em; text-align: center; }
+.neu-input {
+    position: relative;
+    background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(0,0,0,0.18));
+    border-radius: 12px;
+    box-shadow: inset 6px 6px 12px rgba(0,0,0,0.6), inset -6px -6px 12px rgba(255,255,255,0.02);
+    transition: all 0.3s ease;
+    border: 1px solid rgba(212,175,55,0.04);
+}
 
-  h2 i {
-    color: #D4AF37;
-    text-shadow: 0 0 6px rgba(212,175,55,0.9), 0 0 26px rgba(212,175,55,0.25);
-  }
+.neu-input:focus-within {
+  box-shadow:
+    inset 0 0 0 3px rgba(212,175,55,0.12),
+    inset 4px 4px 12px rgba(0,0,0,0.6);
+}
 
-  label { align-self: flex-start; color: #FFD36D; font-size: 0.95em; margin-left: 5px; }
+.neu-input input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  padding: 18px 20px;
+  padding-left: 72px; /* room for icon + floating label */
+  color: var(--text);
+  font-size: 15px;
+  font-weight: 500;
+  outline: none;
+  transition: all 0.18s cubic-bezier(.2,.8,.2,1);
+  caret-color: var(--gold);
+}
 
-  input {
+.neu-input input::placeholder {
+  color: var(--gold);
+  opacity: 0.75;
+}
+
+.neu-input label {
+  position: absolute;
+  left: 72px; /* align with input text */
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--muted);
+  font-size: 15px;
+  font-weight: 500;
+  pointer-events: none;
+  transition: all 0.16s cubic-bezier(.2,.8,.2,1);
+  background: transparent;
+  padding: 0 8px;
+  line-height: 1;
+}
+
+/* Float label to top on focus or when input has content */
+.neu-input input:focus + label,
+.neu-input input:not(:placeholder-shown) + label {
+  top: -6px;
+  font-size: 12px;
+  color: var(--gold);
+  transform: translateY(0);
+  left: 56px;
+  background: var(--card);
+  border-radius: 6px;
+  padding: 0 8px;
+}
+
+/* Hide placeholder while focused so floating label is clear */
+.neu-input input:focus::placeholder {
+  color: transparent;
+}
+
+.input-icon {
+  position: absolute;
+  left: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 20px;
+  color: var(--muted);
+  transition: all 0.18s cubic-bezier(.2,.8,.2,1);
+}
+
+.input-icon svg {
     width: 100%;
-    padding: 10px 20px;
-    outline: none;
-    border: none;
-    font-size: 1em;
-    color: #fff;
-    background: rgba(255,255,255,0.03);
-    border-bottom: 2px solid rgba(212,175,55,0.12);
-    border-radius: 30px;
-  }
+    height: 100%;
+}
 
-  input::placeholder { color: #bfb38a; }
+.neu-input:focus-within .input-icon {
+  color: var(--gold);
+}
 
-  button {
-    width: 60%;
-    background: linear-gradient(180deg, #D4AF37, #FFD36D);
-    border: 1px solid rgba(0,0,0,0.6);
-    font-weight: 600;
-    color: #080707;
-    cursor: pointer;
-    transition: 0.25s;
-    border-radius: 30px;
-    font-size: 1.1em;
-    padding: 10px 14px;
-  }
+/* Password Toggle */
+.password-group {
+    padding-right: 50px;
+}
 
-  button:hover { box-shadow: 0 6px 18px rgba(212,175,55,0.25), 0 0 40px rgba(212,175,55,0.06); transform: translateY(-2px); }
-  button:focus { outline: 2px solid rgba(212,175,55,0.35); outline-offset: 2px; }
-  button:disabled { background: #333; color: #777; cursor: not-allowed; }
+.neu-toggle {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  box-shadow: none;
+    transition: all 0.3s ease;
+}
 
-  .password-wrapper { position: relative; width: 100%; }
-  .password-wrapper input { padding-right: 15px; }
-  .password-wrapper input::-ms-reveal { 
-    color: #ffffff !important; 
-    filter: brightness(0) saturate(100%) invert(100%);
-  }
+.neu-toggle:hover {
+  color: var(--text);
+}
 
-  .spinner {
+.neu-toggle:active { box-shadow: none; }
+
+.neu-toggle svg {
+    width: 18px;
+    height: 18px;
+}
+
+.eye-closed {
     display: none;
+}
+
+.neu-toggle.show-password .eye-open {
+    display: none;
+}
+
+.neu-toggle.show-password .eye-closed {
+    display: block;
+}
+
+/* Form Options */
+.form-options {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 35px;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.remember-wrapper {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+}
+
+.remember-wrapper input[type="checkbox"] {
+    display: none;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    user-select: none;
+    color: var(--muted);
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.neu-checkbox {
+    width: 22px;
+    height: 22px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.22));
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.6), inset -2px -2px 6px rgba(255,255,255,0.02);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid rgba(212,175,55,0.06);
+}
+
+.remember-wrapper input[type="checkbox"]:checked + .checkbox-label .neu-checkbox {
+    box-shadow: 
+        inset 2px 2px 5px #bec3cf,
+        inset -2px -2px 5px #ffffff;
+}
+
+.neu-checkbox svg {
+    width: 14px;
+    height: 14px;
+    color: #00c896;
+    opacity: 0;
+    transform: scale(0);
+    transition: all 0.3s ease;
+}
+
+.remember-wrapper input[type="checkbox"]:checked + .checkbox-label .neu-checkbox svg {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.forgot-link {
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    transition: color 0.3s ease;
+}
+
+.forgot-link:hover {
+    color: var(--text);
+}
+
+/* Neumorphic Button */
+.neu-button {
+    width: 100%;
+    background: linear-gradient(180deg, var(--gold), #b88e2b);
+    border: none;
+    border-radius: 12px;
+    padding: 14px 28px;
+    color: #0b0b0d;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    position: relative;
+    margin-bottom: 30px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.6), 0 2px 6px rgba(212,175,55,0.12);
+    transition: all 0.3s ease;
+    overflow: hidden;
+    border: 1px solid rgba(0,0,0,0.45);
+}
+
+.neu-button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    transition: left 0.5s ease;
+}
+
+.neu-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 14px 30px rgba(0,0,0,0.75), 0 4px 10px rgba(212,175,55,0.14);
+}
+
+.neu-button:hover::before {
+    left: 100%;
+}
+
+.neu-button:active {
+    transform: translateY(0);
+    box-shadow: 
+        inset 4px 4px 10px #bec3cf,
+        inset -4px -4px 10px #ffffff;
+}
+
+.btn-text {
+    position: relative;
+    z-index: 1;
+    transition: opacity 0.3s ease;
+}
+
+.btn-loader {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.neu-spinner {
     width: 20px;
     height: 20px;
-    border: 2px solid rgba(255,255,255,0.08);
-    border-top: 2px solid #D4AF37;
+    border: 3px solid #bec3cf;
+    border-top: 3px solid #6c7293;
     border-radius: 50%;
     animation: spin 1s linear infinite;
-  }
+}
 
-  @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
 
-  #error-message { color: #ffb3a7; margin-top: 10px; text-align: center; font-size: 0.9em; padding: 5px; border-radius: 4px; }
+.neu-button.loading .btn-text {
+    opacity: 0;
+}
 
-  @media (max-width: 480px) {
-    .box { width: 90vw; }
-    .box:hover { width: 95vw; height: 500px; }
-    .loginBx { width: 90%; }
-  }
+.neu-button.loading .btn-loader {
+    opacity: 1;
+}
+
+/* Divider */
+.divider { display: none; }
+.divider-line { display: none; }
+.divider span { display: none; }
+
+/* Social Login */
+.social-login { display: none; }
+.neu-social { display: none; }
+
+/* Signup Link */
+.signup-link {
+    text-align: center;
+}
+
+.signup-link p {
+    color: var(--muted);
+    font-size: 14px;
+}
+
+.signup-link a {
+    color: #6c7293;
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.3s ease;
+}
+
+.signup-link a:hover {
+    color: #3d4468;
+}
+
+/* Error States */
+.error-message {
+    color: #ff3b5c;
+    font-size: 12px;
+    font-weight: 500;
+    margin-top: 8px;
+    margin-left: 20px;
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: all 0.3s ease;
+}
+
+.error-message.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.form-group.error .neu-input {
+    box-shadow: 
+        inset 8px 8px 16px #ffb8c4,
+        inset -8px -8px 16px #ffffff,
+        0 0 0 2px #ff3b5c;
+}
+
+/* Success Message */
+.success-message {
+    display: none;
+    text-align: center;
+    padding: 40px 20px;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.5s ease;
+}
+
+.success-message.show {
+    display: block;
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.success-message .neu-icon {
+    background: #e0e5ec;
+    color: #00c896;
+    margin-bottom: 20px;
+}
+
+.success-message h3 {
+    color: #3d4468;
+    font-size: 1.5rem;
+    margin-bottom: 8px;
+}
+
+.success-message p {
+    color: #9499b7;
+    font-size: 14px;
+}
+
+/* Toast notifications */
+.toast-container {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.toast {
+  min-width: 260px;
+  max-width: 380px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  color: var(--text);
+  background: rgba(16,16,18,0.92);
+  border: 1px solid rgba(255,255,255,0.03);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.6), 0 2px 8px rgba(212,175,55,0.04);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-right: 8px;
+}
+.toast.success {
+  border-left: 4px solid var(--gold);
+}
+.toast.error {
+  border-left: 4px solid #ff3b5c;
+}
+.toast-message {
+  padding-right: 12px;
+  font-size: 14px;
+}
+.toast-close {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: 18px;
+  cursor: pointer;
+}
+
+/* Mobile Responsive */
+@media (max-width: 480px) {
+    body {
+        padding: 16px;
+    }
+    
+    .login-card {
+        padding: 35px 25px;
+        border-radius: 20px;
+    }
+    
+    .login-header h2 {
+        font-size: 1.75rem;
+    }
+    
+    .neu-input input {
+        padding: 18px 20px;
+        padding-left: 50px;
+    }
+    
+    .neu-input label {
+        left: 50px;
+    }
+    
+    .form-options {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+    }
+}
   `;
 
   export default Login;
