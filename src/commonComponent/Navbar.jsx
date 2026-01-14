@@ -168,18 +168,18 @@ const Navbar = ({ isSidebarOpen, setIsSidebarOpen }) => {
           shadow-lg px-3 py-3`}
       >
         {/* Header */}
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-center mb-4">
           <Link to="/dashboard">
             <img
               className="h-10 object-contain cursor-pointer"
-              src="/logo.svg"
+              src="static/admin/logo.svg"
               alt="Logo"
             />
           </Link>
 
           {/* Close button (mobile only) */}
           {isMobileView && (
-            <button onClick={() => setIsSidebarOpen(false)}>
+            <button className="ml-auto" onClick={() => setIsSidebarOpen(false)}>
               <X />
             </button>
           )}
