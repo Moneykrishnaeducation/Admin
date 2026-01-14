@@ -134,6 +134,7 @@ const Navbar = ({ isSidebarOpen, setIsSidebarOpen }) => {
     { path: "/user", icon: Users, label: "User" },
     { path: "/tradingaccounts", icon: CreditCard, label: "Trading Accounts" },
     { path: "/demo", icon: CreditCard, label: "Demo Accounts" },
+    { path: "/managermam", icon: Users, label: "Mam Account" },
     { path: "/transactions", icon: Repeat, label: "Transactions" },
     { path: "/tickets", icon: Ticket, label: "Ticket" },
     { path: "/activities", icon: Calendar, label: "Activities" },
