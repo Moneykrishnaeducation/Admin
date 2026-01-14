@@ -77,6 +77,36 @@ const PartnershipModals = ({
 }) => {
   const theme = useTheme() || {};
   const { isDarkMode = true } = theme;
+  const [fetchedGroups, setFetchedGroups] = React.useState([]);
+  const [editingGroups, setEditingGroupsLocal] = React.useState([]);
+  const [viewingProfileId, setViewingProfileId] = React.useState(null);
+
+  React.useEffect(() => {
+    let mounted = true;
+    if (viewingGroups) {
+      let initial = [];
+      if (Array.isArray(viewingGroups)) {
+        initial = viewingGroups.slice();
+        setViewingProfileId(null);
+      } else if (typeof viewingGroups === 'object' && viewingGroups !== null) {
+        initial = viewingGroups.groups ?? viewingGroups.groupsList ?? viewingGroups.availableGroups ?? [];
+        setViewingProfileId(viewingGroups.profileId ?? viewingGroups.profile_id ?? null);
+      }
+      setEditingGroupsLocal(Array.isArray(initial) ? initial : []);
+      fetch('/api/trading-groups-non-demo/')
+        .then((res) => res.json())
+        .then((data) => {
+          if (!mounted) return;
+          setFetchedGroups(data.available_groups || []);
+        })
+        .catch((err) => {
+          console.error('Failed to load trading groups', err);
+        });
+    }
+    return () => {
+      mounted = false;
+    };
+  }, [viewingGroups]);
   return (
     <>
       {showCommissionModal && (
@@ -244,7 +274,7 @@ const PartnershipModals = ({
               </form>
             ) : (
               <>
-                <div className="fixed-tbody-wrapper overflow-auto max-h-[60vh]">
+                <div className=" overflow-auto max-h-[60vh]">
                   <TableStructure
                     columns={commissionProfileColumns}
                     data={commissionProfiles}
@@ -256,16 +286,44 @@ const PartnershipModals = ({
                     <div className="bg-black text-white rounded-lg shadow-lg w-3/4 max-w-2xl p-4 relative">
                       <h3 className="text-lg font-semibold mb-2 text-yellow-400">Groups</h3>
                       <div style={{ maxHeight: 400, overflowY: 'auto' }} className="text-sm">
-                        {viewingGroups.map((g, i) => (
-                          <div key={i} className="py-1 border-b border-white/10">{g}</div>
-                        ))}
+                        {fetchedGroups.length === 0 ? (
+                          <div className="py-2">Loading groups...</div>
+                        ) : (
+                          fetchedGroups.map((g) => (
+                            <label key={g} className="flex items-center py-1 border-b border-white/10">
+                              <input
+                                type="checkbox"
+                                checked={editingGroups.includes(g)}
+                                onChange={() => {
+                                  setEditingGroupsLocal((prev) =>
+                                    prev.includes(g) ? prev.filter((x) => x !== g) : [...prev, g]
+                                  );
+                                }}
+                                className="mr-2"
+                              />
+                              <span className="truncate">{g}</span>
+                            </label>
+                          ))
+                        )}
                       </div>
-                      <div className="flex justify-end mt-3">
+                      <div className="flex justify-end mt-3 gap-2">
                         <button
                           onClick={() => setViewingGroups(null)}
                           className="bg-gray-600 text-white px-3 py-1 rounded hover:bg-gray-500"
                         >
                           Close
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (typeof setEditedRowData === 'function') {
+                              setEditedRowData((prev) => ({ ...prev, groupsList: editingGroups }));
+                            }
+                            setViewingGroups(null);
+                            setViewingProfileId(null);
+                          }}
+                          className="bg-yellow-500 text-black px-3 py-1 rounded hover:bg-yellow-600"
+                        >
+                          Save
                         </button>
                       </div>
                     </div>
@@ -543,7 +601,7 @@ const PartnershipModals = ({
                 History - {selectedId}
               </h2>
             </div>
-            <div className="fixed-tbody-wrapper">
+            <div className="overflow-auto max-h-[60vh]">
               <TableStructure
                 columns={[
                   { Header: "Transaction ID", accessor: "id" },
@@ -690,7 +748,7 @@ const PartnershipModals = ({
                       </div>
                         {commissionDetailsData && commissionDetailsData.length > 0 ? (
                         <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
-                          <div className="fixed-tbody-wrapper">
+                          <div className="overflow-auto max-h-[60vh]">
                             <TableStructure
                               columns={[
                                 { Header: "Symbols", accessor: "symbol" },
@@ -795,7 +853,7 @@ const PartnershipModals = ({
 
       {showClientListModal && (
         <div className={`fixed inset-0 z-50 flex items-center justify-center ${isDarkMode ? 'bg-black/70 ' : 'bg-white/70 '}  animate-fadeIn`}>
-          <div className={`h-[80vh] ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'} rounded-2xl shadow-2xl w-11/12 max-w-4xl p-8 relative border border-yellow-400/20 transform transition-all duration-300`}>
+          <div className={`${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'} rounded-2xl shadow-2xl w-11/12 max-w-4xl p-8 relative border border-yellow-400/20 transform transition-all duration-300`}>
             <div className="flex items-center mb-6">
               <IconWrapper>
                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -806,7 +864,7 @@ const PartnershipModals = ({
                 Client List - {selectedId}
               </h2>
             </div>
-            <div className="fixed-tbody-wrapper">
+            <div className="overflow-auto max-h-[60vh]">
               <TableStructure
                 columns={[
                   { Header: "Name", accessor: "name" },
