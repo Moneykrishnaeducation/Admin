@@ -274,7 +274,7 @@ const PartnershipModals = ({
               </form>
             ) : (
               <>
-                <div className="fixed-tbody-wrapper overflow-auto max-h-[60vh]">
+                <div className=" overflow-auto max-h-[60vh]">
                   <TableStructure
                     columns={commissionProfileColumns}
                     data={commissionProfiles}
@@ -601,7 +601,7 @@ const PartnershipModals = ({
                 History - {selectedId}
               </h2>
             </div>
-            <div className="fixed-tbody-wrapper">
+            <div className="overflow-auto max-h-[60vh]">
               <TableStructure
                 columns={[
                   { Header: "Transaction ID", accessor: "id" },
@@ -748,7 +748,7 @@ const PartnershipModals = ({
                       </div>
                         {commissionDetailsData && commissionDetailsData.length > 0 ? (
                         <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
-                          <div className="fixed-tbody-wrapper">
+                          <div className="overflow-auto max-h-[60vh]">
                             <TableStructure
                               columns={[
                                 { Header: "Symbols", accessor: "symbol" },
@@ -853,7 +853,7 @@ const PartnershipModals = ({
 
       {showClientListModal && (
         <div className={`fixed inset-0 z-50 flex items-center justify-center ${isDarkMode ? 'bg-black/70 ' : 'bg-white/70 '}  animate-fadeIn`}>
-          <div className={`h-[80vh] ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'} rounded-2xl shadow-2xl w-11/12 max-w-4xl p-8 relative border border-yellow-400/20 transform transition-all duration-300`}>
+          <div className={`${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'} rounded-2xl shadow-2xl w-11/12 max-w-4xl p-8 relative border border-yellow-400/20 transform transition-all duration-300`}>
             <div className="flex items-center mb-6">
               <IconWrapper>
                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -864,7 +864,7 @@ const PartnershipModals = ({
                 Client List - {selectedId}
               </h2>
             </div>
-            <div className="fixed-tbody-wrapper">
+            <div className="overflow-auto max-h-[60vh]">
               <TableStructure
                 columns={[
                   { Header: "Name", accessor: "name" },
