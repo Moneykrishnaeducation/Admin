@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, use } from "react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import TableStructure from "../commonComponent/TableStructure";
@@ -329,24 +329,7 @@ const Partnership = () => {
   }, [error]);
 
   // Commission profiles data and columns for modal
-  const [commissionProfiles, setCommissionProfiles] = useState([
-    {
-      id: "1",
-      profileName: "Gold Plan",
-      profileId: "GP001",
-      commissionDetails: "15% on sales",
-      type: "Fixed",
-      groups: "Group A",
-    },
-    {
-      id: "2",
-      profileName: "Silver Plan",
-      profileId: "SP002",
-      commissionDetails: "10% on sales",
-      type: "Variable",
-      groups: "Group B",
-    },
-  ]);
+  const [commissionProfiles, setCommissionProfiles] = useState([null]);
 
   const commissionProfileColumns = [
     {
@@ -359,7 +342,7 @@ const Partnership = () => {
               type="text"
               value={editedRowData.profileName || ""}
               onChange={(e) => handleEditChange("profileName", e.target.value)}
-              className="border p-1 rounded w-full"
+              className={`border p-1 rounded w-full ${isDarkMode ? 'bg-black text-white border-gray-600' : 'bg-white text-black border-gray-300'}`}
             />
           );
         }
@@ -381,7 +364,7 @@ const Partnership = () => {
               type="text"
               value={editedRowData.commissionDetails || ""}
               onChange={(e) => handleEditChange("commissionDetails", e.target.value)}
-              className="border p-1 rounded w-full"
+              className={`border p-1 rounded w-full ${isDarkMode ? 'bg-black text-white border-gray-600' : 'bg-white text-black border-gray-300'}`}
             />
           );
         }
@@ -397,11 +380,11 @@ const Partnership = () => {
             <select
               value={editedRowData.type || ""}
               onChange={(e) => handleEditChange("type", e.target.value)}
-              className="border p-1 rounded w-full"
+              className={`border p-1 rounded w-full ${isDarkMode ? 'bg-black text-white border-gray-600' : 'bg-white text-black border-gray-300'}`}
             >
               <option value="">Select Type</option>
-              <option value="Fixed">Fixed</option>
-              <option value="Variable">Variable</option>
+              <option value="usd">Usd Per Lot</option>
+              <option value="percentage">Percentage</option>
             </select>
           );
         }
@@ -413,13 +396,14 @@ const Partnership = () => {
       accessor: "groupsList",
       Cell: (cellValue, row) => {
         // cellValue is groupsList array (from mapping)
-        const groups = Array.isArray(cellValue) ? cellValue : (row.groupsList || []);
-        const count = groups.length;
+        const baseGroups = Array.isArray(cellValue) ? cellValue : (row.groupsList || []);
+        const effectiveGroups = (editRowId === row.id) ? (editedRowData.groupsList ?? baseGroups) : baseGroups;
+        const count = Array.isArray(effectiveGroups) ? effectiveGroups.length : 0;
         return (
           <div>
             <button
               type="button"
-              onClick={() => setViewingGroups(groups)}
+              onClick={() => setViewingGroups({ groups: effectiveGroups, profileId: row.id })}
               className="bg-gray-100 text-black px-2 py-1 rounded text-sm"
             >
               {count} {count === 1 ? 'Group' : 'Groups'}
@@ -437,7 +421,59 @@ const Partnership = () => {
 
   const handleEditClick = (row) => {
     setEditRowId(row.id);
-    setEditedRowData(row);
+    // Normalize commissionDetails for editing: extract numeric values like "40,30,20" or "4,3,2"
+    const editable = { ...row };
+    const rawDetails = row.commissionDetails ?? "";
+    const typeLower = String(row.type ?? "").toLowerCase();
+    // Helper to extract numeric tokens (integers or decimals)
+    // Skip numbers that are adjacent to letters (e.g. "L1") and skip totals/max values
+    const extractNumbers = (str) => {
+      const s = String(str || "");
+      const out = [];
+      const re = /(\d+(?:\.\d+)?)/g;
+
+      for (const m of s.matchAll(re)) {
+        const num = m[1];
+        const idx = m.index ?? 0;
+        const prevChar = s[idx - 1] ?? "";
+
+        const contextBefore = s.slice(Math.max(0, idx - 15), idx).toLowerCase();
+        const contextAfter = s.slice(idx + num.length, idx + num.length + 15).toLowerCase();
+
+        // Skip if immediately adjacent to a letter (like L1)
+        if (/[a-z]/i.test(prevChar)) continue;
+
+        // Skip totals / max / avg / sum
+        if (/\b(total|max|sum|subtotal|average|avg)\s*[:\s]*$/i.test(contextBefore)) continue;
+
+        // 🔥 NEW: Skip anything inside parentheses (totals always come there)
+        if (contextBefore.includes("(") && !contextBefore.includes(")")) continue;
+        if (contextAfter.includes(")") && !contextAfter.includes("(")) continue;
+
+        out.push(num);
+      }
+
+      return out;
+    };
+
+    if (typeLower.includes("percent")) {
+      const nums = extractNumbers(rawDetails);
+      if (nums.length) {
+        editable.commissionDetails = nums.join(",");
+      } else {
+        editable.commissionDetails = rawDetails;
+      }
+    } else if (typeLower.includes("usd") || typeLower.includes("usd per") || typeLower.includes("usdper")) {
+      const nums = extractNumbers(rawDetails);
+      if (nums.length) {
+        editable.commissionDetails = nums.join(",");
+      } else {
+        editable.commissionDetails = rawDetails;
+      }
+    } else {
+      editable.commissionDetails = rawDetails;
+    }
+    setEditedRowData(editable);
   };
 
   const handleDeleteClick = (row) => {
@@ -459,11 +495,25 @@ const Partnership = () => {
     const profileId = editedRowData.profileId ?? existing.profileId ?? editRowId;
 
     // Build payload mapping UI fields -> backend fields
+    const type = editedRowData.type ?? existing.type;
     const payload = {
       name: editedRowData.profileName ?? existing.profileName,
-      use_percentage_based: (editedRowData.type ?? existing.type) === "Variable",
+      use_percentage_based: (editedRowData.type ?? existing.type) === "percentage",
+
       approved_groups: editedRowData.groupsList ?? existing.groupsList ?? [],
     };
+
+    if ((editedRowData.type ?? existing.type) === "percentage") {
+      payload.level_percentages =
+        editedRowData.commissionDetails ??
+        existing.commissionDetails ??
+        "";
+    } else if ((editedRowData.type ?? existing.type) === "usd") {
+      payload.level_amounts_usd_per_lot =
+        editedRowData.commissionDetails ??
+        existing.commissionDetails ??
+        "";
+    }
 
     try {
       const url = `${API_ENDPOINTS.commissionProfiles}${profileId}/`;
@@ -488,7 +538,7 @@ const Partnership = () => {
         try {
           const err = await res.json();
           msg = err.detail || err.error || JSON.stringify(err);
-        } catch (e) {}
+        } catch (e) { }
         throw new Error(msg);
       }
 
@@ -500,7 +550,7 @@ const Partnership = () => {
         profileName: json.profileName ?? payload.name,
         profileId: json.profileId ?? profileId,
         commissionDetails: json.displayText ?? existing.commissionDetails,
-        type: json.usePercentageBased ? "Variable" : "Fixed",
+        type: json.usePercentageBased ? "percentage" : "usd",
         groupsList: json.approvedGroups ?? payload.approved_groups,
         id: existing.id ?? profileId,
       };
@@ -1346,7 +1396,7 @@ const Partnership = () => {
       <ToastContainer position="top-right" autoClose={5000} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
 
       <TableStructure
-      style
+        style
         columns={columns}
         data={data}
         actionsColumn={actionsColumn}
