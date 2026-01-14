@@ -93,6 +93,19 @@ const ManagerDashboard = () => {
   }, []);
 
   // Map API data to cards with icons
+  // Map stat label to navigation route
+  const statRoutes = {
+    "Total Clients": "/manager/user",
+    "Live Trading Accounts": "/manager/tradingaccounts",
+    "Demo Accounts": "/manager/demo",
+    "IB Earnings": "/manager/ib-earnings",
+    "Pending Transactions": "/manager/transactions",
+    "Pending Tickets": "/manager/tickets?tab=pending",
+    "Overall Deposits": "/manager/transactions",
+    "Real Balance (USD)": "/manager/transactions",
+    "Total Withdrawn": "/manager/transactions",
+  };
+
   const stats = statsData
     ? [
         { label: "Total Clients", value: formatValue(statsData.total_clients), icon: Users },
@@ -146,6 +159,7 @@ const ManagerDashboard = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-8">
               {stats.map((stat, index) => {
                 const Icon = stat.icon;
+                const route = statRoutes[stat.label];
                 return (
                   <div
                     key={index}
@@ -160,6 +174,7 @@ const ManagerDashboard = () => {
                       hover:scale-[1.02]
                       transition-all duration-200
                       flex flex-col items-center justify-center`}
+                    onClick={() => route && navigate(route)}
                   >
                     <Icon className="w-8 h-8 mb-2 text-yellow-400" />
                     <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{stat.label}</p>
