@@ -439,15 +439,22 @@ const User = () => {
     setEditProfileRow(null);
   };
   const handleDisable = async (row) => {
-    console.log("Toggle user:", row?.id, "New status:", !row.isEnabled);
-    // TODO: Call API to disable/enable user
-    const newEnabled = !row.isEnabled;
+    // Get current user state from data array (not stale row)
+    const currentUser = data.find(u => u.userId === row.userId);
+    if (!currentUser) return;
+    
+    const newEnabled = !currentUser.isEnabled;
+    const oldEnabled = currentUser.isEnabled;
+    
+    console.log("Toggle user:", row?.userId, "New status:", newEnabled);
+    
     // Optimistically update UI
     setData(prevData =>
       prevData.map(user =>
         user.userId === row.userId ? { ...user, isEnabled: newEnabled } : user
       )
     );
+    
     // Call API to actually enable/disable user
     try {
       const headers = {
@@ -465,13 +472,13 @@ const User = () => {
       return newEnabled;
     } catch (err) {
       alert("Failed to update user status");
-      // Optionally revert UI change if needed
+      // Revert UI change on error
       setData(prevData =>
         prevData.map(user =>
-          user.userId === row.userId ? { ...user, isEnabled: row.isEnabled } : user
+          user.userId === row.userId ? { ...user, isEnabled: oldEnabled } : user
         )
       );
-      throw err; // Re-throw to allow caller to handle
+      throw err;
     }
   };
   const handleTransactions = (row) => {
@@ -486,6 +493,9 @@ const User = () => {
 
   const renderRowSubComponent = (row) => {
     const isExpanded = expandedRows.has(row.userId);
+    
+    // Get the latest user data from state to ensure we have current isEnabled status
+    const currentUser = data.find(u => u.userId === row.userId) || row;
 
     const actionItems = [
       { icon: <ShieldCheck size={15} />, label: "Verify", onClick: () => handleOpenVerifyModal(row) },
@@ -514,17 +524,17 @@ const User = () => {
           >
             <SubRowButtons actionItems={actionItems} />
             <div className="flex items-center gap-2 ml-auto">
-              <span className={`text-sm font-semibold ${row.isEnabled ? "text-green-400" : "text-red-400"}`}>
-                {row.isEnabled ? "Enabled" : "Disabled"}
+              <span className={`text-sm font-semibold ${currentUser.isEnabled ? "text-green-400" : "text-red-400"}`}>
+                {currentUser.isEnabled ? "Enabled" : "Disabled"}
               </span>
               <button
                 onClick={() => handleDisable(row)}
-                className={`relative w-14 h-7 rounded-full transition-colors duration-300 ${row.isEnabled ? "bg-green-500" : "bg-red-500"
+                className={`relative w-14 h-7 rounded-full transition-colors duration-300 ${currentUser.isEnabled ? "bg-green-500" : "bg-red-500"
                   } hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-offset-2 ${isDarkMode ? "focus:ring-yellow-400" : "focus:ring-yellow-500"
                   }`}
               >
                 <div
-                  className={`absolute top-1 h-5 w-5 bg-white rounded-full transition-transform duration-300 ${row.isEnabled ? "translate-x-7" : "translate-x-1"
+                  className={`absolute top-1 h-5 w-5 bg-white rounded-full transition-transform duration-300 ${currentUser.isEnabled ? "translate-x-7" : "translate-x-1"
                     }`}
                 />
               </button>
