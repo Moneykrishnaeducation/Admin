@@ -38,6 +38,7 @@ import ManagerDemo from '../ManagerComponent/ManagerDemo';
 import ManagerTickets from '../ManagerComponent/ManagerTickets';
 import ManagerActivities from '../ManagerComponent/MangerActivities';
 import ManagerTransactions from '../ManagerComponent/ManagerTransActions';
+import ManagerMamAccount from '../ManagerComponent/ManagerMamAccount';
 
 /* -------------------------------------------------- */
 /* APP ROUTES */
@@ -96,6 +97,7 @@ const AppRoutes = ({ role }) => {
     { path: "/manager/transactions", element: <ManagerTransactions /> },
     { path: "/manager/tickets", element: <ManagerTickets /> },
     { path: "/manager/activities", element: <ManagerActivities /> },
+    { path: "/manager/managermam", element: <ManagerMamAccount/> },
   ];
 
   const allowedRoutes = role === "admin" ? adminRoutes : managerRoutes;
