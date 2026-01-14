@@ -74,8 +74,8 @@ export default function IbStatusModal({
         setProfiles(Array.isArray(profilesRes) ? profilesRes : []);
 
         setStatus({
-          enabled: Boolean(statusRes?.is_ib),
-          profile_id: statusRes?.ib_profile?.id || null,
+          enabled: Boolean(statusRes?.enabled),
+          profile_id: statusRes?.profile_id || null,
           profile_name: statusRes?.ib_profile?.name || "None",
           commission: statusRes?.ib_profile?.commission || 0,
         });
@@ -94,6 +94,12 @@ export default function IbStatusModal({
 
   /* ===================== ACTIONS ===================== */
   const toggleStatus = async () => {
+    // Prevent enabling without a profile
+    if (!status.enabled && !status.profile_id) {
+      alert("Please select a profile before enabling IB");
+      return;
+    }
+
     try {
       const newStatus = !status.enabled;
 
@@ -102,25 +108,44 @@ export default function IbStatusModal({
         profile_id: status.profile_id,
       });
 
-      setStatus((prev) => ({
-        ...prev,
-        enabled: newStatus,
-      }));
+      // Refetch the actual status from backend
+      const statusRes = await fetchGET(`/api/ib-user/${userId}/ib-status/`);
 
-      alert(`IB ${newStatus ? "Enabled" : "Disabled"}`);
+      setStatus({
+        enabled: Boolean(statusRes?.enabled),
+        profile_id: statusRes?.profile_id || null,
+        profile_name: statusRes?.ib_profile?.name || "None",
+        commission: statusRes?.ib_profile?.commission || 0,
+      });
+
+      alert(`IB ${statusRes?.is_ib ? "Enabled" : "Disabled"}`);
     } catch (err) {
       console.error(err);
       alert("Failed to update IB status");
     }
   };
 
-  const selectProfile = (profile) => {
-    setStatus((prev) => ({
-      ...prev,
-      profile_id: profile.id,
-      profile_name: profile.name,
-      commission: profile.commission,
-    }));
+  const selectProfile = async (profile) => {
+    try {
+      // Save profile selection to backend
+      await fetchPATCH({
+        enabled: status.enabled,
+        profile_id: profile.id,
+      });
+
+      // Update UI
+      setStatus((prev) => ({
+        ...prev,
+        profile_id: profile.id,
+        profile_name: profile.name,
+        commission: profile.commission,
+      }));
+
+      alert(`Profile "${profile.name}" saved`);
+    } catch (err) {
+      console.error("Failed to save profile:", err);
+      alert("Failed to save profile selection");
+    }
   };
 
   /* ===================== STYLES ===================== */
