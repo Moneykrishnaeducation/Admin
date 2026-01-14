@@ -159,8 +159,8 @@ const Partnership = () => {
     tradingGroups: "/api/trading-groups/",
     tradingGroupsNonDemo: "/api/trading-groups-non-demo/",
     partnerList: "/api/admin/ib-users/",
-    withdrawalRequest: "/api/admin/commission-withdrawal-history",
-    withdrawalPending: "/api/admin/pending-withdrawal-requests",
+    withdrawalRequest: "/api/admin/commission-withdrawal-history/",
+    withdrawalPending: "/api/admin/pending-withdrawal-requests/",
     // Actions - base path; handlers will append the transaction id and action
     withdrawalApprove: "/api/admin/transaction/",
     withdrawalReject: "/api/admin/transaction/",
