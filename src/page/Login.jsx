@@ -332,6 +332,12 @@ const Login = () => {
                           placeholder=" "
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && !isLoading) {
+                              e.preventDefault();
+                              handleSubmit(e);
+                            }
+                          }}
                         />
                         <label htmlFor="email">Email address</label>
                         <div className="input-icon">
@@ -357,6 +363,12 @@ const Login = () => {
                           placeholder=" "
                           value={password}
                           onChange={(e) => setPassword(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && !isLoading) {
+                              e.preventDefault();
+                              handleSubmit(e);
+                            }
+                          }}
                         />
                         <label htmlFor="password">Password</label>
                         <div className="input-icon">
@@ -388,11 +400,16 @@ const Login = () => {
 
                 {/* Removed remember-me and forgot-password per request */}
 
-                <button type="submit" className="neu-button login-btn">
-                    <span className="btn-text">Sign In</span>
-                    <div className="btn-loader">
-                        <div className="neu-spinner"></div>
-                    </div>
+                <button
+                  type="submit"
+                  className={"neu-button login-btn " + (isLoading ? 'loading' : 'pulse')}
+                  disabled={isLoading}
+                  aria-busy={isLoading}
+                >
+                  <span className="btn-text">Sign In</span>
+                  <div className="btn-loader">
+                    <div className="neu-spinner"></div>
+                  </div>
                 </button>
                              {verificationRequired && (
                 <div id="verification-message" style={{ color: '#FFD36D', marginTop: '10px' }}>
@@ -816,75 +833,103 @@ const Login = () => {
     color: var(--text);
 }
 
-/* Neumorphic Button */
+/* Black & Gold Neumorphic Button */
 .neu-button {
-    width: 100%;
-    background: linear-gradient(180deg, var(--gold), #b88e2b);
+    width: 60%;
+    margin: 0 auto 30px auto; /* center horizontally */
+    display: block;
+
+    background: linear-gradient(180deg, #d4af37, #9f7c1f);
     border: none;
-    border-radius: 12px;
+    border-radius: 14px;
     padding: 14px 28px;
-    color: #0b0b0d;
+    color: #0a0a0a;
     font-size: 16px;
     font-weight: 700;
     cursor: pointer;
     position: relative;
-    margin-bottom: 30px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.6), 0 2px 6px rgba(212,175,55,0.12);
-    transition: all 0.3s ease;
     overflow: hidden;
-    border: 1px solid rgba(0,0,0,0.45);
+
+    box-shadow:
+        0 10px 30px rgba(0, 0, 0, 0.85),
+        0 2px 6px rgba(212, 175, 55, 0.25);
+
+    border: 1px solid rgba(0, 0, 0, 0.6);
+    transition: all 0.3s ease;
 }
 
+
+/* Gold shine sweep */
 .neu-button::before {
     content: '';
     position: absolute;
     top: 0;
-    left: -100%;
-    width: 100%;
+    left: -120%;
+    width: 120%;
     height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-    transition: left 0.5s ease;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 215, 100, 0.35),
+        transparent
+    );
+    transition: left 0.6s ease;
 }
 
+/* Hover state */
 .neu-button:hover {
     transform: translateY(-2px);
-    box-shadow: 0 14px 30px rgba(0,0,0,0.75), 0 4px 10px rgba(212,175,55,0.14);
+    box-shadow:
+        0 16px 40px rgba(0, 0, 0, 0.9),
+        0 6px 14px rgba(212, 175, 55, 0.35);
 }
 
 .neu-button:hover::before {
-    left: 100%;
+    left: 120%;
 }
 
+/* Pressed state (neumorphic inset) */
 .neu-button:active {
     transform: translateY(0);
-    box-shadow: 
-        inset 4px 4px 10px #bec3cf,
-        inset -4px -4px 10px #ffffff;
+    box-shadow:
+        inset 4px 4px 12px rgba(0, 0, 0, 0.8),
+        inset -4px -4px 12px rgba(255, 215, 100, 0.25);
 }
 
+/* Button text */
 .btn-text {
     position: relative;
     z-index: 1;
     transition: opacity 0.3s ease;
 }
 
+/* Loader */
 .btn-loader {
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
     opacity: 0;
+    z-index: 1;
     transition: opacity 0.3s ease;
 }
 
+/* Gold spinner */
 .neu-spinner {
     width: 20px;
     height: 20px;
-    border: 3px solid #bec3cf;
-    border-top: 3px solid #6c7293;
+    border: 3px solid rgba(0, 0, 0, 0.35);
+    border-top: 3px solid #d4af37;
     border-radius: 50%;
     animation: spin 1s linear infinite;
 }
+
+/* Spinner animation */
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
 
 @keyframes spin {
     0% { transform: rotate(0deg); }
@@ -892,7 +937,7 @@ const Login = () => {
 }
 
 .neu-button.loading .btn-text {
-    opacity: 0;
+  opacity: 0.32;
 }
 
 .neu-button.loading .btn-loader {
@@ -1026,6 +1071,41 @@ const Login = () => {
   color: var(--muted);
   font-size: 18px;
   cursor: pointer;
+}
+
+/* Button pulse and disabled states */
+@keyframes goldPulse {
+  0% {
+    box-shadow: 0 8px 24px rgba(0,0,0,0.6), 0 2px 6px rgba(212,175,55,0.06);
+  }
+  50% {
+    box-shadow: 0 18px 36px rgba(0,0,0,0.7), 0 8px 30px rgba(212,175,55,0.12);
+  }
+  100% {
+    box-shadow: 0 8px 24px rgba(0,0,0,0.6), 0 2px 6px rgba(212,175,55,0.06);
+  }
+}
+
+.neu-button.pulse {
+  animation: goldPulse 4.5s ease-in-out infinite;
+}
+
+.neu-button[disabled],
+.neu-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  filter: grayscale(0.02) contrast(0.95);
+  transform: translateY(0);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.55), 0 1px 6px rgba(212,175,55,0.02) !important;
+  transition: box-shadow 220ms ease, opacity 220ms ease, transform 180ms ease;
+  animation-play-state: paused;
+}
+
+.neu-button.loading {
+  pointer-events: none;
+  opacity: 0.95;
+  box-shadow: 0 20px 48px rgba(0,0,0,0.7), 0 6px 28px rgba(212,175,55,0.14);
+  transition: box-shadow 180ms ease, opacity 180ms ease;
 }
 
 /* Mobile Responsive */
