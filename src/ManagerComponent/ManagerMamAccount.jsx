@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import TableStructure from "../commonComponent/TableStructure";
+import HistoryModal from "../Modals/HistoryModal";
 // Removed unused sample data to satisfy linter warnings
 
 
@@ -22,6 +23,19 @@ const MamAccount = () => {
 
 
   
+  // State for HistoryModal
+  const [historyModalVisible, setHistoryModalVisible] = useState(false);
+  const [selectedAccountId, setSelectedAccountId] = useState(null);
+  const [historyActiveTab, setHistoryActiveTab] = useState("transactions");
+
+  // Handler for View button
+  // Use mamAccountId for the trading account ID
+  const handleViewHistory = (mamAccountId) => {
+    setSelectedAccountId(mamAccountId);
+    setHistoryActiveTab("transactions");
+    setHistoryModalVisible(true);
+  };
+
   const columnsMam = [
     { Header: "User ID", accessor: "userId" },
     { Header: "Name", accessor: "name" },
@@ -32,6 +46,22 @@ const MamAccount = () => {
     { Header: "Profit Share (%)", accessor: "profitShare" },
     { Header: "Risk Level", accessor: "riskLevel" },
     { Header: "Payout Frequency", accessor: "payoutFrequency" },
+    {
+      Header: "Action",
+      accessor: "userId", // Can be any unique field
+      Cell: (cellProps) => {
+        // Use userId for the modal
+        const mamAccountId = cellProps.row?.original?.mamAccountId || cellProps.value;
+        return (
+          <button
+            className="px-3 py-1 bg-yellow-400 text-black rounded hover:bg-yellow-500 transition text-xs font-semibold"
+            onClick={() => handleViewHistory(mamAccountId)}
+          >
+            View
+          </button>
+        );
+      },
+    },
   ];
 
   const columnsInvestor = [
@@ -165,9 +195,7 @@ const MamAccount = () => {
         </button>
       </div>
 
-      <div
-        
-      >
+      <div>
         <TableStructure
           key={activeTab}
           columns={columns}
@@ -176,6 +204,15 @@ const MamAccount = () => {
           onFetch={handleFetch}
         />
       </div>
+
+      {/* History Modal rendered outside the TableStructure for proper state updates */}
+      <HistoryModal
+        visible={historyModalVisible}
+        onClose={() => setHistoryModalVisible(false)}
+        accountId={selectedAccountId}
+        activeTab={historyActiveTab}
+        setActiveTab={setHistoryActiveTab}
+      />
 
       
     </div>
