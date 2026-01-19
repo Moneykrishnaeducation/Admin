@@ -18,8 +18,32 @@ function isAuthenticated() {
 // Route guard for protected routes
 function RequireAuth({ children }) {
   if (!isAuthenticated()) {
-    return <Navigate to="/login" replace />;
+    // Call backend logout to ensure server-side session is cleared,
+    // then clear client-side auth cookies. Render the Login UI
+    // instead of performing a <Navigate> redirect.
+    (async () => {
+      try {
+        await fetch('/api/logout', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+        });
+      } catch (e) {
+        console.debug('[Routes] Logout API call failed:', e);
+      }
+
+      try {
+        document.cookie = 'user=; Max-Age=0; path=/';
+        document.cookie = 'userRole=; Max-Age=0; path=/';
+        document.cookie = 'user_role=; Max-Age=0; path=/';
+      } catch (e) {
+        console.debug('[Routes] Clearing cookies failed:', e);
+      }
+    })();
+
+    return <Navigate to="/" replace />;
   }
+
   return children;
 }
 import '../utils/auth-utils.js';

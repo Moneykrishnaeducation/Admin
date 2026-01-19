@@ -179,5 +179,74 @@
   // Initialize auth utils
   window.authUtils.init();
 
+  // Debugging: Check cookie presence
+  console.log('Debug - Cookie Check:', {
+    user: document.cookie.includes('user'), // should be true before logout
+    user_role: document.cookie.includes('user_role') // should be false
+  });
+
+  // Wrap global fetch to detect 401/403 responses and force logout
+  try {
+    if (!window._authUtilsFetchWrapped) {
+      window._authUtilsFetchWrapped = true;
+      const _originalFetch = window.fetch.bind(window);
+
+      window.fetch = async function(input, init) {
+        try {
+          const response = await _originalFetch(input, init);
+
+          if (response && (response.status === 401 || response.status === 403)) {
+            console.debug('[Auth Utils] Detected 401/403, performing logout flow');
+
+            // Attempt server-side logout to clear HttpOnly cookies
+            try {
+              await _originalFetch('/api/logout', {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+              });
+            } catch (e) {
+              console.debug('[Auth Utils] Logout endpoint call failed:', e);
+            }
+
+            // Clear any client-side cookies we can access
+            try {
+              document.cookie = 'user=; Max-Age=0; path=/';
+              document.cookie = 'userRole=; Max-Age=0; path=/';
+              document.cookie = 'user_role=; Max-Age=0; path=/';
+              document.cookie = 'userName=; Max-Age=0; path=/';
+              document.cookie = 'userEmail=; Max-Age=0; path=/';
+            } catch (e) {
+              console.debug('[Auth Utils] Clearing cookies failed:', e);
+            }
+
+            // Notify other tabs and redirect to login/root
+            try {
+              localStorage.setItem('authLogout', String(Date.now()));
+            } catch (e) {
+              // ignore
+            }
+
+            // Give the storage event and cookie clearing a moment, then navigate
+            setTimeout(() => {
+              try {
+                window.location.href = '/';
+              } catch (e) {
+                // ignore
+              }
+            }, 50);
+          }
+
+          return response;
+        } catch (err) {
+          // If fetch itself fails, rethrow so callers can handle it
+          throw err;
+        }
+      };
+    }
+  } catch (e) {
+    console.error('[Auth Utils] Failed to wrap fetch:', e);
+  }
+
 })();
 
