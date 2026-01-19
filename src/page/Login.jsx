@@ -35,12 +35,7 @@ function getUserFromCookies() {
 async function ensureCsrf(baseUrl) {
   if (getCookie('csrftoken')) return;
   const endpoints = [
-    '/api/get-csrf/',
-    '/api/get_csrf/',
-    '/api/csrf/',
-    '/csrf/',
-    '/api/auth/csrf/',
-    '/'
+    '/api/csrf/'
   ];
 
   for (const ep of endpoints) {
