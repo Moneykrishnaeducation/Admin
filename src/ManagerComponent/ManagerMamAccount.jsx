@@ -31,6 +31,7 @@ const MamAccount = () => {
   // Handler for View button
   // Use mamAccountId for the trading account ID
   const handleViewHistory = (mamAccountId) => {
+    console.log('View button clicked with mamAccountId:', mamAccountId);
     setSelectedAccountId(mamAccountId);
     setHistoryActiveTab("transactions");
     setHistoryModalVisible(true);
@@ -48,14 +49,21 @@ const MamAccount = () => {
     { Header: "Payout Frequency", accessor: "payoutFrequency" },
     {
       Header: "Action",
-      accessor: "userId", // Can be any unique field
-      Cell: (cellProps) => {
-        // Use userId for the modal
-        const mamAccountId = cellProps.row?.original?.mamAccountId || cellProps.value;
+      accessor: "mamAccountId",
+      Cell: (cellValue, row) => {
+        // cellValue is the mamAccountId, row is the full row data
+        const mamAccountId = cellValue;
+        console.log('Cell rendered with cellValue:', cellValue, 'row:', row);
         return (
           <button
             className="px-3 py-1 bg-yellow-400 text-black rounded hover:bg-yellow-500 transition text-xs font-semibold"
-            onClick={() => handleViewHistory(mamAccountId)}
+            onClick={() => {
+              if (mamAccountId) {
+                handleViewHistory(mamAccountId);
+              } else {
+                console.warn('No mamAccountId found');
+              }
+            }}
           >
             View
           </button>
@@ -109,7 +117,7 @@ const MamAccount = () => {
 
       const mapped = items.map((item, idx) => {
         if (activeTab === 'mam') {
-          return {
+          const mappedItem = {
             id: item.id ?? item.pk ?? idx,
             userId: item.user_id ?? item.user ?? item.userId ?? '',
             // Prefer username, fall back to account_name or existing name
@@ -128,6 +136,8 @@ const MamAccount = () => {
             payoutFrequency: item.payout_frequency ?? item.payoutFrequency ?? '',
             accountId: item.account_id ?? item.accountId ?? '',
           };
+          console.log('Mapped MAM item:', mappedItem);
+          return mappedItem;
         }
 
         // investor mapping
@@ -150,6 +160,7 @@ const MamAccount = () => {
         };
       });
 
+      console.log('Returning data from handleFetch:', { data: mapped, total });
       return { data: mapped, total };
     } catch (err) {
       console.error('MAM fetch error', err);
