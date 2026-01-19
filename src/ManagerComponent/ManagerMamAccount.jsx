@@ -80,6 +80,28 @@ const MamAccount = () => {
     { Header: "Trading Account ID", accessor: "tradingAccountId" },
     { Header: "Amount Invested", accessor: "amountInvested" },
     { Header: "Profit", accessor: "profit" },
+    {
+      Header: "Action",
+      accessor: "tradingAccountId",
+      Cell: (cellValue, row) => {
+        // cellValue is the tradingAccountId, row is the full row data
+        const tradingAccountId = cellValue;
+        return (
+          <button
+            className="px-3 py-1 bg-yellow-400 text-black rounded hover:bg-yellow-500 transition text-xs font-semibold"
+            onClick={() => {
+              if (tradingAccountId) {
+                handleViewHistory(tradingAccountId);
+              } else {
+                console.warn('No tradingAccountId found');
+              }
+            }}
+          >
+            View
+          </button>
+        );
+      },
+    },
   ];
 
   const columns = activeTab === "mam" ? columnsMam : columnsInvestor;
