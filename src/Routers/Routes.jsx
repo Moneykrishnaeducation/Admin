@@ -1,3 +1,27 @@
+import { Navigate } from "react-router-dom";
+// Simple auth check: returns true if user cookie exists and has a role
+function isAuthenticated() {
+  const userCookie = getCookie('user');
+  if (userCookie) {
+    try {
+      const user = JSON.parse(userCookie);
+      return !!user?.role;
+    } catch {
+      return false;
+    }
+  }
+  // Fallback: check for role cookies
+  const cookieRole = getCookie('userRole') || getCookie('user_role');
+  return !!cookieRole;
+}
+
+// Route guard for protected routes
+function RequireAuth({ children }) {
+  if (!isAuthenticated()) {
+    return <Navigate to="/login" replace />;
+  }
+  return children;
+}
 import '../utils/auth-utils.js';
 
 import React, { useState, useEffect } from "react";
@@ -71,37 +95,39 @@ const AppRoutes = ({ role }) => {
 
   /* ---------------- Routes ---------------- */
 
+
+  // Wrap protected routes with RequireAuth
   const adminRoutes = [
-    { path: "/dashboard", element: <Dashboard /> },
-    { path: "/tradingaccounts", element: <TradingAccount /> },
-    { path: "/settings", element: <Settings /> },
-    { path: "/propfirm", element: <Propfirm /> },
-    { path: "/user", element: <User /> },
-    { path: "/tickets", element: <Tickets /> },
-    { path: "/activities", element: <Activities /> },
-    { path: "/mamaccount", element: <MamAccount /> },
-    { path: "/pendingrequest", element: <Pendingrequest /> },
-    { path: "/demo", element: <DemoAccount /> },
-    { path: "/mail", element: <Mail /> },
-    { path: "/transactions", element: <Transactions /> },
-    { path: "/partnership", element: <Partnership /> },
-    { path: "/admin", element: <AdminManagerList /> },
-    { path: "/trading-group", element: <GroupConfiguration /> },
+    { path: "/dashboard", element: <RequireAuth><Dashboard /></RequireAuth> },
+    { path: "/tradingaccounts", element: <RequireAuth><TradingAccount /></RequireAuth> },
+    { path: "/settings", element: <RequireAuth><Settings /></RequireAuth> },
+    { path: "/propfirm", element: <RequireAuth><Propfirm /></RequireAuth> },
+    { path: "/user", element: <RequireAuth><User /></RequireAuth> },
+    { path: "/tickets", element: <RequireAuth><Tickets /></RequireAuth> },
+    { path: "/activities", element: <RequireAuth><Activities /></RequireAuth> },
+    { path: "/mamaccount", element: <RequireAuth><MamAccount /></RequireAuth> },
+    { path: "/pendingrequest", element: <RequireAuth><Pendingrequest /></RequireAuth> },
+    { path: "/demo", element: <RequireAuth><DemoAccount /></RequireAuth> },
+    { path: "/mail", element: <RequireAuth><Mail /></RequireAuth> },
+    { path: "/transactions", element: <RequireAuth><Transactions /></RequireAuth> },
+    { path: "/partnership", element: <RequireAuth><Partnership /></RequireAuth> },
+    { path: "/admin", element: <RequireAuth><AdminManagerList /></RequireAuth> },
+    { path: "/trading-group", element: <RequireAuth><GroupConfiguration /></RequireAuth> },
   ];
 
   const managerRoutes = [
-    { path: "/manager/dashboard", element: <Dash /> },
-    { path: "/manager/user", element: <ManagerUser /> },
-    { path: "/manager/tradingaccounts", element: <ManagerTradingaccount /> },
-    { path: "/manager/demo", element: <ManagerDemo /> },
-    { path: "/manager/transactions", element: <ManagerTransactions /> },
-    { path: "/manager/tickets", element: <ManagerTickets /> },
-    { path: "/manager/activities", element: <ManagerActivities /> },
-    { path: "/manager/managermam", element: <ManagerMamAccount/> },
+    { path: "/manager/dashboard", element: <RequireAuth><Dash /></RequireAuth> },
+    { path: "/manager/user", element: <RequireAuth><ManagerUser /></RequireAuth> },
+    { path: "/manager/tradingaccounts", element: <RequireAuth><ManagerTradingaccount /></RequireAuth> },
+    { path: "/manager/demo", element: <RequireAuth><ManagerDemo /></RequireAuth> },
+    { path: "/manager/transactions", element: <RequireAuth><ManagerTransactions /></RequireAuth> },
+    { path: "/manager/tickets", element: <RequireAuth><ManagerTickets /></RequireAuth> },
+    { path: "/manager/activities", element: <RequireAuth><ManagerActivities /></RequireAuth> },
+    { path: "/manager/managermam", element: <RequireAuth><ManagerMamAccount/></RequireAuth> },
   ];
 
   const allowedRoutes = role === "admin" ? adminRoutes : managerRoutes;
-  const fallbackRoute = role === "admin" ? <Dashboard /> : <Dash />;
+  const fallbackRoute = role === "admin" ? <RequireAuth><Dashboard /></RequireAuth> : <RequireAuth><Dash /></RequireAuth>;
 
   return (
     <div className="flex min-h-screen w-full overflow-x-hidden">
