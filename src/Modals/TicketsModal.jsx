@@ -203,6 +203,20 @@ const TicketsModal = ({ visible, onClose, userId: userIdProp, userName, isDarkMo
 
   const currentDetailStatusClass = ticketDetail ? (statusBadgeColors[ticketDetail.status] || 'bg-gray-200') : 'bg-gray-200';
 
+
+  // Get userRole from cookie/localStorage
+  let userRole = null;
+  try {
+    userRole = (window.localStorage.getItem('userRole') || window.localStorage.getItem('user_role')) || null;
+    if (!userRole) {
+      const cookies = document.cookie.split(';').map(c => c.trim());
+      for (const c of cookies) {
+        if (c.startsWith('userRole=')) userRole = c.split('=')[1];
+        if (c.startsWith('user_role=')) userRole = c.split('=')[1];
+      }
+    }
+  } catch {}
+
   return (
     <>
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/10 backdrop-blur-md p-2 sm:p-4">
@@ -252,7 +266,9 @@ const TicketsModal = ({ visible, onClose, userId: userIdProp, userName, isDarkMo
                   <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-semibold text-xs sm:text-sm">Description</th>
                   <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-semibold text-xs sm:text-sm">Status</th>
                   <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-semibold text-xs sm:text-sm">Created</th>
-                  <th className="px-2 sm:px-4 py-2 sm:py-3 text-center font-semibold text-xs sm:text-sm">Actions</th>
+                  {userRole !== 'manager' && (
+                    <th className="px-2 sm:px-4 py-2 sm:py-3 text-center font-semibold text-xs sm:text-sm">Actions</th>
+                  )}
                 </tr>
               </thead>
               <tbody>
@@ -278,31 +294,33 @@ const TicketsModal = ({ visible, onClose, userId: userIdProp, userName, isDarkMo
                         </span>
                       </td>
                       <td className="px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm">{ticket.created_at ? new Date(ticket.created_at).toLocaleString() : (ticket.created || '-')}</td>
-                      <td className="px-2 sm:px-4 py-2 sm:py-3 text-center">
-                        <button
-                          onClick={async () => {
-                            const id = ticket.id ?? ticket.pk ?? ticket.ticket_id;
-                            setSelectedTicket(id);
-                            setDetailVisible(true);
-                            setDetailLoading(true);
-                            setDetailError(null);
-                            setTicketDetail(null);
-                            try {
-                              const res = await apiClient.get(`/api/tickets/${id}/`, { Accept: 'application/json' });
-                              if (typeof res === 'string') throw new Error('Non-JSON response');
-                              setTicketDetail(res);
-                            } catch (err) {
-                              console.warn('Failed to load ticket detail', err);
-                              setDetailError('Failed to load ticket details');
-                            } finally {
-                              setDetailLoading(false);
-                            }
-                          }}
-                          className="text-blue-500 hover:text-blue-600 text-xs sm:text-sm font-medium"
-                        >
-                          View
-                        </button>
-                      </td>
+                      {userRole !== 'manager' && (
+                        <td className="px-2 sm:px-4 py-2 sm:py-3 text-center">
+                          <button
+                            onClick={async () => {
+                              const id = ticket.id ?? ticket.pk ?? ticket.ticket_id;
+                              setSelectedTicket(id);
+                              setDetailVisible(true);
+                              setDetailLoading(true);
+                              setDetailError(null);
+                              setTicketDetail(null);
+                              try {
+                                const res = await apiClient.get(`/api/tickets/${id}/`, { Accept: 'application/json' });
+                                if (typeof res === 'string') throw new Error('Non-JSON response');
+                                setTicketDetail(res);
+                              } catch (err) {
+                                console.warn('Failed to load ticket detail', err);
+                                setDetailError('Failed to load ticket details');
+                              } finally {
+                                setDetailLoading(false);
+                              }
+                            }}
+                            className="text-blue-500 hover:text-blue-600 text-xs sm:text-sm font-medium"
+                          >
+                            View
+                          </button>
+                        </td>
+                      )}
                     </tr>
                   );
                 })}
