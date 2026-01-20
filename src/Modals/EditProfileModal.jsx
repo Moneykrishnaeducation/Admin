@@ -152,9 +152,31 @@ const [originalForm, setOriginalForm] = useState(null); // To restore on cancel
   };
 
   // ===========================================================
+  // FETCH CREATED BY USER ID (FROM EMAIL)
+  // ===========================================================
+  const fetchCreatedById = async (email) => {
+    if (!email) {
+      return null;
+    }
+
+    try {
+      const data = await apiClient.get(`/admin/find-user-by-email/?email=${encodeURIComponent(email)}`);
+
+      if (data?.email !== email) {
+        return null;
+      }
+
+      return data?.user_id || null;
+    } catch (err) {
+      console.error("Error fetching created by user:", err);
+      return null;
+    }
+  };
+
+  // ===========================================================
   // PATCH UPDATE REQUEST
   // ===========================================================
-  const submitPatchUpdate = async (parentIbId) => {
+  const submitPatchUpdate = async (createdById, parentIbId) => {
     if (!userId) return alert("User ID missing");
 
     setSaving(true);
@@ -170,7 +192,13 @@ const [originalForm, setOriginalForm] = useState(null); // To restore on cancel
       formData.append("dob", form.dob);
       formData.append("address", form.address);
 
-      formData.append("created_by_email", form.createdBy);
+      // Use the createdById passed as parameter (from the lookup)
+      if (createdById) {
+        formData.append("created_by", createdById);
+      } else {
+        // Clear created_by if no email is provided
+        formData.append("created_by", "");
+      }
 
       // Use the parentIbId passed as parameter (from the lookup)
       if (parentIbId) {
@@ -204,7 +232,14 @@ const [originalForm, setOriginalForm] = useState(null); // To restore on cancel
   const handleSave = async (e) => {
     e.preventDefault();
 
+    const createdById = await fetchCreatedById(form.createdBy);
     const parentIbId = await fetchParentIb(form.parentEmail);
+
+    // Check if lookup failed for created_by
+    if (form.createdBy && !createdById) {
+      alert("Please fix the Created By Email error before saving.");
+      return;
+    }
 
     // Check if lookup failed (no parentIbId returned)
     if (form.parentEmail && !parentIbId) {
@@ -212,7 +247,7 @@ const [originalForm, setOriginalForm] = useState(null); // To restore on cancel
       return;
     }
 
-    await submitPatchUpdate(parentIbId);
+    await submitPatchUpdate(createdById, parentIbId);
   };
 
   // ===========================================================
