@@ -190,7 +190,7 @@ const ManagerTickets = () => {
         <div className="flex justify-center gap-4 mt-4">
           <button
             onClick={() => setActivePage("create")}
-            className={`flex items-center justify-center gap-2 font-semibold px-4 py-2 rounded-md transition ${
+            className={`flex items-center justify-center gap-2 font-semibold px-20 py-3 rounded-md transition ${
               activePage === "create"
                 ? "bg-yellow-400 text-black"
                 : "bg-gray-700 text-yellow-300 hover:bg-gray-600"
@@ -201,7 +201,7 @@ const ManagerTickets = () => {
           </button>
           <button
             onClick={() => setActivePage("view")}
-            className={`flex items-center justify-center gap-2 font-semibold px-4 py-2 rounded-md transition ${
+            className={`flex items-center justify-center gap-2 font-semibold px-20 py-3 rounded-md transition ${
               activePage === "view"
                 ? "bg-yellow-400 text-black"
                 : "bg-gray-700 text-yellow-300 hover:bg-gray-600"
@@ -217,12 +217,12 @@ const ManagerTickets = () => {
         <>
 
           {/* TABS */}
-          <div className="flex justify-start gap-4 mb-6">
-            {["open", "pending", "closed"].map((tab) => (
+          <div className="flex justify-center mt-6 gap-10 mb-6">
+            {["Open", "Pending", "Closed"].map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`px-5 py-2 rounded-md font-semibold transition ${
+                className={`justify-center px-30 py-3 rounded-md font-semibold transition ${
                   activeTab === tab
                     ? "bg-yellow-400 text-black"
                     : "bg-gray-700 text-yellow-300"
@@ -444,4 +444,4 @@ const ManagerTickets = () => {
   );
 };
 
-export default ManagerTickets;
+export default ManagerTickets
