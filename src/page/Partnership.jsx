@@ -76,6 +76,8 @@ const Partnership = () => {
     { Header: "User ID", accessor: "userId" },
     { Header: "Commission Profile", accessor: "commissionProfile" },
     { Header: "Total Clients", accessor: "totalClients" },
+    { Header: "Actions", accessor: "actions" },
+    { Header: "Available Commission", accessor: "availableCommission" },
   ];
 
   const withdrawalRequestColumns = [
@@ -215,6 +217,22 @@ const Partnership = () => {
           email: u.email ?? "",
           commissionProfile: u.commission_profile_name ?? u.commissioning_profile ?? u.commission_profile ?? "",
           totalClients: u.total_clients ?? u.totalClients ?? 0,
+          // 'actions' is informational: Enabled or Disabled
+          actions: (() => {
+            try {
+              const statusVal = u.is_active ?? u.active ?? (u.status ?? "");
+              if (typeof statusVal === "boolean") return statusVal ? "Enabled" : "Disabled";
+              const statusStr = String(statusVal).toLowerCase();
+              if (statusStr === "disabled" || statusStr === "inactive") return "Disabled";
+              if (statusStr === "enabled" || statusStr === "active") return "Enabled";
+              if (u.disabled === true || u.is_disabled === true) return "Disabled";
+              return "Enabled";
+            } catch (e) {
+              return "Enabled";
+            }
+          })(),
+          // Withdrawable commission
+          availableCommission: Number(u.available_commission ?? u.withdrawable_commission ?? u.commission_balance ?? u.availableCommission ?? u.balance ?? 0),
           // keep original object for advanced rows if needed
           _raw: u,
         }));
