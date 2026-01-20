@@ -205,16 +205,16 @@ const TicketsModal = ({ visible, onClose, userId: userIdProp, userName, isDarkMo
 
   return (
     <>
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/10 backdrop-blur-md">
-      <div className={`relative w-full max-w-3xl mx-4 rounded-lg shadow-xl ${bgColor} border ${borderColor}`}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/10 backdrop-blur-md p-2 sm:p-4">
+      <div className={`relative w-full max-w-3xl rounded-lg shadow-xl ${bgColor} border ${borderColor}`}>
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b" style={{ borderColor: isDarkMode ? '#b8860b33' : '#e5e7eb' }}>
-          <h3 className={`text-lg font-bold ${isDarkMode ? 'text-yellow-400' : 'text-yellow-600'}`}>
+        <div className="relative flex justify-between items-start p-3 sm:p-4 border-b" style={{ borderColor: isDarkMode ? '#b8860b33' : '#e5e7eb' }}>
+          <h3 className={`text-sm sm:text-lg font-bold pr-8 ${isDarkMode ? 'text-yellow-400' : 'text-yellow-600'}`}>
             Tickets for {userName}
           </h3>
           <button 
             onClick={onClose} 
-            className="p-1 hover:bg-opacity-80 transition"
+            className="absolute top-3 sm:top-4 right-3 sm:right-4 p-1 hover:bg-opacity-80 transition flex-shrink-0"
             aria-label="Close"
           >
             <X size={20} />
@@ -222,12 +222,12 @@ const TicketsModal = ({ visible, onClose, userId: userIdProp, userName, isDarkMo
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-2 p-4 border-b" style={{ borderColor: isDarkMode ? '#b8860b33' : '#e5e7eb' }}>
+        <div className="flex gap-1 sm:gap-2 p-2 sm:p-4 border-b overflow-x-auto" style={{ borderColor: isDarkMode ? '#b8860b33' : '#e5e7eb' }}>
           {tabs.map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`px-4 py-2 rounded font-medium transition capitalize ${
+              className={`px-2 sm:px-4 py-2 rounded font-medium transition capitalize text-xs sm:text-sm flex-shrink-0 ${
                 activeTab === tab ? tabActiveColor : tabInactiveColor
               }`}
             >
@@ -237,22 +237,22 @@ const TicketsModal = ({ visible, onClose, userId: userIdProp, userName, isDarkMo
         </div>
 
         {/* Table */}
-        <div className="p-4">
+        <div className="p-2 sm:p-4">
           <div className="w-full rounded overflow-hidden" style={{ background: tableBg }}>
             {/* Scrollable table area with reduced max height */}
-            <div className="overflow-auto" style={{ maxHeight: '50vh' }}>
+            <div className="overflow-x-auto" style={{ maxHeight: '50vh' }}>
               {filteredTickets.length > 0 ? (
-                <table className={`w-full text-sm rounded`}>
+                <table className={`w-full text-xs sm:text-sm rounded`}>
               <thead className={tableHeaderBg}>
                 <tr>
-                  <th className="px-4 py-3 text-left font-semibold">Ticket ID</th>
-                  <th className="px-4 py-3 text-left font-semibold">User ID</th>
-                  <th className="px-4 py-3 text-left font-semibold">User Name</th>
-                  <th className="px-4 py-3 text-left font-semibold">Subject</th>
-                  <th className="px-4 py-3 text-left font-semibold">Description</th>
-                  <th className="px-4 py-3 text-left font-semibold">Status</th>
-                  <th className="px-4 py-3 text-left font-semibold">Created</th>
-                  <th className="px-4 py-3 text-center font-semibold">Actions</th>
+                  <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-semibold text-xs sm:text-sm">Ticket ID</th>
+                  <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-semibold text-xs sm:text-sm">User ID</th>
+                  <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-semibold text-xs sm:text-sm">User Name</th>
+                  <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-semibold text-xs sm:text-sm">Subject</th>
+                  <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-semibold text-xs sm:text-sm">Description</th>
+                  <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-semibold text-xs sm:text-sm">Status</th>
+                  <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-semibold text-xs sm:text-sm">Created</th>
+                  <th className="px-2 sm:px-4 py-2 sm:py-3 text-center font-semibold text-xs sm:text-sm">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -267,18 +267,18 @@ const TicketsModal = ({ visible, onClose, userId: userIdProp, userName, isDarkMo
                       }`}
                       style={{ borderColor: isDarkMode ? '#4b5563' : '#e5e7eb' }}
                     >
-                      <td className="px-4 py-3 font-semibold">{ticket.id ?? ticket.pk ?? ticket.ticket_id}</td>
-                      <td className="px-4 py-3">{ticket.user_id || '-'}</td>
-                      <td className="px-4 py-3">{ticket.username || '-'}</td>
-                      <td className="px-4 py-3">{ticket.subject || ticket.title || '-'}</td>
-                      <td className="px-4 py-3 text-sm truncate max-w-xs">{ticket.description || '-'}</td>
-                      <td className="px-4 py-3">
-                        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusBadgeColors[ticket.status]}`}>
+                      <td className="px-2 sm:px-4 py-2 sm:py-3 font-semibold text-xs sm:text-sm">{ticket.id ?? ticket.pk ?? ticket.ticket_id}</td>
+                      <td className="px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm">{ticket.user_id || '-'}</td>
+                      <td className="px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm">{ticket.username || '-'}</td>
+                      <td className="px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm">{ticket.subject || ticket.title || '-'}</td>
+                      <td className="px-2 sm:px-4 py-2 sm:py-3 text-xs truncate">{ticket.description || '-'}</td>
+                      <td className="px-2 sm:px-4 py-2 sm:py-3">
+                        <span className={`px-2 sm:px-3 py-1 rounded-full text-xs font-semibold ${statusBadgeColors[ticket.status]}`}>
                           {ticket.status || ticket.state || '-'}
                         </span>
                       </td>
-                      <td className="px-4 py-3">{ticket.created_at ? new Date(ticket.created_at).toLocaleString() : (ticket.created || '-')}</td>
-                      <td className="px-4 py-3 text-center">
+                      <td className="px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm">{ticket.created_at ? new Date(ticket.created_at).toLocaleString() : (ticket.created || '-')}</td>
+                      <td className="px-2 sm:px-4 py-2 sm:py-3 text-center">
                         <button
                           onClick={async () => {
                             const id = ticket.id ?? ticket.pk ?? ticket.ticket_id;
@@ -298,7 +298,7 @@ const TicketsModal = ({ visible, onClose, userId: userIdProp, userName, isDarkMo
                               setDetailLoading(false);
                             }
                           }}
-                          className="text-blue-500 hover:text-blue-600 text-sm font-medium"
+                          className="text-blue-500 hover:text-blue-600 text-xs sm:text-sm font-medium"
                         >
                           View
                         </button>
@@ -316,19 +316,19 @@ const TicketsModal = ({ visible, onClose, userId: userIdProp, userName, isDarkMo
             </div>
 
             {/* Pagination controls */}
-            <div className="flex items-center justify-between px-4 py-2 border-t" style={{ borderColor: isDarkMode ? '#b8860b33' : '#e5e7eb' }}>
-              <div className="text-sm text-gray-500">Showing {Math.min(filteredTickets.length, (page - 1) * pageSize + 1)} - {Math.min(filteredTickets.length, page * pageSize)} of {filteredTickets.length}</div>
-              <div className="flex items-center gap-2">
+            <div className="flex flex-col sm:flex-row items-center justify-between px-2 sm:px-4 py-2 gap-2 sm:gap-0 border-t" style={{ borderColor: isDarkMode ? '#b8860b33' : '#e5e7eb' }}>
+              <div className="text-xs sm:text-sm text-gray-500 order-2 sm:order-1">Showing {Math.min(filteredTickets.length, (page - 1) * pageSize + 1)} - {Math.min(filteredTickets.length, page * pageSize)} of {filteredTickets.length}</div>
+              <div className="flex items-center gap-1 sm:gap-2 order-1 sm:order-2">
                 <button
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={page <= 1}
-                  className={`px-3 py-1 rounded ${page <= 1 ? 'opacity-50 cursor-not-allowed' : 'bg-gray-100 hover:bg-gray-200'}`}
+                  className={`px-2 sm:px-3 py-1 rounded text-xs sm:text-sm ${page <= 1 ? 'opacity-50 cursor-not-allowed' : 'bg-gray-100 hover:bg-gray-200'}`}
                 >Prev</button>
-                <div className="text-sm">{page} / {totalPages}</div>
+                <div className="text-xs sm:text-sm">{page} / {totalPages}</div>
                 <button
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                   disabled={page >= totalPages}
-                  className={`px-3 py-1 rounded ${page >= totalPages ? 'opacity-50 cursor-not-allowed' : 'bg-gray-100 hover:bg-gray-200'}`}
+                  className={`px-2 sm:px-3 py-1 rounded text-xs sm:text-sm ${page >= totalPages ? 'opacity-50 cursor-not-allowed' : 'bg-gray-100 hover:bg-gray-200'}`}
                 >Next</button>
               </div>
             </div>
@@ -336,10 +336,10 @@ const TicketsModal = ({ visible, onClose, userId: userIdProp, userName, isDarkMo
         </div>
 
         {/* Footer */}
-        <div className="flex justify-end gap-2 p-4 border-t" style={{ borderColor: isDarkMode ? '#b8860b33' : '#e5e7eb' }}>
+        <div className="flex justify-end gap-2 px-2 sm:px-4 py-2 sm:py-4 border-t" style={{ borderColor: isDarkMode ? '#b8860b33' : '#e5e7eb' }}>
           <button
             onClick={onClose}
-            className={`px-4 py-2 rounded font-medium transition ${
+            className={`px-3 sm:px-4 py-1 sm:py-2 rounded font-medium transition text-xs sm:text-sm ${
               isDarkMode 
                 ? 'bg-gray-800 text-white hover:bg-gray-700' 
                 : 'bg-gray-200 text-black hover:bg-gray-300'
@@ -352,35 +352,35 @@ const TicketsModal = ({ visible, onClose, userId: userIdProp, userName, isDarkMo
     </div>
     {detailVisible && (
       <div className="fixed inset-0 z-60 flex items-center justify-center bg-black bg-opacity-50">
-        <div className={`relative w-full max-w-2xl mx-4 rounded-lg shadow-xl ${bgColor} border ${borderColor}`}>
-          <div className="flex items-center justify-between p-4 border-b" style={{ borderColor: isDarkMode ? '#b8860b33' : '#e5e7eb' }}>
-            <h3 className={`text-lg font-bold ${isDarkMode ? 'text-yellow-400' : 'text-yellow-600'}`}>Ticket Details</h3>
-            <button onClick={() => { setDetailVisible(false); setTicketDetail(null); setSelectedTicket(null); }} className="p-1" aria-label="Close detail"><X size={20} /></button>
+        <div className={`relative w-full max-w-2xl mx-2 sm:mx-4 rounded-lg shadow-xl ${bgColor} border ${borderColor}`}>
+          <div className="relative flex justify-between items-start p-2 sm:p-4 border-b" style={{ borderColor: isDarkMode ? '#b8860b33' : '#e5e7eb' }}>
+            <h3 className={`text-sm sm:text-lg font-bold pr-8 ${isDarkMode ? 'text-yellow-400' : 'text-yellow-600'}`}>Ticket Details</h3>
+            <button onClick={() => { setDetailVisible(false); setTicketDetail(null); setSelectedTicket(null); }} className="absolute top-2 sm:top-3 right-2 sm:right-3 p-1 flex-shrink-0" aria-label="Close detail"><X size={20} /></button>
           </div>
-          <div className="p-4">
+          <div className="p-2 sm:p-4">
             {detailLoading ? (
               <div className="text-center py-8">Loading...</div>
             ) : detailError ? (
               <div className="text-center py-8 text-red-500">{detailError}</div>
             ) : ticketDetail ? (
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div className={`p-3 rounded ${cellBg}`}><div className="font-semibold">ID</div><div>{ticketDetail.id ?? ticketDetail.pk}</div></div>
-                <div className={`p-3 rounded ${cellBg}`}><div className="font-semibold">Subject</div><div>{ticketDetail.subject || '-'}</div></div>
-                <div className={`p-3 rounded ${cellBg}`}><div className="font-semibold">Status</div><div><span className={`px-2 py-1 rounded ${currentDetailStatusClass}`}>{ticketDetail.status || '-'}</span></div></div>
-                <div className={`p-3 rounded ${cellBg}`}><div className="font-semibold">Created</div><div>{ticketDetail.created_at ? new Date(ticketDetail.created_at).toLocaleString() : (ticketDetail.created || '-')}</div></div>
-                <div className={`col-span-2 p-3 rounded ${cellBg}`}><div className="font-semibold">Description</div><div className="mt-1 whitespace-pre-wrap">{ticketDetail.description || '-'}</div></div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4 text-xs sm:text-sm">
+                <div className={`p-2 sm:p-3 rounded ${cellBg}`}><div className="font-semibold">ID</div><div className="mt-1">{ticketDetail.id ?? ticketDetail.pk}</div></div>
+                <div className={`p-2 sm:p-3 rounded ${cellBg}`}><div className="font-semibold">Subject</div><div className="mt-1">{ticketDetail.subject || '-'}</div></div>
+                <div className={`p-2 sm:p-3 rounded ${cellBg}`}><div className="font-semibold">Status</div><div className="mt-1"><span className={`px-2 py-1 rounded text-xs ${currentDetailStatusClass}`}>{ticketDetail.status || '-'}</span></div></div>
+                <div className={`p-2 sm:p-3 rounded ${cellBg}`}><div className="font-semibold">Created</div><div className="mt-1">{ticketDetail.created_at ? new Date(ticketDetail.created_at).toLocaleString() : (ticketDetail.created || '-')}</div></div>
+                <div className={`col-span-1 sm:col-span-2 p-2 sm:p-3 rounded ${cellBg}`}><div className="font-semibold">Description</div><div className="mt-1 whitespace-pre-wrap text-xs">{ticketDetail.description || '-'}</div></div>
               </div>
             ) : (
               <div className="text-center py-8">No details available.</div>
             )}
           </div>
-          <div className="flex justify-between items-center gap-2 p-4 border-t" style={{ borderColor: isDarkMode ? '#b8860b33' : '#e5e7eb' }}>
-            <div className="flex items-center gap-2">
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-2 p-2 sm:p-4 border-t" style={{ borderColor: isDarkMode ? '#b8860b33' : '#e5e7eb' }}>
+            <div className="flex items-center gap-1 sm:gap-2 w-full sm:w-auto order-2 sm:order-1">
               {ticketDetail && activeTab === 'open' && (
                 <button
                   onClick={() => handleChangeStatus('pending')}
                   disabled={detailLoading}
-                  className="px-3 py-1 rounded bg-yellow-500 hover:bg-yellow-600 text-black"
+                  className="flex-1 sm:flex-none px-2 sm:px-3 py-1 sm:py-2 rounded bg-yellow-500 hover:bg-yellow-600 text-black text-xs sm:text-sm font-medium"
                 >
                   Pending
                 </button>
@@ -390,7 +390,7 @@ const TicketsModal = ({ visible, onClose, userId: userIdProp, userName, isDarkMo
                 <button
                   onClick={() => handleChangeStatus('closed')}
                   disabled={detailLoading}
-                  className="px-3 py-1 rounded bg-red-600 hover:bg-red-700 text-white"
+                  className="flex-1 sm:flex-none px-2 sm:px-3 py-1 sm:py-2 rounded bg-red-600 hover:bg-red-700 text-white text-xs sm:text-sm font-medium"
                 >
                   Close
                 </button>
@@ -399,8 +399,8 @@ const TicketsModal = ({ visible, onClose, userId: userIdProp, userName, isDarkMo
               {/* No status-change buttons for closed tab */}
             </div>
 
-            <div>
-              <button onClick={() => { setDetailVisible(false); setTicketDetail(null); setSelectedTicket(null); }} className={`px-4 py-2 rounded ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-gray-200 text-black'}`}>Close</button>
+            <div className="w-full sm:w-auto order-1 sm:order-2">
+              <button onClick={() => { setDetailVisible(false); setTicketDetail(null); setSelectedTicket(null); }} className={`w-full sm:w-auto px-3 sm:px-4 py-1 sm:py-2 rounded text-xs sm:text-sm font-medium ${isDarkMode ? 'bg-gray-800 text-white hover:bg-gray-700' : 'bg-gray-200 text-black hover:bg-gray-300'}`}>Close</button>
             </div>
           </div>
         </div>

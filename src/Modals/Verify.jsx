@@ -187,20 +187,20 @@ const Verify = ({
         onClick={() => setVerifyModalOpen(false)}
       />
 
-      <div className={`relative max-w-lg w-full rounded-lg shadow-xl ${modalBg}`}>
+      <div className={`relative max-w-lg w-full mx-2 rounded-lg shadow-xl ${modalBg}`}>
         {/* HEADER */}
-        <div className="flex justify-between items-center p-4 border-b">
-          <div className="font-bold">
-            Document Verification for {userName} ID:{" "}
-            <span className="text-yellow-500">{userId}</span>
+        <div className="relative flex justify-between items-start p-3 sm:p-4 border-b">
+          <div className="font-bold text-sm sm:text-base pr-8">
+            Document Verification for {userName}{" "}
+            <span className="text-yellow-500 block sm:inline">ID: {userId}</span>
           </div>
-          <button onClick={() => setVerifyModalOpen(false)}>
-            <X />
+          <button onClick={() => setVerifyModalOpen(false)} className="absolute top-3 sm:top-4 right-3 sm:right-4 flex-shrink-0">
+            <X size={20} />
           </button>
         </div>
 
         {/* BODY */}
-        <div className="p-4 space-y-6">
+        <div className="p-3 sm:p-4 space-y-4 sm:space-y-6">
           <DocumentBlock
             title="ID Proof"
             doc={docs.id}
@@ -221,9 +221,9 @@ const Verify = ({
             isDarkMode={isDarkMode}
           />
 
-          <div className="text-right">
+          <div className="text-center sm:text-right w-full">
             <button
-              className={`${btnGhost} px-4 py-2 rounded bg-yellow-500 text-black`}
+              className={`${btnGhost} px-3 sm:px-4 py-2 rounded bg-yellow-500 text-black text-sm sm:text-base font-semibold`}
               onClick={() => setVerifyModalOpen(false)}
             >
               Close
@@ -250,9 +250,9 @@ function DocumentBlock({
 }) {
   return (
     <div>
-      <div className="flex justify-between mb-1">
-        <h4 className="font-semibold">{title}</h4>
-        <span className={`text-sm ${statusColor(doc.status)}`}>
+      <div className="flex flex-col sm:flex-row sm:justify-between gap-1 mb-2">
+        <h4 className="font-semibold text-sm sm:text-base">{title}</h4>
+        <span className={`text-xs sm:text-sm ${statusColor(doc.status)}`}>
           • {doc.status.replace("_", " ")}
         </span>
       </div>
@@ -261,7 +261,7 @@ function DocumentBlock({
         <img
           src={doc.preview}
           alt="preview"
-          className="h-40 md:h-30 w-full mb-2 border rounded"
+          className="h-24 sm:h-40 w-full mb-2 border rounded"
         />
       )}
 
@@ -269,12 +269,12 @@ function DocumentBlock({
         <img
           src={doc.file_url}
           alt="preview"
-          className="h-40 md:h-30 w-full mb-2 border rounded"
+          className="h-24 sm:h-40 w-full mb-2 border rounded"
         />
       )}
 
       <label
-        className={`block border-dashed border rounded py-4 text-center cursor-pointer ${
+        className={`block border-dashed border rounded py-2 sm:py-4 text-center cursor-pointer text-xs sm:text-base ${
           isDarkMode ? "bg-gray-800" : "bg-gray-50"
         }`}
       >
@@ -298,9 +298,9 @@ function DocumentBlock({
         {doc.file?.name || `Select ${title}`}
       </label>
 
-      <div className="flex gap-2 mt-2">
+      <div className="flex gap-1 sm:gap-2 mt-2">
         <button
-          className={`flex-1 py-2 rounded transition ${
+          className={`flex-1 py-2 rounded transition text-xs sm:text-sm font-semibold ${
             doc.status === "verified" || doc.status === "approved"
               ? "bg-green-600 text-white cursor-not-allowed opacity-75"
               : "bg-blue-600 text-white hover:bg-blue-700"
