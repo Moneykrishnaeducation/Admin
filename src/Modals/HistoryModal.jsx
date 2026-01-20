@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import ModalWrapper from './ModalWrapper';
 import TableStructure from '../commonComponent/TableStructure';
 import { AdminAuthenticatedFetch } from "../utils/fetch-utils.js";
@@ -32,58 +32,60 @@ const HistoryModal = ({ visible, onClose, accountId, activeTab, setActiveTab }) 
     if (accountId) {
       fetchHistory();
     }
+    // Only run if accountId and selectedDays change
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accountId, selectedDays]);
+
+  // Memoize computed data to prevent unnecessary re-renders
+  const transactionsData = useMemo(() => {
+    return historyData?.transactions?.map(transaction => ({
+      date: new Date(transaction.created_at).toLocaleDateString(),
+      type: transaction.transaction_type,
+      amount: `$${transaction.amount}`,
+      status: transaction.status,
+      comment: transaction.description,
+    })) || [];
+  }, [historyData?.transactions]);
+
+  const positionsData = useMemo(() => {
+    return historyData?.positions?.map(position => ({
+      id: position.id,
+      symbol: position.symbol,
+      volume: position.volume,
+      price: position.price,
+      pl: position.pl,
+    })) || [];
+  }, [historyData?.positions]);
+
+  // Memoize pagination logic
+  const paginatedTransactions = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return transactionsData.slice(startIndex, endIndex);
+  }, [transactionsData, currentPage, itemsPerPage]);
+
+  const paginatedPositions = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return positionsData.slice(startIndex, endIndex);
+  }, [positionsData, currentPage, itemsPerPage]);
+
+  const totalTransactionPages = useMemo(() => {
+    return Math.ceil(transactionsData.length / itemsPerPage);
+  }, [transactionsData.length, itemsPerPage]);
+
+  const totalPositionPages = useMemo(() => {
+    return Math.ceil(positionsData.length / itemsPerPage);
+  }, [positionsData.length, itemsPerPage]);
+
+
+  // Notification logic (define as memoized values to avoid ReferenceError)
+  const showTransactionsDot = useMemo(() => false, []);
+  const showPositionsDot = useMemo(() => false, []);
 
   if (!visible) return null;
 
-  const transactionsColumns = [
-    { Header: "Date", accessor: "date" },
-    { Header: "Type", accessor: "type" },
-    { Header: "Amount", accessor: "amount" },
-    { Header: "Status", accessor: "status" },
-    { Header: "Comment", accessor: "comment" },
-  ];
-
-  const transactionsData = historyData?.transactions?.map(transaction => ({
-    date: new Date(transaction.created_at).toLocaleDateString(),
-    type: transaction.transaction_type,
-    amount: `$${transaction.amount}`,
-    status: transaction.status,
-    comment: transaction.description,
-  })) || [];
-
-  const positionsColumns = [
-    { Header: "ID", accessor: "id" },
-    { Header: "Symbol", accessor: "symbol" },
-    { Header: "Vol", accessor: "volume" },
-    { Header: "Price", accessor: "price" },
-    { Header: "P/L", accessor: "pl" },
-  ];
-
-  const positionsData = historyData?.positions?.map(position => ({
-    id: position.id,
-    symbol: position.symbol,
-    volume: position.volume,
-    price: position.price,
-    pl: position.pl,
-  })) || [];
-
-
-  // Pagination logic
-  const getPaginatedData = (data) => {
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
-    return data.slice(startIndex, endIndex);
-  };
-
-  const getTotalPages = (data) => {
-    return Math.ceil(data.length / itemsPerPage);
-  };
-
-  const paginatedTransactions = getPaginatedData(transactionsData);
-  const paginatedPositions = getPaginatedData(positionsData);
-  const totalTransactionPages = getTotalPages(transactionsData);
-  const totalPositionPages = getTotalPages(positionsData);
+  // Remove unused column definitions to prevent linting errors
 
   return (
     <ModalWrapper title={`Account Summary (ID: ${accountId})`} visible={visible} onClose={onClose}>
@@ -107,6 +109,7 @@ const HistoryModal = ({ visible, onClose, accountId, activeTab, setActiveTab }) 
       </div>
 
           {/* Compact Controls: Transactions / Open Positions + History Range in one line */}
+<<<<<<< HEAD
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 sm:gap-4 mb-3 sm:mb-4 w-full">
             <div className="flex gap-1 sm:gap-2 w-full sm:w-auto">
               <button
@@ -136,6 +139,56 @@ const HistoryModal = ({ visible, onClose, accountId, activeTab, setActiveTab }) 
               >
                 Open Positions
               </button>
+=======
+          <div className="flex items-center justify-between gap-4 mb-4 flex-nowrap w-full">
+            {/* Count badges for Transactions and Open Positions */}
+            <div className="flex-1 flex items-center gap-2">
+
+              {/* Transactions Button with Notification Badge */}
+              <div className="relative inline-block">
+                <button
+                  onClick={() => {
+                    setActiveTab("transactions");
+                    setCurrentPage(1);
+                  }}
+                  className={`px-3 py-2 rounded transition ${
+                    activeTab === "transactions"
+                      ? "bg-yellow-400 text-black"
+                      : "bg-gray-700 text-white hover:bg-gray-600"
+                  }`}
+                >
+                  Transactions
+                  {/* Notification badge in top-right corner */}
+                  {transactionsData.length > 0 && (
+                    <span className="absolute -top-2 -right-2 min-w-[20px] h-5 px-1 flex items-center justify-center bg-red-500 text-white text-xs font-bold rounded-full border-2 border-white shadow">
+                      {transactionsData.length}
+                    </span>
+                  )}
+                </button>
+              </div>
+
+              {/* Open Positions Button with Notification Badge */}
+              <div className="relative inline-block">
+                <button
+                  onClick={() => {
+                    setActiveTab("positions");
+                    setCurrentPage(1);
+                  }}
+                  className={`px-3 py-2 rounded transition ${
+                    activeTab === "positions"
+                      ? "bg-yellow-400 text-black"
+                      : "bg-gray-700 text-white hover:bg-gray-600"
+                  }`}
+                >
+                  Open Positions
+                  {positionsData.length > 0 && (
+                    <span className="absolute -top-2 -right-2 min-w-[20px] h-5 px-1 flex items-center justify-center bg-red-500 text-white text-xs font-bold rounded-full border-2 border-white shadow">
+                      {positionsData.length}
+                    </span>
+                  )}
+                </button>
+              </div>
+>>>>>>> c0e34f07972a68499e95cce33664118281f3cca5
             </div>
 
             <div className="flex gap-1 sm:gap-2 w-full sm:w-auto sm:justify-end">

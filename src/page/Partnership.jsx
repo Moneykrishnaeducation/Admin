@@ -146,6 +146,8 @@ const Partnership = () => {
     withdrawalPending: { items: [], total: 0 },
   });
 
+  const [loading, setLoading] = useState(false);
+
   const [pageByTab] = useState({ partnerList: 1, withdrawalRequest: 1, withdrawalPending: 1 });
   const [perPage] = useState(10);
   const [error, setError] = useState(null);
@@ -175,6 +177,7 @@ const Partnership = () => {
     const endpoint = API_ENDPOINTS[tab];
     if (!endpoint) return;
     setError(null);
+    setLoading(true);
     try {
       // Build headers for authentication
       const headers = { Accept: "application/json" };
@@ -243,6 +246,8 @@ const Partnership = () => {
       setDataState((prev) => ({ ...prev, [tab]: { items: transformed, total } }));
     } catch (err) {
       setError(err.message || "Failed to fetch data");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -1401,6 +1406,7 @@ const Partnership = () => {
         data={data}
         actionsColumn={actionsColumn}
         renderRowSubComponent={renderRowSubComponent}
+        isLoading={loading}
       />
 
       <PartnershipModals

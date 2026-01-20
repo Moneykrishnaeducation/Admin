@@ -565,8 +565,8 @@ const PendingRequest = () => {
           data={tableData}
           serverSide={false}
           initialPageSize={5}
+          isLoading={loading}
           pageSizeOptions={[5, 10, 20]}
-          onRowClick={(row) => console.log("Clicked row", row.id)}
         />
       </ErrorBoundary>
 
@@ -614,9 +614,7 @@ const PendingRequest = () => {
         }}
       />
 
-      {loading && (
-        <div className="mt-2 text-yellow-400 font-semibold">Loading...</div>
-      )}
+      
     </div>
   );
 };

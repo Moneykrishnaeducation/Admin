@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useTheme } from "../context/ThemeContext";
-import { Search } from "lucide-react";
+import { DollarSign, Search } from "lucide-react";
 
 const TableStructure = ({
   columns = [],
@@ -23,7 +23,8 @@ const TableStructure = ({
   // server-side state
   const [serverData, setServerData] = useState([]);
   const [total, setTotal] = useState((data && data.length) || 0);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(isLoading || false);
+  const [hasFetched, setHasFetched] = useState(!serverSide);
 
   const effectiveLoading = typeof isLoading === 'boolean' ? isLoading : loading;
 
@@ -34,6 +35,7 @@ const TableStructure = ({
     const timer = setTimeout(async () => {
       if (!onFetch) {
         console.warn("TableStructure: serverSide=true but no onFetch provided. Falling back to client-side behavior.");
+        if (!cancelled) setHasFetched(true);
         return;
       }
       setLoading(true);
@@ -45,7 +47,10 @@ const TableStructure = ({
       } catch (err) {
         console.error("Error fetching server-side data for TableStructure:", err);
       } finally {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+          setHasFetched(true);
+        }
       }
     }, 350);
 
@@ -81,6 +86,8 @@ const TableStructure = ({
   const paginatedData = serverSide
     ? serverData
     : filteredData.slice(startIndex, endIndex);
+
+  const showEmpty = !effectiveLoading && (serverSide ? hasFetched : true) && paginatedData.length === 0;
 
   const handlePrev = () => setPage((p) => Math.max(1, p - 1));
   const handleNext = () => setPage((p) => Math.min(totalPages, p + 1));
@@ -155,7 +162,7 @@ const TableStructure = ({
                   )}
                 </tr>
               ))
-            ) : paginatedData.length > 0 ? (
+            ) : (paginatedData.length > 0 ? (
               paginatedData.map((row, rowIndex) => (
                 <React.Fragment key={row.id || startIndex + rowIndex}>
                   <tr
@@ -181,17 +188,35 @@ const TableStructure = ({
                   </tr>
                   {renderRowSubComponent && expandedRow === (row.id || startIndex + rowIndex) && renderRowSubComponent(row, startIndex + rowIndex)}
                 </React.Fragment>
-              ))
-            ) : (
-              <tr>
-                <td
-                  className="p-4 text-center text-yellow-400"
-                  colSpan={columns.length + (actionsColumn ? 1 : 0)}
-                >
-                  No data available.
-                </td>
-              </tr>
-            )}
+              ))) : (
+                showEmpty && serverSide ? (
+                  <tr className={`border-b ${borderClass} ${rowHover} transition`}>
+                    <td colSpan={columns.length + (actionsColumn ? 1 : 0)} className="p-0">
+                      <div className="w-full flex justify-center mt-8">
+                        <div className={`w-full text-center p-6 rounded-lg ${isDarkMode ? 'bg-[#0b0b0b] border border-gray-800 text-gray-200' : 'bg-white border border-gray-200 text-gray-800'} shadow-sm`}>
+                          <div className="flex justify-center mb-3">
+                            <DollarSign size={36} className="text-gold" />
+                          </div>
+                          <h3 className="text-xl font-semibold mb-2">No data available.</h3>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                ) : (showEmpty &&(
+                  <tr className={`border-b ${borderClass} ${rowHover} transition`}>
+                    <td colSpan={columns.length + (actionsColumn ? 1 : 0)} className="p-0">
+                      <div className="w-full flex justify-center mt-8">
+                        <div className={`w-full text-center p-6 rounded-lg ${isDarkMode ? 'bg-[#0b0b0b] border border-gray-800 text-gray-200' : 'bg-white border border-gray-200 text-gray-800'} shadow-sm`}>
+                          <div className="flex justify-center mb-3">
+                            <DollarSign size={36} className="text-gold" />
+                          </div>
+                          <h3 className="text-xl font-semibold mb-2">No data available.</h3>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              ))}
           </tbody>
         </table>
       </div>
