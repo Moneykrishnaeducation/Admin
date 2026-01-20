@@ -162,35 +162,35 @@ const HistoryModal = ({ visible, onClose, accountId, activeTab, setActiveTab }) 
           </div>
 
       {/* Table Section */}
-      <div className="mt-4 w-full overflow-auto">
+      <div className="mt-4 w-full">
         {activeTab === "transactions" && (
-          <div className={`border rounded ${isDarkMode ? 'border-gray-700 bg-gray-800/30' : 'border-gray-300 bg-gray-50'}`}>
-            <table className="text-xs sm:text-sm border-collapse w-full">
+          <div className={`border rounded overflow-x-auto ${isDarkMode ? 'border-gray-700 bg-gray-800/30' : 'border-gray-300 bg-gray-50'}`}>
+            <table className="text-xs sm:text-sm border-collapse w-full table-fixed">
               <thead className="sticky top-0 z-10">
                 <tr className={isDarkMode ? "bg-yellow-500/20 border-b border-yellow-500/50" : "bg-yellow-400/20 border-b border-yellow-400/50"}>
-                  <th className={`px-2 sm:px-3 py-2  font-semibold ${isDarkMode ? 'text-yellow-400' : 'text-yellow-600'}`}>Date</th>
-                  <th className={`px-2 sm:px-3 py-2  font-semibold ${isDarkMode ? 'text-yellow-400' : 'text-yellow-600'}`}>Type</th>
-                  <th className={`px-2 sm:px-3 py-2  font-semibold ${isDarkMode ? 'text-yellow-400' : 'text-yellow-600'}`}>Amount</th>
-                  <th className={`px-2 sm:px-3 py-2  font-semibold ${isDarkMode ? 'text-yellow-400' : 'text-yellow-600'}`}>Status</th>
-                  <th className={`px-2 sm:px-3 py-2  font-semibold hidden sm:table-cell ${isDarkMode ? 'text-yellow-400' : 'text-yellow-600'}`}>Comment</th>
+                  <th className={`px-2 sm:px-3 py-2 text-center font-semibold ${isDarkMode ? 'text-yellow-400' : 'text-yellow-600'}`}>Date</th>
+                  <th className={`px-2 sm:px-3 py-2 text-center font-semibold ${isDarkMode ? 'text-yellow-400' : 'text-yellow-600'}`}>Type</th>
+                  <th className={`px-2 sm:px-3 py-2 text-center font-semibold ${isDarkMode ? 'text-yellow-400' : 'text-yellow-600'}`}>Amount</th>
+                  <th className={`px-2 sm:px-3 py-2 text-center font-semibold ${isDarkMode ? 'text-yellow-400' : 'text-yellow-600'}`}>Status</th>
+                  <th className={`px-2 sm:px-3 py-2 text-center font-semibold hidden sm:table-cell ${isDarkMode ? 'text-yellow-400' : 'text-yellow-600'}`}>Comment</th>
                 </tr>
               </thead>
             </table>
             <div className={`overflow-y-auto max-h-64 sm:max-h-80 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
-              <table className="text-xs sm:text-sm border-collapse w-full">
+              <table className="text-xs sm:text-sm border-collapse w-full table-fixed">
                 <tbody>
                   {paginatedTransactions.length > 0 ? (
                     paginatedTransactions.map((row, idx) => (
                       <tr key={idx} className={`border-b ${isDarkMode ? 'border-gray-700 hover:bg-gray-700/50' : 'border-gray-200 hover:bg-gray-100'} transition`}>
-                        <td className={`px-2 sm:px-3 py-2 truncate ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{row.date}</td>
-                        <td className={`px-2 sm:px-3 py-2 truncate ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{row.type}</td>
-                        <td className={`px-2 sm:px-3 py-2 truncate ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{row.amount}</td>
-                        <td className="px-2 sm:px-3 py-2 truncate">
+                        <td className={`px-2 sm:px-3 py-2 text-center truncate ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{row.date}</td>
+                        <td className={`px-2 sm:px-3 py-2 text-center truncate ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{row.type}</td>
+                        <td className={`px-2 sm:px-3 py-2 text-center truncate ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{row.amount}</td>
+                        <td className="px-2 sm:px-3 py-2 text-center truncate">
                           <span className={`px-2 py-1 rounded text-xs font-semibold inline-block ${row.status === 'approved' ? isDarkMode ? 'bg-green-500/30 text-green-400' : 'bg-green-100 text-green-700' : isDarkMode ? 'bg-yellow-500/30 text-yellow-400' : 'bg-yellow-100 text-yellow-700'}`}>
                             {row.status}
                           </span>
                         </td>
-                        <td className={`px-2 sm:px-3 py-2 truncate hidden sm:table-cell ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{row.comment}</td>
+                        <td className={`px-2 sm:px-3 py-2 text-center truncate hidden sm:table-cell ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{row.comment}</td>
                       </tr>
                     ))
                   ) : (
@@ -229,29 +229,29 @@ const HistoryModal = ({ visible, onClose, accountId, activeTab, setActiveTab }) 
         )}
         
         {activeTab === "positions" && (
-          <div className={`border rounded ${isDarkMode ? 'border-gray-700 bg-gray-800/30' : 'border-gray-300 bg-gray-50'}`}>
-            <table className="text-xs sm:text-sm border-collapse w-full">
+          <div className={`border rounded overflow-x-auto ${isDarkMode ? 'border-gray-700 bg-gray-800/30' : 'border-gray-300 bg-gray-50'}`}>
+            <table className="text-xs sm:text-sm border-collapse w-full table-fixed">
               <thead className="sticky top-0 z-10">
                 <tr className={isDarkMode ? "bg-yellow-500/20 border-b border-yellow-500/50" : "bg-yellow-400/20 border-b border-yellow-400/50"}>
-                  <th className={`px-2 sm:px-3 py-2  font-semibold hidden sm:table-cell ${isDarkMode ? 'text-yellow-400' : 'text-yellow-600'}`}>ID</th>
-                  <th className={`px-2 sm:px-3 py-2  font-semibold ${isDarkMode ? 'text-yellow-400' : 'text-yellow-600'}`}>Symbol</th>
-                  <th className={`px-2 sm:px-3 py-2  font-semibold ${isDarkMode ? 'text-yellow-400' : 'text-yellow-600'}`}>Vol</th>
-                  <th className={`px-2 sm:px-3 py-2  font-semibold ${isDarkMode ? 'text-yellow-400' : 'text-yellow-600'}`}>Price</th>
-                  <th className={`px-2 sm:px-3 py-2  font-semibold ${isDarkMode ? 'text-yellow-400' : 'text-yellow-600'}`}>P/L</th>
+                  <th className={`px-2 sm:px-3 py-2 text-center font-semibold hidden sm:table-cell ${isDarkMode ? 'text-yellow-400' : 'text-yellow-600'}`}>ID</th>
+                  <th className={`px-2 sm:px-3 py-2 text-center font-semibold ${isDarkMode ? 'text-yellow-400' : 'text-yellow-600'}`}>Symbol</th>
+                  <th className={`px-2 sm:px-3 py-2 text-center font-semibold ${isDarkMode ? 'text-yellow-400' : 'text-yellow-600'}`}>Vol</th>
+                  <th className={`px-2 sm:px-3 py-2 text-center font-semibold ${isDarkMode ? 'text-yellow-400' : 'text-yellow-600'}`}>Price</th>
+                  <th className={`px-2 sm:px-3 py-2 text-center font-semibold ${isDarkMode ? 'text-yellow-400' : 'text-yellow-600'}`}>P/L</th>
                 </tr>
               </thead>
             </table>
             <div className={`overflow-auto max-h-64 sm:max-h-96 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
-              <table className="text-xs sm:text-sm border-collapse w-full">
+              <table className="text-xs sm:text-sm border-collapse w-full table-fixed">
                 <tbody>
                   {paginatedPositions.length > 0 ? (
                     paginatedPositions.map((row, idx) => (
                       <tr key={idx} className={`border-b ${isDarkMode ? 'border-gray-700 hover:bg-gray-700/50' : 'border-gray-200 hover:bg-gray-100'} transition`}>
-                        <td className={`px-2 sm:px-3 py-2 truncate hidden sm:table-cell ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{row.id}</td>
-                        <td className={`px-2 sm:px-3 py-2 font-semibold truncate ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{row.symbol}</td>
-                        <td className={`px-2 sm:px-3 py-2 truncate ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{row.volume}</td>
-                        <td className={`px-2 sm:px-3 py-2 truncate ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{row.price}</td>
-                        <td className="px-2 sm:px-3 py-2 truncate">
+                        <td className={`px-2 sm:px-3 py-2 text-center truncate hidden sm:table-cell ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{row.id}</td>
+                        <td className={`px-2 sm:px-3 py-2 text-center font-semibold truncate ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{row.symbol}</td>
+                        <td className={`px-2 sm:px-3 py-2 text-center truncate ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{row.volume}</td>
+                        <td className={`px-2 sm:px-3 py-2 text-center truncate ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{row.price}</td>
+                        <td className="px-2 sm:px-3 py-2 text-center truncate">
                           <span className={`font-semibold ${parseFloat(row.profit) >= 0 ? isDarkMode ? 'text-green-400' : 'text-green-600' : isDarkMode ? 'text-red-400' : 'text-red-600'}`}>
                             {row.profit}
                           </span>
