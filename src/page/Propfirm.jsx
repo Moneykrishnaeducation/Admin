@@ -284,9 +284,7 @@ const PropFirm = () => {
   const renderTable = () => {
     switch(activeTab) {
       case "Packages":
-        if (loading) {
-          return <div className="text-center py-8 text-yellow-400">Loading packages...</div>;
-        }
+        
         if (error) {
           return <div className="text-center py-8 text-red-400">Error: {error}</div>;
         }
@@ -303,6 +301,7 @@ const PropFirm = () => {
             <TableStructure
               columns={columnsPackages}
               data={packages}
+              isLoading={loading}
               actionsColumn={null}
               onRowClick={(row) => toggleExpand(row.id)}
               renderRowSubComponent={(row) => (

@@ -273,18 +273,19 @@ const Tickets = ({ isAdmin = false }) => {
             : "border-gray-300 bg-white"
         } shadow-md p-4`}
       >
-        {loading && (
-          <p className="text-center text-yellow-400">Loading tickets...</p>
-        )}
+        
 
         {error && (
           <p className="text-center text-red-500">{error}</p>
         )}
 
-        {!loading && !error && (
+        {!error && (
           <TableStructure
             columns={columns}
             data={tableData}
+            isLoading={loading}
+            serverSide={false}
+            initialPageSize={10}
             actionsColumn={(row) => {
               if (activeTab === "Waiting") {
                 return (

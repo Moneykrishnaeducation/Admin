@@ -47,7 +47,7 @@ const Navbar = ({ isSidebarOpen, setIsSidebarOpen }) => {
   React.useEffect(() => {
     const updateRole = () => {
       let currentRole = "manager";
-      
+
       try {
         // Check user cookie first
         const userCookie = getCookie('user');
@@ -64,7 +64,7 @@ const Navbar = ({ isSidebarOpen, setIsSidebarOpen }) => {
             console.debug('Failed to parse user cookie:', e);
           }
         }
-        
+
         // Fallback: Check individual role cookies
         const cookieRole = getCookie('userRole') || getCookie('user_role');
         if (cookieRole) {
@@ -73,7 +73,7 @@ const Navbar = ({ isSidebarOpen, setIsSidebarOpen }) => {
         } else {
           console.debug('No role found in cookies, defaulting to manager');
         }
-        
+
         setRole(currentRole);
       } catch (e) {
         console.error('Error reading user role:', e);
@@ -83,10 +83,10 @@ const Navbar = ({ isSidebarOpen, setIsSidebarOpen }) => {
 
     // Update role immediately on mount
     updateRole();
-    
+
     // Listen for storage changes (from other tabs/windows)
     window.addEventListener('storage', updateRole);
-    
+
     // Re-check role when location changes (page navigation)
     return () => {
       window.removeEventListener('storage', updateRole);
@@ -169,10 +169,10 @@ const Navbar = ({ isSidebarOpen, setIsSidebarOpen }) => {
       >
         {/* Header */}
         <div className="flex items-center justify-center mb-4">
-          <Link to="/dashboard">
+          <Link to={`${basePath}/dashboard`}>
             <img
               className="h-10 object-contain cursor-pointer"
-              src="static/admin/logo.svg"
+              src={`/static/admin/logo.svg`}
               alt="Logo"
             />
           </Link>
@@ -197,10 +197,13 @@ const Navbar = ({ isSidebarOpen, setIsSidebarOpen }) => {
                 to={item.path}
                 onClick={isMobileView ? () => setIsSidebarOpen(false) : undefined}
                 className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition
+                  ${!isActive ? isDarkMode 
+                        ? "bg-gradient-to-t from-gray-700 to-black shadow-lg hover:bg-gradient-to-r from-gray-700 to-black shadow-lg" 
+                        : "bg-gradient-to-t from-gray-100 to-white shadow-xl hover:bg-gradient-to-r from-gray-100 to-white shadow-xl" : ""}
                   ${
                     isActive
                       ? "bg-yellow-500 text-black shadow-md"
-                      : "hover:bg-yellow-500 hover:text-black"
+                      : "hover:bg-yellow-500"
                   }`}
               >
                 <Icon
