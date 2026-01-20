@@ -109,7 +109,6 @@ const HistoryModal = ({ visible, onClose, accountId, activeTab, setActiveTab }) 
       </div>
 
           {/* Compact Controls: Transactions / Open Positions + History Range in one line */}
-<<<<<<< HEAD
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 sm:gap-4 mb-3 sm:mb-4 w-full">
             <div className="flex gap-1 sm:gap-2 w-full sm:w-auto">
               <button
@@ -139,56 +138,6 @@ const HistoryModal = ({ visible, onClose, accountId, activeTab, setActiveTab }) 
               >
                 Open Positions
               </button>
-=======
-          <div className="flex items-center justify-between gap-4 mb-4 flex-nowrap w-full">
-            {/* Count badges for Transactions and Open Positions */}
-            <div className="flex-1 flex items-center gap-2">
-
-              {/* Transactions Button with Notification Badge */}
-              <div className="relative inline-block">
-                <button
-                  onClick={() => {
-                    setActiveTab("transactions");
-                    setCurrentPage(1);
-                  }}
-                  className={`px-3 py-2 rounded transition ${
-                    activeTab === "transactions"
-                      ? "bg-yellow-400 text-black"
-                      : "bg-gray-700 text-white hover:bg-gray-600"
-                  }`}
-                >
-                  Transactions
-                  {/* Notification badge in top-right corner */}
-                  {transactionsData.length > 0 && (
-                    <span className="absolute -top-2 -right-2 min-w-[20px] h-5 px-1 flex items-center justify-center bg-red-500 text-white text-xs font-bold rounded-full border-2 border-white shadow">
-                      {transactionsData.length}
-                    </span>
-                  )}
-                </button>
-              </div>
-
-              {/* Open Positions Button with Notification Badge */}
-              <div className="relative inline-block">
-                <button
-                  onClick={() => {
-                    setActiveTab("positions");
-                    setCurrentPage(1);
-                  }}
-                  className={`px-3 py-2 rounded transition ${
-                    activeTab === "positions"
-                      ? "bg-yellow-400 text-black"
-                      : "bg-gray-700 text-white hover:bg-gray-600"
-                  }`}
-                >
-                  Open Positions
-                  {positionsData.length > 0 && (
-                    <span className="absolute -top-2 -right-2 min-w-[20px] h-5 px-1 flex items-center justify-center bg-red-500 text-white text-xs font-bold rounded-full border-2 border-white shadow">
-                      {positionsData.length}
-                    </span>
-                  )}
-                </button>
-              </div>
->>>>>>> c0e34f07972a68499e95cce33664118281f3cca5
             </div>
 
             <div className="flex gap-1 sm:gap-2 w-full sm:w-auto sm:justify-end">
