@@ -88,202 +88,158 @@ const HistoryModal = ({ visible, onClose, accountId, activeTab, setActiveTab }) 
   // Remove unused column definitions to prevent linting errors
 
   return (
-    <ModalWrapper title={`Account Summary (ID: ${accountId})`} visible={visible} onClose={onClose}>
-
-      {/* Summary Section */}
-      <div className="grid grid-cols-3 gap-1 sm:gap-6 p-2 sm:p-4 rounded-lg border border-yellow-500/30 mb-4 sm:mb-6">
+    <ModalWrapper
+      title={`Account Summary (ID: ${accountId})`}
+      visible={visible}
+      onClose={onClose}
+    >
+      {/* ===== SUMMARY ===== */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-6 p-2 sm:p-4 rounded-lg border border-yellow-500/30 mb-4 sm:mb-6">
         <div className="text-center py-1">
-          <p className="text-gray-400 text-xs sm:text-sm mb-0.5">Balance</p>
-          <p className="text-yellow-400 text-sm sm:text-lg font-semibold">${historyData?.account_summary?.balance?.toFixed(2) || '0.00'}</p>
+          <p className="text-gray-400 text-xs sm:text-sm">Balance</p>
+          <p className="text-yellow-400 text-sm sm:text-lg font-semibold">
+            ${historyData?.account_summary?.balance?.toFixed(2) || "0.00"}
+          </p>
         </div>
 
         <div className="text-center py-1">
-          <p className="text-gray-400 text-xs sm:text-sm mb-0.5">Equity</p>
-          <p className="text-yellow-400 text-sm sm:text-lg font-semibold">${historyData?.account_summary?.equity?.toFixed(2) || '0.00'}</p>
+          <p className="text-gray-400 text-xs sm:text-sm">Equity</p>
+          <p className="text-yellow-400 text-sm sm:text-lg font-semibold">
+            ${historyData?.account_summary?.equity?.toFixed(2) || "0.00"}
+          </p>
         </div>
 
         <div className="text-center py-1">
-          <p className="text-gray-400 text-xs sm:text-sm mb-0.5">Open Positions</p>
-          <p className="text-yellow-400 text-sm sm:text-lg font-semibold">{historyData?.account_summary?.open_positions || 0}</p>
+          <p className="text-gray-400 text-xs sm:text-sm">Open Positions</p>
+          <p className="text-yellow-400 text-sm sm:text-lg font-semibold">
+            {historyData?.account_summary?.open_positions || 0}
+          </p>
         </div>
       </div>
 
-          {/* Compact Controls: Transactions / Open Positions + History Range in one line */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 sm:gap-4 mb-3 sm:mb-4 w-full">
-            <div className="flex gap-1 sm:gap-2 w-full sm:w-auto">
-              <button
-                onClick={() => {
-            	  setActiveTab("transactions");
-            	  setCurrentPage(1);
-          	}}
-                className={`flex-1 sm:flex-none px-2 sm:px-3 py-2 rounded transition text-xs sm:text-sm ${
-                  activeTab === "transactions"
-                    ? "bg-yellow-400 text-black"
-                    : "bg-gray-700 text-white hover:bg-gray-600"
+      {/* ===== CONTROLS ===== */}
+      <div className="flex flex-col lg:flex-row gap-2 sm:gap-4 mb-4 w-full">
+        <div className="flex w-full lg:w-auto gap-2">
+          {["transactions", "positions"].map(tab => (
+            <button
+              key={tab}
+              onClick={() => {
+                setActiveTab(tab);
+                setCurrentPage(1);
+              }}
+              className={`flex-1 lg:flex-none px-3 py-2 rounded text-xs sm:text-sm transition ${activeTab === tab
+                  ? "bg-yellow-400 text-black"
+                  : "bg-gray-700 text-white hover:bg-gray-600"
                 }`}
-              >
-                Transactions
-              </button>
+            >
+              {tab === "transactions" ? "Transactions" : "Open Positions"}
+            </button>
+          ))}
+        </div>
 
-              <button
-                onClick={() => {
-            	  setActiveTab("positions");
-            	  setCurrentPage(1);
-          	}}
-                className={`flex-1 sm:flex-none px-2 sm:px-3 py-2 rounded transition text-xs sm:text-sm ${
-                  activeTab === "positions"
-                    ? "bg-yellow-400 text-black"
-                    : "bg-gray-700 text-white hover:bg-gray-600"
-                }`}
-              >
-                Open Positions
-              </button>
-            </div>
+        <div className="flex w-full lg:w-auto gap-2 lg:ml-auto">
+          <select
+            value={selectedDays}
+            onChange={e => setSelectedDays(Number(e.target.value))}
+            className="flex-1 lg:flex-none bg-gray-700 text-white px-3 py-2 rounded border border-gray-600 text-xs sm:text-sm"
+          >
+            <option value={7}>7 days</option>
+            <option value={30}>30 days</option>
+            <option value={60}>60 days</option>
+            <option value={90}>90 days</option>
+          </select>
 
-            <div className="flex gap-1 sm:gap-2 w-full sm:w-auto sm:justify-end">
-                <select
-                  value={selectedDays}
-                  onChange={(e) => setSelectedDays(Number(e.target.value))}
-                  className="bg-gray-700 text-white px-2 py-2 rounded border border-gray-600 text-xs sm:text-sm flex-1 sm:flex-none"
-                >
-                  <option value={7}>7 days</option>
-                  <option value={30}>30 days</option>
-                  <option value={60}>60 days</option>
-                  <option value={90}>90 days</option>
-                </select>
-                <button
-                  onClick={fetchHistory}
-                  disabled={loading}
-                  className="bg-yellow-400 text-black px-2 sm:px-3 py-2 rounded hover:bg-yellow-500 transition disabled:opacity-50 text-xs sm:text-sm font-semibold flex-1 sm:flex-none"
-                >
-                  {loading ? 'Refresh...' : 'Refresh'}
-                </button>
-              </div>
-          </div>
+          <button
+            onClick={fetchHistory}
+            disabled={loading}
+            className="flex-1 lg:flex-none bg-yellow-400 text-black px-4 py-2 rounded hover:bg-yellow-500 transition disabled:opacity-50 text-xs sm:text-sm font-semibold"
+          >
+            {loading ? "Refreshing..." : "Refresh"}
+          </button>
+        </div>
+      </div>
 
-      {/* Table Section */}
-      <div className="mt-4 w-full">
+      {/* ===== TABLES ===== */}
+      <div className="w-full">
+        {/* ================= TRANSACTIONS ================= */}
         {activeTab === "transactions" && (
-          <div className={`border rounded overflow-auto ${isDarkMode ? 'border-gray-700 bg-gray-800/30' : 'border-gray-300 bg-gray-50'}`}>
-            <table className="text-xs sm:text-sm border-collapse w-full ">
-              <thead className="sticky top-0 z-10">
-                <tr className={isDarkMode ? "bg-yellow-500/20 border-b border-yellow-500/50" : "bg-yellow-400/20 border-b border-yellow-400/50"}>
-                  <th className={`px-2 sm:px-3 py-2 text-center font-semibold ${isDarkMode ? 'text-yellow-400' : 'text-yellow-600'}`}>Date</th>
-                  <th className={`px-2 sm:px-3 py-2 text-center font-semibold ${isDarkMode ? 'text-yellow-400' : 'text-yellow-600'}`}>Type</th>
-                  <th className={`px-2 sm:px-3 py-2 text-center font-semibold ${isDarkMode ? 'text-yellow-400' : 'text-yellow-600'}`}>Amount</th>
-                  <th className={`px-2 sm:px-3 py-2 text-center font-semibold ${isDarkMode ? 'text-yellow-400' : 'text-yellow-600'}`}>Status</th>
-                  <th className={`px-2 sm:px-3 py-2 text-center font-semibold hidden sm:table-cell ${isDarkMode ? 'text-yellow-400' : 'text-yellow-600'}`}>Comment</th>
-                </tr>
-              </thead>
-            </table>
-            <div className={`overflow-auto max-h-64 sm:max-h-80 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
-              <table className="text-xs sm:text-sm border-collapse w-full ">
+          <div className={`rounded border ${isDarkMode ? "border-gray-700 bg-gray-800/30" : "border-gray-300 bg-gray-50"}`}>
+            <div className="overflow-x-auto">
+              <table className="min-w-[640px] w-full text-xs sm:text-sm">
+                <thead className="sticky top-0 z-10">
+                  <tr className={isDarkMode ? "bg-yellow-500/20" : "bg-yellow-400/20"}>
+                    {["Date", "Type", "Amount", "Status", "Comment"].map((h, i) => (
+                      <th
+                        key={i}
+                        className={`px-3 py-2 text-center font-semibold ${i === 4 ? "hidden sm:table-cell" : ""
+                          } ${isDarkMode ? "text-yellow-400" : "text-yellow-600"}`}
+                      >
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
                 <tbody>
-                  {paginatedTransactions.length > 0 ? (
+                  {paginatedTransactions.length ? (
                     paginatedTransactions.map((row, idx) => (
-                      <tr key={idx} className={`border-b ${isDarkMode ? 'border-gray-700 hover:bg-gray-700/50' : 'border-gray-200 hover:bg-gray-100'} transition`}>
-                        <td className={`px-2 sm:px-3 py-2 text-center truncate ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{row.date}</td>
-                        <td className={`px-2 sm:px-3 py-2 text-center truncate ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{row.type}</td>
-                        <td className={`px-2 sm:px-3 py-2 text-center truncate ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{row.amount}</td>
-                        <td className="px-2 sm:px-3 py-2 text-center truncate">
-                          <span className={`px-2 py-1 rounded text-xs font-semibold inline-block ${row.status === 'approved' ? isDarkMode ? 'bg-green-500/30 text-green-400' : 'bg-green-100 text-green-700' : isDarkMode ? 'bg-yellow-500/30 text-yellow-400' : 'bg-yellow-100 text-yellow-700'}`}>
+                      <tr
+                        key={idx}
+                        className={`border-b transition ${isDarkMode
+                            ? "border-gray-700 hover:bg-gray-700/50"
+                            : "border-gray-200 hover:bg-gray-100"
+                          }`}
+                      >
+                        <td className="px-3 py-2 text-center">{row.date}</td>
+                        <td className="px-3 py-2 text-center">{row.type}</td>
+                        <td className="px-3 py-2 text-center">{row.amount}</td>
+                        <td className="px-3 py-2 text-center">
+                          <span
+                            className={`px-2 py-1 rounded text-xs font-semibold ${row.status === "approved"
+                                ? isDarkMode
+                                  ? "bg-green-500/30 text-green-400"
+                                  : "bg-green-100 text-green-700"
+                                : isDarkMode
+                                  ? "bg-yellow-500/30 text-yellow-400"
+                                  : "bg-yellow-100 text-yellow-700"
+                              }`}
+                          >
                             {row.status}
                           </span>
                         </td>
-                        <td className={`px-2 sm:px-3 py-2 text-center truncate hidden sm:table-cell ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{row.comment}</td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan="5" className={`px-2 sm:px-3 py-4 text-center text-xs sm:text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>No transactions found</td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-            {/* Pagination Controls */}
-            {transactionsData.length > itemsPerPage && (
-              <div className={`flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 sm:gap-0 px-2 sm:px-3 py-3 border-t ${isDarkMode ? 'border-gray-700 bg-gray-900' : 'border-gray-200 bg-gray-100'}`}>
-                <span className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                  Page {currentPage} of {totalTransactionPages} | Showing {paginatedTransactions.length} of {transactionsData.length}
-                </span>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                    disabled={currentPage === 1}
-                    className={`px-3 py-1 rounded text-xs font-semibold transition ${currentPage === 1 ? isDarkMode ? 'bg-gray-700 text-gray-500 cursor-not-allowed' : 'bg-gray-300 text-gray-500 cursor-not-allowed' : isDarkMode ? 'bg-yellow-500/30 text-yellow-400 hover:bg-yellow-500/50' : 'bg-yellow-200 text-yellow-700 hover:bg-yellow-300'}`}
-                  >
-                    Previous
-                  </button>
-                  <button
-                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalTransactionPages))}
-                    disabled={currentPage === totalTransactionPages}
-                    className={`px-3 py-1 rounded text-xs font-semibold transition ${currentPage === totalTransactionPages ? isDarkMode ? 'bg-gray-700 text-gray-500 cursor-not-allowed' : 'bg-gray-300 text-gray-500 cursor-not-allowed' : isDarkMode ? 'bg-yellow-500/30 text-yellow-400 hover:bg-yellow-500/50' : 'bg-yellow-200 text-yellow-700 hover:bg-yellow-300'}`}
-                  >
-                    Next
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-        
-        {activeTab === "positions" && (
-          <div className={`border rounded overflow-auto ${isDarkMode ? 'border-gray-700 bg-gray-800/30' : 'border-gray-300 bg-gray-50'}`}>
-            <table className="text-xs sm:text-sm border-collapse w-full ">
-              <thead className="sticky top-0 z-10">
-                <tr className={isDarkMode ? "bg-yellow-500/20 border-b border-yellow-500/50" : "bg-yellow-400/20 border-b border-yellow-400/50"}>
-                  <th className={`px-2 sm:px-3 py-2 text-center font-semibold hidden sm:table-cell ${isDarkMode ? 'text-yellow-400' : 'text-yellow-600'}`}>ID</th>
-                  <th className={`px-2 sm:px-3 py-2 text-center font-semibold ${isDarkMode ? 'text-yellow-400' : 'text-yellow-600'}`}>Symbol</th>
-                  <th className={`px-2 sm:px-3 py-2 text-center font-semibold ${isDarkMode ? 'text-yellow-400' : 'text-yellow-600'}`}>Vol</th>
-                  <th className={`px-2 sm:px-3 py-2 text-center font-semibold ${isDarkMode ? 'text-yellow-400' : 'text-yellow-600'}`}>Price</th>
-                  <th className={`px-2 sm:px-3 py-2 text-center font-semibold ${isDarkMode ? 'text-yellow-400' : 'text-yellow-600'}`}>P/L</th>
-                </tr>
-              </thead>
-            </table>
-            <div className={`overflow-auto max-h-64 sm:max-h-96 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
-              <table className="text-xs sm:text-sm border-collapse w-full ">
-                <tbody>
-                  {paginatedPositions.length > 0 ? (
-                    paginatedPositions.map((row, idx) => (
-                      <tr key={idx} className={`border-b ${isDarkMode ? 'border-gray-700 hover:bg-gray-700/50' : 'border-gray-200 hover:bg-gray-100'} transition`}>
-                        <td className={`px-2 sm:px-3 py-2 text-center truncate hidden sm:table-cell ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{row.id}</td>
-                        <td className={`px-2 sm:px-3 py-2 text-center font-semibold truncate ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{row.symbol}</td>
-                        <td className={`px-2 sm:px-3 py-2 text-center truncate ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{row.volume}</td>
-                        <td className={`px-2 sm:px-3 py-2 text-center truncate ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{row.price}</td>
-                        <td className="px-2 sm:px-3 py-2 text-center truncate">
-                          <span className={`font-semibold ${parseFloat(row.profit) >= 0 ? isDarkMode ? 'text-green-400' : 'text-green-600' : isDarkMode ? 'text-red-400' : 'text-red-600'}`}>
-                            {row.profit}
-                          </span>
+                        <td className="px-3 py-2 text-center hidden sm:table-cell">
+                          {row.comment}
                         </td>
                       </tr>
                     ))
                   ) : (
                     <tr>
-                      <td colSpan="5" className={`px-2 sm:px-3 py-4 text-center text-xs sm:text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>No positions found</td>
+                      <td colSpan={5} className="py-6 text-center text-gray-400">
+                        No transactions found
+                      </td>
                     </tr>
                   )}
                 </tbody>
               </table>
             </div>
-            {/* Pagination Controls */}
-            {positionsData.length > itemsPerPage && (
-              <div className={`flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 sm:gap-0 px-2 sm:px-3 py-3 border-t ${isDarkMode ? 'border-gray-700 bg-gray-900' : 'border-gray-200 bg-gray-100'}`}>
-                <span className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                  Page {currentPage} of {totalPositionPages} | Showing {paginatedPositions.length} of {positionsData.length}
+
+            {/* Pagination */}
+            {transactionsData.length > itemsPerPage && (
+              <div className={`flex flex-col sm:flex-row justify-between gap-2 p-3 text-xs ${isDarkMode ? "bg-gray-900" : "bg-gray-100"}`}>
+                <span>
+                  Page {currentPage} of {totalTransactionPages}
                 </span>
                 <div className="flex gap-2">
                   <button
-                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                     disabled={currentPage === 1}
-                    className={`px-3 py-1 rounded text-xs font-semibold transition ${currentPage === 1 ? isDarkMode ? 'bg-gray-700 text-gray-500 cursor-not-allowed' : 'bg-gray-300 text-gray-500 cursor-not-allowed' : isDarkMode ? 'bg-yellow-500/30 text-yellow-400 hover:bg-yellow-500/50' : 'bg-yellow-200 text-yellow-700 hover:bg-yellow-300'}`}
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    className="px-3 py-1 rounded bg-gray-700 text-white disabled:opacity-40"
                   >
-                    Previous
+                    Prev
                   </button>
                   <button
-                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPositionPages))}
-                    disabled={currentPage === totalPositionPages}
-                    className={`px-3 py-1 rounded text-xs font-semibold transition ${currentPage === totalPositionPages ? isDarkMode ? 'bg-gray-700 text-gray-500 cursor-not-allowed' : 'bg-gray-300 text-gray-500 cursor-not-allowed' : isDarkMode ? 'bg-yellow-500/30 text-yellow-400 hover:bg-yellow-500/50' : 'bg-yellow-200 text-yellow-700 hover:bg-yellow-300'}`}
+                    disabled={currentPage === totalTransactionPages}
+                    onClick={() => setCurrentPage(p => Math.min(totalTransactionPages, p + 1))}
+                    className="px-3 py-1 rounded bg-yellow-400 text-black disabled:opacity-40"
                   >
                     Next
                   </button>
@@ -292,10 +248,56 @@ const HistoryModal = ({ visible, onClose, accountId, activeTab, setActiveTab }) 
             )}
           </div>
         )}
-      </div>
 
-      
+        {/* ================= POSITIONS ================= */}
+        {activeTab === "positions" && (
+          <div className={`rounded border ${isDarkMode ? "border-gray-700 bg-gray-800/30" : "border-gray-300 bg-gray-50"}`}>
+            <div className="overflow-x-auto">
+              <table className="min-w-[520px] w-full text-xs sm:text-sm">
+                <thead>
+                  <tr className={isDarkMode ? "bg-yellow-500/20" : "bg-yellow-400/20"}>
+                    {["ID", "Symbol", "Vol", "Price", "P/L"].map((h, i) => (
+                      <th
+                        key={i}
+                        className={`px-3 py-2 text-center font-semibold ${i === 0 ? "hidden sm:table-cell" : ""
+                          } ${isDarkMode ? "text-yellow-400" : "text-yellow-600"}`}
+                      >
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {paginatedPositions.length ? (
+                    paginatedPositions.map((row, idx) => (
+                      <tr key={idx} className="border-b">
+                        <td className="hidden sm:table-cell px-3 py-2 text-center">{row.id}</td>
+                        <td className="px-3 py-2 text-center font-semibold">{row.symbol}</td>
+                        <td className="px-3 py-2 text-center">{row.volume}</td>
+                        <td className="px-3 py-2 text-center">{row.price}</td>
+                        <td className={`px-3 py-2 text-center font-semibold ${parseFloat(row.profit) >= 0
+                            ? "text-green-500"
+                            : "text-red-500"
+                          }`}>
+                          {row.profit}
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={5} className="py-6 text-center text-gray-400">
+                        No positions found
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+      </div>
     </ModalWrapper>
+
   );
 };
 
