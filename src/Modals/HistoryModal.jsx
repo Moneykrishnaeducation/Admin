@@ -53,7 +53,7 @@ const HistoryModal = ({ visible, onClose, accountId, activeTab, setActiveTab }) 
       symbol: position.symbol,
       volume: position.volume,
       price: position.price,
-      pl: position.pl,
+      profit: position.profit,
     })) || [];
   }, [historyData?.positions]);
 
