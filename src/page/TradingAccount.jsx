@@ -34,7 +34,7 @@ const TradingAccountPage = () => {
   const [page, _setPage] = useState(1);
   const [pageSize, _setPageSize] = useState(10);
 
-  const [_loading] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [error] = useState(null);
   const [expandedId, setExpandedId] = useState(null);
 
@@ -82,6 +82,7 @@ const TradingAccountPage = () => {
       params.set("pageSize", String(ps));
       if (query) params.set("query", query);
       try {
+        setLoading(true);
         const client = typeof window !== "undefined" && window.adminApiClient ? window.adminApiClient : null;
         let resJson;
         if (client && typeof client.get === "function") {
@@ -123,6 +124,9 @@ const TradingAccountPage = () => {
       } catch (err) {
         console.error("Failed to load users:", err);
         return { data: [], total: 0 };
+      }
+      finally {
+        setLoading(false);
       }
     },
     []
@@ -449,7 +453,9 @@ const TradingAccountPage = () => {
       </div>
       <TableStructure
         columns={columns}
+        serverSide={false}
         data={data}
+        isLoading={loading}
         initialPageSize={10}
         renderRowSubComponent={renderRowSubComponent}
         onRowClick={onRowClick}
