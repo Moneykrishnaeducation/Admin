@@ -187,10 +187,10 @@ const ManagerTickets = () => {
         <h2 className="text-2xl md:text-3xl font-bold text-yellow-400">
           Support Tickets
         </h2>
-        <div className="flex justify-center gap-4 mt-4">
+        <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 mt-4 w-full">
           <button
             onClick={() => setActivePage("create")}
-            className={`flex items-center justify-center gap-2 font-semibold px-20 py-3 rounded-md transition ${
+            className={`w-full sm:w-auto flex items-center justify-center gap-2 font-semibold px-6 py-3 rounded-md transition ${
               activePage === "create"
                 ? "bg-yellow-400 text-black"
                 : "bg-gray-700 text-yellow-300 hover:bg-gray-600"
@@ -201,7 +201,7 @@ const ManagerTickets = () => {
           </button>
           <button
             onClick={() => setActivePage("view")}
-            className={`flex items-center justify-center gap-2 font-semibold px-20 py-3 rounded-md transition ${
+            className={`w-full sm:w-auto flex items-center justify-center gap-2 font-semibold px-6 py-3 rounded-md transition ${
               activePage === "view"
                 ? "bg-yellow-400 text-black"
                 : "bg-gray-700 text-yellow-300 hover:bg-gray-600"
@@ -217,12 +217,12 @@ const ManagerTickets = () => {
         <>
 
           {/* TABS */}
-          <div className="flex justify-center mt-6 gap-10 mb-6">
+          <div className="flex flex-col sm:flex-row justify-center mt-6 gap-4 sm:gap-10 mb-6 w-full">
             {["Open", "Pending", "Closed"].map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`justify-center px-30 py-3 rounded-md font-semibold transition ${
+                className={`w-full sm:w-auto justify-center px-6 py-3 rounded-md font-semibold transition ${
                   activeTab === tab
                     ? "bg-yellow-400 text-black"
                     : "bg-gray-700 text-yellow-300"
