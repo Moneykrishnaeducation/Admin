@@ -171,8 +171,7 @@ const HistoryModal = ({ visible, onClose, accountId, activeTab, setActiveTab }) 
                     {["Date", "Type", "Amount", "Status", "Comment"].map((h, i) => (
                       <th
                         key={i}
-                        className={`px-3 py-2 text-center font-semibold ${i === 4 ? "hidden sm:table-cell" : ""
-                          } ${isDarkMode ? "text-yellow-400" : "text-yellow-600"}`}
+                        className={`px-3 py-2 text-center font-semibold ${isDarkMode ? "text-yellow-400" : "text-yellow-600"}`}
                       >
                         {h}
                       </th>
