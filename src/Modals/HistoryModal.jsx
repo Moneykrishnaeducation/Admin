@@ -164,7 +164,7 @@ const HistoryModal = ({ visible, onClose, accountId, activeTab, setActiveTab }) 
       {/* Table Section */}
       <div className="mt-4 w-full">
         {activeTab === "transactions" && (
-          <div className={`border rounded overflow-x-auto ${isDarkMode ? 'border-gray-700 bg-gray-800/30' : 'border-gray-300 bg-gray-50'}`}>
+          <div className={`border rounded overflow-auto ${isDarkMode ? 'border-gray-700 bg-gray-800/30' : 'border-gray-300 bg-gray-50'}`}>
             <table className="text-xs sm:text-sm border-collapse w-full table-fixed">
               <thead className="sticky top-0 z-10">
                 <tr className={isDarkMode ? "bg-yellow-500/20 border-b border-yellow-500/50" : "bg-yellow-400/20 border-b border-yellow-400/50"}>
@@ -176,7 +176,7 @@ const HistoryModal = ({ visible, onClose, accountId, activeTab, setActiveTab }) 
                 </tr>
               </thead>
             </table>
-            <div className={`overflow-y-auto max-h-64 sm:max-h-80 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
+            <div className={`overflow-auto max-h-64 sm:max-h-80 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
               <table className="text-xs sm:text-sm border-collapse w-full table-fixed">
                 <tbody>
                   {paginatedTransactions.length > 0 ? (
@@ -229,7 +229,7 @@ const HistoryModal = ({ visible, onClose, accountId, activeTab, setActiveTab }) 
         )}
         
         {activeTab === "positions" && (
-          <div className={`border rounded overflow-x-auto ${isDarkMode ? 'border-gray-700 bg-gray-800/30' : 'border-gray-300 bg-gray-50'}`}>
+          <div className={`border rounded overflow-auto ${isDarkMode ? 'border-gray-700 bg-gray-800/30' : 'border-gray-300 bg-gray-50'}`}>
             <table className="text-xs sm:text-sm border-collapse w-full table-fixed">
               <thead className="sticky top-0 z-10">
                 <tr className={isDarkMode ? "bg-yellow-500/20 border-b border-yellow-500/50" : "bg-yellow-400/20 border-b border-yellow-400/50"}>
