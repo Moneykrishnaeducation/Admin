@@ -206,7 +206,7 @@ const HistoryModal = ({ visible, onClose, accountId, activeTab, setActiveTab }) 
                             {row.status}
                           </span>
                         </td>
-                        <td className="px-3 py-2 text-center hidden sm:table-cell">
+                        <td className="px-3 py-2 text-center">
                           {row.comment}
                         </td>
                       </tr>
