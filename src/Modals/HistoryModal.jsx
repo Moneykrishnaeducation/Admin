@@ -165,7 +165,7 @@ const HistoryModal = ({ visible, onClose, accountId, activeTab, setActiveTab }) 
       <div className="mt-4 w-full">
         {activeTab === "transactions" && (
           <div className={`border rounded overflow-auto ${isDarkMode ? 'border-gray-700 bg-gray-800/30' : 'border-gray-300 bg-gray-50'}`}>
-            <table className="text-xs sm:text-sm border-collapse w-full table-fixed">
+            <table className="text-xs sm:text-sm border-collapse w-full ">
               <thead className="sticky top-0 z-10">
                 <tr className={isDarkMode ? "bg-yellow-500/20 border-b border-yellow-500/50" : "bg-yellow-400/20 border-b border-yellow-400/50"}>
                   <th className={`px-2 sm:px-3 py-2 text-center font-semibold ${isDarkMode ? 'text-yellow-400' : 'text-yellow-600'}`}>Date</th>
@@ -177,7 +177,7 @@ const HistoryModal = ({ visible, onClose, accountId, activeTab, setActiveTab }) 
               </thead>
             </table>
             <div className={`overflow-auto max-h-64 sm:max-h-80 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
-              <table className="text-xs sm:text-sm border-collapse w-full table-fixed">
+              <table className="text-xs sm:text-sm border-collapse w-full ">
                 <tbody>
                   {paginatedTransactions.length > 0 ? (
                     paginatedTransactions.map((row, idx) => (
@@ -230,7 +230,7 @@ const HistoryModal = ({ visible, onClose, accountId, activeTab, setActiveTab }) 
         
         {activeTab === "positions" && (
           <div className={`border rounded overflow-auto ${isDarkMode ? 'border-gray-700 bg-gray-800/30' : 'border-gray-300 bg-gray-50'}`}>
-            <table className="text-xs sm:text-sm border-collapse w-full table-fixed">
+            <table className="text-xs sm:text-sm border-collapse w-full ">
               <thead className="sticky top-0 z-10">
                 <tr className={isDarkMode ? "bg-yellow-500/20 border-b border-yellow-500/50" : "bg-yellow-400/20 border-b border-yellow-400/50"}>
                   <th className={`px-2 sm:px-3 py-2 text-center font-semibold hidden sm:table-cell ${isDarkMode ? 'text-yellow-400' : 'text-yellow-600'}`}>ID</th>
@@ -242,7 +242,7 @@ const HistoryModal = ({ visible, onClose, accountId, activeTab, setActiveTab }) 
               </thead>
             </table>
             <div className={`overflow-auto max-h-64 sm:max-h-96 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
-              <table className="text-xs sm:text-sm border-collapse w-full table-fixed">
+              <table className="text-xs sm:text-sm border-collapse w-full ">
                 <tbody>
                   {paginatedPositions.length > 0 ? (
                     paginatedPositions.map((row, idx) => (
