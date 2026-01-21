@@ -19,11 +19,16 @@ const ChatBot = () => {
   const [messageCounts, setMessageCounts] = useState({});
   const [isSidebarOpen, setIsSidebarOpen] = useState(true); // Mobile sidebar state
   const [userRole, setUserRole] = useState(null); // Track user role
+  const [adminProfiles, setAdminProfiles] = useState({}); // Store admin profile pictures
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
   const previousMessageCountRef = useRef(0);
   const isInitialLoadRef = useRef(true);
   const messageCountWhenOpenedRef = useRef(0);
+  const clientsAbortControllerRef = useRef(null);
+  const messagesAbortControllerRef = useRef(null);
+  const lastClientsCountRef = useRef(0);
+  const lastMessagesHashRef = useRef({});
 
   // Get user role on component mount
   useEffect(() => {
@@ -53,6 +58,24 @@ const ChatBot = () => {
     
     getUserRole();
   }, []);
+
+  // Update badge count from clientUnreadCounts (works in background)
+  useEffect(() => {
+    if (!isOpen) {
+      // Chat is closed - calculate total unread from all clients
+      const totalUnread = Object.values(clientUnreadCounts).reduce((sum, count) => sum + count, 0);
+      if (totalUnread > 0) {
+        setUnreadCount(totalUnread);
+        setHasUnreadMessages(true);
+      } else {
+        setUnreadCount(0);
+        setHasUnreadMessages(false);
+      }
+    } else {
+      // Chat is open - clear badge
+      setUnreadCount(0);
+    }
+  }, [clientUnreadCounts, isOpen]);
 
   // Smart scroll and unread count tracking
   useEffect(() => {
@@ -162,39 +185,62 @@ const ChatBot = () => {
     }
   }, [selectedClientId]);
 
-  // Load clients and messages when chat opens
+  // Load clients list ALWAYS in background (polling independent of chat being open)
   useEffect(() => {
-    if (isOpen) {
-      loadClients();
-      const interval = setInterval(loadClients, 5000);
-      return () => clearInterval(interval);
-    }
-  }, [isOpen]);
+    // Start polling immediately
+    loadClients();
+    // Poll clients every 30 seconds continuously for background unread count updates
+    const interval = setInterval(loadClients, 3000);
+    return () => clearInterval(interval);
+  }, []);
 
-  // Load messages for selected client
+  // Load messages for selected client - reduced to 15s polling for background
   useEffect(() => {
     if (selectedClientId) {
       loadMessagesForClient(selectedClientId);
-      const interval = setInterval(() => loadMessagesForClient(selectedClientId), 3000);
+      // Poll messages every 15 seconds for smooth updates with less network usage
+      const interval = setInterval(() => loadMessagesForClient(selectedClientId), 15000);
       return () => clearInterval(interval);
     }
   }, [selectedClientId]);
 
-  // Load clients and update every 5 seconds (similar to Client)
+  // Cleanup: Abort all pending requests on component unmount
   useEffect(() => {
-    loadClients();
-    const interval = setInterval(loadClients, 5000);
-    return () => clearInterval(interval);
+    return () => {
+      if (clientsAbortControllerRef.current) {
+        clientsAbortControllerRef.current.abort();
+      }
+      if (messagesAbortControllerRef.current) {
+        messagesAbortControllerRef.current.abort();
+      }
+    };
   }, []);
+
+  // Helper: Simple hash to detect changes
+  const getDataHash = (data) => {
+    return JSON.stringify(data).length + Object.keys(data || {}).length;
+  };
 
   const loadClients = async () => {
     try {
+      // Cancel previous request if still pending
+      if (clientsAbortControllerRef.current) {
+        clientsAbortControllerRef.current.abort();
+      }
+      
+      // Create new abort controller with 10 second timeout
+      clientsAbortControllerRef.current = new AbortController();
+      const timeoutId = setTimeout(() => clientsAbortControllerRef.current.abort(), 10000);
+      
       const response = await fetch("/api/chat/admin/messages/", {
         headers: {
           "X-CSRFToken": getCookie("csrftoken"),
         },
+        signal: clientsAbortControllerRef.current.signal,
       });
 
+      clearTimeout(timeoutId);
+      
       if (!response.ok) throw new Error("Failed to load clients");
 
       const data = await response.json();
@@ -224,9 +270,7 @@ const ChatBot = () => {
         }
       });
 
-      setClients(Object.values(uniqueClients));
-      
-      // Update unread counts for all clients EXCEPT the currently selected one
+      // Always update unread counts (even if client list didn't change)
       setClientUnreadCounts((prev) => {
         const updated = { ...prev, ...unreadCounts };
         // Don't update count for currently selected client (it's being actively viewed)
@@ -235,34 +279,103 @@ const ChatBot = () => {
         }
         return updated;
       });
+
+      // Check if client list changed to avoid unnecessary re-renders
+      const clientListHash = getDataHash(uniqueClients);
+      if (clientListHash === lastClientsCountRef.current) {
+        // No changes in client list, skip further updates
+        setError(null);
+        return;
+      }
+      lastClientsCountRef.current = clientListHash;
+
+      setClients(Object.values(uniqueClients));
+      
+      // Load admin profiles from the messages (only if clients changed)
+      const adminIds = new Set();
+      data.messages.forEach((msg) => {
+        if (msg.sender_type === "admin") {
+          adminIds.add(msg.sender);
+        }
+      });
+      
+      // Fetch admin profile pictures in background (non-blocking)
+      if (adminIds.size > 0) {
+        try {
+          const adminResponse = await fetch("/api/chat/admin/profiles/?ids=" + Array.from(adminIds).join(","), {
+            headers: {
+              "X-CSRFToken": getCookie("csrftoken"),
+            },
+          });
+          if (adminResponse.ok) {
+            const adminData = await adminResponse.json();
+            const profiles = {};
+            adminData.profiles.forEach((admin) => {
+              profiles[admin.id] = admin.profile_pic || null;
+            });
+            setAdminProfiles(profiles);
+          }
+        } catch (err) {
+          // Silently fail for profile loading - doesn't block chat
+          console.debug("Admin profiles failed to load, will retry");
+        }
+      }
       
       setError(null);
     } catch (err) {
-      //console.error("Error loading clients:", err);
-      setError(err.message);
+      // Silently fail - don't show errors for background polling
+      if (err.name !== "AbortError") {
+        console.debug("Background polling: clients load failed, will retry");
+      }
     }
   };
 
   const loadMessagesForClient = async (clientId) => {
     try {
+      // Cancel previous request if still pending
+      if (messagesAbortControllerRef.current) {
+        messagesAbortControllerRef.current.abort();
+      }
+      
+      // Create new abort controller with 10 second timeout
+      messagesAbortControllerRef.current = new AbortController();
+      const timeoutId = setTimeout(() => messagesAbortControllerRef.current.abort(), 10000);
+      
       const response = await fetch(`/api/chat/admin/messages/?user_id=${clientId}`, {
         headers: {
           "X-CSRFToken": getCookie("csrftoken"),
         },
+        signal: messagesAbortControllerRef.current.signal,
       });
 
-      if (!response.ok) throw new Error("Failed to load messages");
+      clearTimeout(timeoutId);
+      
+      if (!response.ok) {
+        console.debug(`Messages poll: Failed for client ${clientId}`);
+        throw new Error("Failed to load messages");
+      }
 
       const data = await response.json();
+      
       const newMessages = data.messages.map((msg) => ({
         id: msg.id,
         message: msg.message,
         sender: msg.sender_type === "admin" ? "admin" : "user",
         sender_name: msg.sender_name || "User",
+        sender_id: msg.sender,
+        sender_profile_pic: msg.sender_profile_pic || null,
         admin_sender_name: msg.admin_sender_name || null,
         timestamp: msg.timestamp,
         is_read: msg.is_read,
       }));
+      
+      // Check if messages changed to avoid unnecessary re-renders
+      const messagesHash = getDataHash(newMessages);
+      if (messagesHash === (lastMessagesHashRef.current[clientId] || 0)) {
+        // No changes in messages, skip update
+        return;
+      }
+      lastMessagesHashRef.current[clientId] = messagesHash;
       
       // Count unread messages from the client (not admin messages)
       const unreadCount = newMessages.filter(
@@ -287,7 +400,10 @@ const ChatBot = () => {
         [clientId]: newMessages.length,
       }));
     } catch (err) {
-      //console.error("Error loading messages:", err);
+      // Silently fail for background polling - will retry on next interval
+      if (err.name !== "AbortError") {
+        console.debug(`Background polling: Messages failed for client ${clientId}, will retry`);
+      }
     }
   };
 
@@ -465,13 +581,13 @@ const ChatBot = () => {
               {/* Clients list - hidden on mobile unless sidebar is open */}
               <div
                 className={`absolute sm:relative w-48 h-full sm:h-auto ${
-                  isDarkMode ? "bg-gradient-to-b from-gray-800 to-gray-900" : "bg-gradient-to-b from-blue-50 to-blue-100"
-                } rounded-lg border ${isDarkMode ? "border-blue-600" : "border-blue-300"} overflow-hidden flex flex-col shadow-lg transition-all duration-300 z-40 ${
+                  isDarkMode ? "bg-gradient-to-b from-gray-800 to-gray-900" : "bg-white"
+                } rounded-lg border ${isDarkMode ? "border-yellow-400" : "border-yellow-400"} overflow-hidden flex flex-col shadow-lg transition-all duration-300 z-40 ${
                   isSidebarOpen ? "left-0 sm:left-auto" : "-left-full sm:left-auto"
                 }`}
               >
                 <div className={`px-3 py-3 font-bold text-sm border-b ${
-                  isDarkMode ? "bg-blue-900 text-blue-100 border-blue-700" : "bg-blue-500 text-white border-blue-400"
+                  isDarkMode ? "bg-yellow-600 text-yellow-100 border-yellow-500" : "bg-yellow-500 text-white border-yellow-400"
                 }`}>
                   Clients ({clients.length})
                 </div>
@@ -490,18 +606,18 @@ const ChatBot = () => {
                         key={client.id}
                         onClick={() => setSelectedClientId(client.id)}
                         className={`w-full text-left px-3 py-2.5 text-xs border-b transition-all duration-200 flex items-center justify-between ${
-                          isDarkMode ? "border-gray-700" : "border-blue-200"
+                          isDarkMode ? "border-gray-700" : "border-yellow-200"
                         } ${
                           selectedClientId === client.id
                             ? `${
                                 isDarkMode
-                                  ? "bg-gradient-to-r from-yellow-600 to-yellow-500 text-white font-semibold shadow-md"
-                                  : "bg-gradient-to-r from-yellow-400 to-yellow-300 text-gray-900 font-semibold shadow-md"
+                                  ? "bg-yellow-500 text-white font-semibold shadow-md"
+                                  : "bg-yellow-400 text-gray-900 font-semibold shadow-md"
                               }`
                             : `${
                                 isDarkMode
-                                  ? "bg-gray-700/50 text-gray-200 hover:bg-gradient-to-r hover:from-blue-700/80 hover:to-blue-600/80 hover:text-white hover:shadow-md"
-                                  : "bg-white/60 text-gray-700 hover:bg-gradient-to-r hover:from-blue-200/80 hover:to-blue-100/80 hover:text-gray-900 hover:shadow-md"
+                                  ? "bg-gray-700/50 text-gray-200 hover:bg-yellow-500/60 hover:text-white hover:shadow-md"
+                                  : "bg-white/60 text-gray-700 hover:bg-yellow-200 hover:text-gray-900 hover:shadow-md"
                               }`
                         }`}
                       >
@@ -536,11 +652,11 @@ const ChatBot = () => {
                     {/* Client header */}
                     <div
                       className={`px-3 py-2 border-b ${
-                        isDarkMode ? "border-gray-700 bg-gray-800" : "border-gray-200 bg-gray-100"
+                        isDarkMode ? "border-gray-700 bg-gray-800" : "border-gray-200 bg-white"
                       } text-sm font-medium`}
                     >
                       <div className="flex flex-col">
-                        <span className={`${isDarkMode ? "text-blue-400" : "text-blue-600"}`}>{clients.find((c) => c.id === selectedClientId)?.name}</span>
+                        <span className={`${isDarkMode ? "text-yellow-300" : "text-yellow-500"}`}>{clients.find((c) => c.id === selectedClientId)?.name}</span>
                         <span className={`text-xs ${isDarkMode ? "text-gray-400" : "text-gray-500"}`}>
                           {clients.find((c) => c.id === selectedClientId)?.email}
                         </span>
@@ -572,9 +688,26 @@ const ChatBot = () => {
                             <div className="flex items-end gap-2 max-w-xs">
                               {/* Profile Avatar for User Messages */}
                               {msg.sender === "user" && (
+                                msg.sender_profile_pic ? (
+                                  <img
+                                    src={`/media/${msg.sender_profile_pic}`}
+                                    alt={msg.sender_name || "User"}
+                                    className="avatar-fade w-6 h-6 rounded-full flex-shrink-0 object-cover"
+                                    title={msg.sender_name || "User"}
+                                    onError={(e) => {
+                                      e.target.style.display = "none";
+                                      const fallback = e.target.nextElementSibling;
+                                      if (fallback) fallback.style.display = "flex";
+                                    }}
+                                  />
+                                ) : null
+                              )}
+
+                              {/* Fallback Avatar for User Messages with Initials */}
+                              {msg.sender === "user" && !msg.sender_profile_pic && (
                                 <div
                                   className={`avatar-fade w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0 ${
-                                    isDarkMode ? "bg-blue-600" : "bg-blue-500"
+                                    isDarkMode ? "bg-yellow-500" : "bg-yellow-400"
                                   }`}
                                 >
                                   {getInitials(msg.sender_name)}
@@ -618,12 +751,30 @@ const ChatBot = () => {
 
                               {/* Profile Avatar for Admin Messages */}
                               {msg.sender === "admin" && (
+                                adminProfiles[msg.sender_id] ? (
+                                  <img
+                                    src={`/media/${adminProfiles[msg.sender_id]}`}
+                                    alt={msg.admin_sender_name || "Admin"}
+                                    className="avatar-fade w-8 h-8 rounded-full flex-shrink-0 object-cover"
+                                    title={msg.admin_sender_name || "Admin"}
+                                    onError={(e) => {
+                                      e.target.style.display = "none";
+                                      const fallback = e.target.nextElementSibling;
+                                      if (fallback) fallback.style.display = "flex";
+                                    }}
+                                  />
+                                ) : null
+                              )}
+                              
+                              {/* Fallback Avatar with Initials */}
+                              {msg.sender === "admin" && !adminProfiles[msg.sender_id] && (
                                 <div
-                                  className={`avatar-fade w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0 ${
-                                    isDarkMode ? "bg-yellow-600" : "bg-yellow-500"
+                                  className={`avatar-fade w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0 ${
+                                    isDarkMode ? "bg-yellow-500" : "bg-yellow-400"
                                   }`}
+                                  title={msg.admin_sender_name || "Admin"}
                                 >
-                                  AD
+                                  {msg.admin_sender_name ? getInitials(msg.admin_sender_name) : "AD"}
                                 </div>
                               )}
                             </div>
