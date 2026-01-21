@@ -1,7 +1,36 @@
 import { useState, useEffect, useRef } from "react";
-import { X, MessageCircle, Send, AlertCircle, RefreshCw, Trash2, Menu, ImagePlus } from "lucide-react";
+import { X, MessageCircle, Send, AlertCircle, RefreshCw, Trash2, Menu, ImagePlus, Smile } from "lucide-react";
 import { useTheme } from "../context/ThemeContext";
 import { getCookie } from "../utils/api";
+
+// Emoji picker component
+const EmojiPicker = ({ onEmojiSelect, isDarkMode }) => {
+  const emojis = [
+    "😀", "😂", "😍", "🥰", "😘", "😁", "🤣", "😊",
+    "😄", "😆", "😅", "🤗", "☺️", "😌", "😍", "🥳",
+    "😎", "🤓", "🧐", "😕", "😔", "😲", "😳", "😍",
+    "👍", "👎", "👏", "🙏", "🤝", "💪", "👊", "✊",
+    "❤️", "💔", "💕", "💖", "💗", "💘", "💝", "💟",
+    "🎉", "🎊", "🎈", "🎁", "🎀", "🎂", "🍰", "🎃",
+    "✨", "⭐", "🌟", "💫", "⚡", "🔥", "💯", "🚀",
+    "👀", "👋", "🙌", "🤲", "🤜", "🤛", "🙏", "💃",
+  ];
+
+  return (
+    <div className={`grid grid-cols-8 gap-2 p-3 rounded-lg ${isDarkMode ? "bg-gray-800 border border-gray-700" : "bg-white border border-gray-200"} shadow-lg`}>
+      {emojis.map((emoji, index) => (
+        <button
+          key={index}
+          onClick={() => onEmojiSelect(emoji)}
+          className={`text-2xl p-2 rounded hover:scale-125 transition-transform ${isDarkMode ? "hover:bg-gray-700" : "hover:bg-gray-100"}`}
+          title={emoji}
+        >
+          {emoji}
+        </button>
+      ))}
+    </div>
+  );
+};
 
 const ChatBot = () => {
   const { isDarkMode } = useTheme();
@@ -22,6 +51,7 @@ const ChatBot = () => {
   const [adminProfiles, setAdminProfiles] = useState({}); // Store admin profile pictures
   const [selectedImage, setSelectedImage] = useState(null); // Store selected image file
   const [imagePreview, setImagePreview] = useState(null); // Preview URL for selected image
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false); // Toggle emoji picker visibility
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
   const previousMessageCountRef = useRef(0);
@@ -408,6 +438,12 @@ const ChatBot = () => {
         console.debug(`Background polling: Messages failed for client ${clientId}, will retry`);
       }
     }
+  };
+
+  // Handle emoji selection
+  const handleEmojiSelect = (emoji) => {
+    setInput(input + emoji);
+    setShowEmojiPicker(false);
   };
 
   const handleSend = async () => {
@@ -882,6 +918,34 @@ const ChatBot = () => {
                             isDarkMode
                               ? "bg-gray-700 hover:bg-gray-600 text-gray-300 hover:text-yellow-400"
                               : "bg-gray-200 hover:bg-gray-300 text-gray-700 hover:text-yellow-600"
+                          } disabled:opacity-50 disabled:cursor-not-allowed`}
+                          title="Attach image"
+                        >
+                          <ImagePlus className="w-5 h-5" />
+                        </button>
+
+                        {/* Emoji Picker Button */}
+                        <div className="relative">
+                          <button
+                            onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                            disabled={loading}
+                            className={`p-3 rounded-2xl transition-all duration-300 ${
+                              isDarkMode
+                                ? "bg-gray-700 hover:bg-gray-600 text-gray-300 hover:text-yellow-400"
+                                : "bg-gray-200 hover:bg-gray-300 text-gray-700 hover:text-yellow-600"
+                            } disabled:opacity-50 disabled:cursor-not-allowed`}
+                            title="Add emoji"
+                          >
+                            <Smile className="w-5 h-5" />
+                          </button>
+                          
+                          {/* Emoji Picker Popup */}
+                          {showEmojiPicker && (
+                            <div className="absolute bottom-12 left-0 z-50">
+                              <EmojiPicker onEmojiSelect={handleEmojiSelect} isDarkMode={isDarkMode} />
+                            </div>
+                          )}
+                        </div>
                           } disabled:opacity-50 disabled:cursor-not-allowed`}
                           title="Attach image"
                         >
