@@ -381,13 +381,52 @@ const TicketsModal = ({ visible, onClose, userId: userIdProp, userName, isDarkMo
             ) : detailError ? (
               <div className="text-center py-8 text-red-500">{detailError}</div>
             ) : ticketDetail ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4 text-xs sm:text-sm">
-                <div className={`p-2 sm:p-3 rounded ${cellBg}`}><div className="font-semibold">ID</div><div className="mt-1">{ticketDetail.id ?? ticketDetail.pk}</div></div>
-                <div className={`p-2 sm:p-3 rounded ${cellBg}`}><div className="font-semibold">Subject</div><div className="mt-1">{ticketDetail.subject || '-'}</div></div>
-                <div className={`p-2 sm:p-3 rounded ${cellBg}`}><div className="font-semibold">Status</div><div className="mt-1"><span className={`px-2 py-1 rounded text-xs ${currentDetailStatusClass}`}>{ticketDetail.status || '-'}</span></div></div>
-                <div className={`p-2 sm:p-3 rounded ${cellBg}`}><div className="font-semibold">Created</div><div className="mt-1">{ticketDetail.created_at ? new Date(ticketDetail.created_at).toLocaleString() : (ticketDetail.created || '-')}</div></div>
-                <div className={`col-span-1 sm:col-span-2 p-2 sm:p-3 rounded ${cellBg}`}><div className="font-semibold">Description</div><div className="mt-1 whitespace-pre-wrap text-xs">{ticketDetail.description || '-'}</div></div>
-              </div>
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4 text-xs sm:text-sm">
+                  <div className={`p-2 sm:p-3 rounded ${cellBg}`}><div className="font-semibold">ID</div><div className="mt-1">{ticketDetail.id ?? ticketDetail.pk}</div></div>
+                  <div className={`p-2 sm:p-3 rounded ${cellBg}`}><div className="font-semibold">Subject</div><div className="mt-1">{ticketDetail.subject || '-'}</div></div>
+                  <div className={`p-2 sm:p-3 rounded ${cellBg}`}><div className="font-semibold">Status</div><div className="mt-1"><span className={`px-2 py-1 rounded text-xs ${currentDetailStatusClass}`}>{ticketDetail.status || '-'}</span></div></div>
+                  <div className={`p-2 sm:p-3 rounded ${cellBg}`}><div className="font-semibold">Created</div><div className="mt-1">{ticketDetail.created_at ? new Date(ticketDetail.created_at).toLocaleString() : (ticketDetail.created || '-')}</div></div>
+                  <div className={`col-span-1 sm:col-span-2 p-2 sm:p-3 rounded ${cellBg}`}><div className="font-semibold">Description</div><div className="mt-1 whitespace-pre-wrap text-xs">{ticketDetail.description || '-'}</div></div>
+                </div>
+                <div className={`col-span-1 sm:col-span-2 p-2 sm:p-3 rounded mt-2 ${isDarkMode ? 'bg-gray-800' : 'bg-gray-50'}`}>
+                  <div className={`font-bold ${isDarkMode ? 'text-yellow-400' : 'text-yellow-600'}`}>Attachments</div>
+                  <div className="mt-2">
+                    {Array.isArray(ticketDetail.messages) && ticketDetail.messages.length > 0 ? (
+                      <div>
+                        {ticketDetail.messages.map((m, idx) => {
+                          if (!m.file) return null;
+                          const fileUrl = m.file;
+                          const filename = fileUrl.split('/').pop();
+                          const isImage = /\.(jpg|jpeg|png|gif|bmp|webp)$/i.test(filename);
+                          return (
+                            <div key={m.id || idx} className={`mt-1 ${isDarkMode ? 'text-white' : 'text-black'}`} style={{minWidth: 120}}>
+                              {fileUrl ? (
+                                <div className="flex flex-col items-center gap-2">
+                                  {isImage ? (
+                                    <a href={fileUrl} target="_blank" rel="noreferrer">
+                                      <img src={fileUrl} alt={filename} style={{ maxHeight: 200, maxWidth: 400, borderRadius: 6, border: '1px solid #FFD700', cursor: 'pointer' }} />
+                                    </a>
+                                  ) : (
+                                    <a href={fileUrl} target="_blank" rel="noreferrer" className="underline text-yellow-400">
+                                      {filename}
+                                    </a>
+                                  )}
+                                  <a href={fileUrl} download className="text-xs text-yellow-500 underline mt-1">Download</a>
+                                </div>
+                              ) : (
+                                <span className={`${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>{filename}</span>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="text-sm text-gray-500">No attachments</div>
+                    )}
+                  </div>
+                </div>
+              </>
             ) : (
               <div className="text-center py-8">No details available.</div>
             )}

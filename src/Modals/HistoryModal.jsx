@@ -165,7 +165,7 @@ const HistoryModal = ({ visible, onClose, accountId, activeTab, setActiveTab }) 
         {activeTab === "transactions" && (
           <div className={`rounded border ${isDarkMode ? "border-gray-700 bg-gray-800/30" : "border-gray-300 bg-gray-50"}`}>
             <div className="overflow-x-auto">
-              <table className="min-w-[640px] w-full text-xs sm:text-sm">
+              <table className={`min-w-[640px] w-full text-xs sm:text-sm ${isDarkMode ? 'text-white' : 'text-black'}`}> 
                 <thead className="sticky top-0 z-10">
                   <tr className={isDarkMode ? "bg-yellow-500/20" : "bg-yellow-400/20"}>
                     {["Date", "Type", "Amount", "Status", "Comment"].map((h, i) => (
@@ -188,9 +188,9 @@ const HistoryModal = ({ visible, onClose, accountId, activeTab, setActiveTab }) 
                             : "border-gray-200 hover:bg-gray-100"
                           }`}
                       >
-                        <td className="px-3 py-2 text-center">{row.date}</td>
-                        <td className="px-3 py-2 text-center">{row.type}</td>
-                        <td className="px-3 py-2 text-center">{row.amount}</td>
+                        <td className={`px-3 py-2 text-center ${isDarkMode ? 'text-white' : 'text-black'}`}>{row.date}</td>
+                        <td className={`px-3 py-2 text-center ${isDarkMode ? 'text-white' : 'text-black'}`}>{row.type}</td>
+                        <td className={`px-3 py-2 text-center ${isDarkMode ? 'text-white' : 'text-black'}`}>{row.amount}</td>
                         <td className="px-3 py-2 text-center">
                           <span
                             className={`px-2 py-1 rounded text-xs font-semibold ${row.status === "approved"
@@ -205,9 +205,7 @@ const HistoryModal = ({ visible, onClose, accountId, activeTab, setActiveTab }) 
                             {row.status}
                           </span>
                         </td>
-                        <td className="px-3 py-2 text-center">
-                          {row.comment}
-                        </td>
+                        <td className={`px-3 py-2 text-center ${isDarkMode ? 'text-white' : 'text-black'}`}>{row.comment}</td>
                       </tr>
                     ))
                   ) : (
@@ -252,7 +250,7 @@ const HistoryModal = ({ visible, onClose, accountId, activeTab, setActiveTab }) 
         {activeTab === "positions" && (
           <div className={`rounded border ${isDarkMode ? "border-gray-700 bg-gray-800/30" : "border-gray-300 bg-gray-50"}`}>
             <div className="overflow-x-auto">
-              <table className="min-w-[520px] w-full text-xs sm:text-sm">
+              <table className={`min-w-[520px] w-full text-xs sm:text-sm ${isDarkMode ? 'text-white' : 'text-black'}`}> 
                 <thead>
                   <tr className={isDarkMode ? "bg-yellow-500/20" : "bg-yellow-400/20"}>
                     {["ID", "Symbol", "Vol", "Price", "P/L"].map((h, i) => (
@@ -270,14 +268,14 @@ const HistoryModal = ({ visible, onClose, accountId, activeTab, setActiveTab }) 
                   {paginatedPositions.length ? (
                     paginatedPositions.map((row, idx) => (
                       <tr key={idx} className="border-b">
-                        <td className="hidden sm:table-cell px-3 py-2 text-center">{row.id}</td>
-                        <td className="px-3 py-2 text-center font-semibold">{row.symbol}</td>
-                        <td className="px-3 py-2 text-center">{row.volume}</td>
-                        <td className="px-3 py-2 text-center">{row.price}</td>
+                        <td className={`hidden sm:table-cell px-3 py-2 text-center ${isDarkMode ? 'text-white' : 'text-black'}`}>{row.id}</td>
+                        <td className={`px-3 py-2 text-center font-semibold ${isDarkMode ? 'text-white' : 'text-black'}`}>{row.symbol}</td>
+                        <td className={`px-3 py-2 text-center ${isDarkMode ? 'text-white' : 'text-black'}`}>{row.volume}</td>
+                        <td className={`px-3 py-2 text-center ${isDarkMode ? 'text-white' : 'text-black'}`}>{row.price}</td>
                         <td className={`px-3 py-2 text-center font-semibold ${parseFloat(row.profit) >= 0
                             ? "text-green-500"
                             : "text-red-500"
-                          }`}>
+                          } ${isDarkMode ? 'text-white' : 'text-black'}`}>
                           {row.profit}
                         </td>
                       </tr>
