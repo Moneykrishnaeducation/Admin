@@ -259,6 +259,7 @@ const ChatBot = () => {
         message: msg.message,
         sender: msg.sender_type === "admin" ? "admin" : "user",
         sender_name: msg.sender_name || "User",
+        admin_sender_name: msg.admin_sender_name || null,
         timestamp: msg.timestamp,
         is_read: msg.is_read,
       }));
@@ -580,28 +581,39 @@ const ChatBot = () => {
                                 </div>
                               )}
 
-                              {/* Message Bubble */}
-                              <div
-                                className={`px-3 py-2 rounded-lg text-xs break-words relative group/message transition-all hover:shadow-md ${
-                                  msg.sender === "admin"
-                                    ? "bg-yellow-400 text-black rounded-br-none"
-                                    : `${
-                                        isDarkMode
-                                          ? "bg-gray-800 text-white"
-                                          : "bg-gray-200 text-black"
-                                      } rounded-bl-none`
-                                }`}
-                              >
-                                {msg.message}
-
-                                {/* Delete Button on Hover */}
-                                <button
-                                  onClick={() => handleDeleteMessage(msg.id)}
-                                  className="absolute -top-8 right-0 opacity-0 group-hover/message:opacity-100 transition-opacity p-1 hover:bg-red-500 hover:text-white rounded"
-                                  title="Delete message"
+                              {/* Message Bubble with Admin Name */}
+                              <div className="flex flex-col gap-1">
+                                {/* Admin sender name - only show for admin messages when admin_sender_name exists */}
+                                {msg.sender === "admin" && msg.admin_sender_name && (
+                                  <div className={`text-xs font-semibold ${
+                                    isDarkMode ? "text-yellow-400" : "text-yellow-600"
+                                  } px-1`}>
+                                    {msg.admin_sender_name}
+                                  </div>
+                                )}
+                                
+                                <div
+                                  className={`px-3 py-2 rounded-lg text-xs break-words relative group/message transition-all hover:shadow-md ${
+                                    msg.sender === "admin"
+                                      ? "bg-yellow-400 text-black rounded-br-none"
+                                      : `${
+                                          isDarkMode
+                                            ? "bg-gray-800 text-white"
+                                            : "bg-gray-200 text-black"
+                                        } rounded-bl-none`
+                                  }`}
                                 >
-                                  <Trash2 className="w-4 h-4" />
-                                </button>
+                                  {msg.message}
+
+                                  {/* Delete Button on Hover */}
+                                  <button
+                                    onClick={() => handleDeleteMessage(msg.id)}
+                                    className="absolute -top-8 right-0 opacity-0 group-hover/message:opacity-100 transition-opacity p-1 hover:bg-red-500 hover:text-white rounded"
+                                    title="Delete message"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                </div>
                               </div>
 
                               {/* Profile Avatar for Admin Messages */}
