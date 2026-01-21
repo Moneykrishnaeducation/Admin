@@ -77,8 +77,8 @@ const AddTradingAccountModal = ({
           label: g.label,
         }))
       );
-    } catch (err) {
-      console.error('Error fetching options:', err);
+    } catch {
+      // console.error('Error fetching options:', err);
       setError("Failed to load options");
       showToast("Failed to load options", "error");
     } finally {
@@ -118,8 +118,8 @@ const AddTradingAccountModal = ({
       showToast("Live trading account created successfully!", "success");
       setLiveForm({ accountName: "", leverage: "", tradingGroup: "" });
       setTimeout(() => onClose(), 1000);
-    } catch (err) {
-      console.error('Error creating live account:', err);
+    } catch {
+      // console.error('Error creating live account:', err);
       setError("Failed to create live account");
       showToast("Failed to create live account", "error");
     } finally {
@@ -143,8 +143,8 @@ const AddTradingAccountModal = ({
       showToast("Demo account created successfully!", "success");
       setDemoForm({ accountName: "", leverage: "", initialDeposit: "10000" });
       setTimeout(() => onClose(), 1000);
-    } catch (err) {
-      console.error('Error creating demo account:', err);
+    } catch {
+      // console.error('Error creating demo account:', err);
       setError("Failed to create demo account");
       showToast("Failed to create demo account", "error");
     } finally {

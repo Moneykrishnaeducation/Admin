@@ -40,8 +40,8 @@ const DepositModal = ({ visible, onClose, accountId, onSubmit }) => {
       try {
         const csrfRes = await client.get("/api/csrf/");
         csrfToken = csrfRes?.csrfToken;
-      } catch (csrfError) {
-        console.error("CSRF Token Error:", csrfError);
+      } catch {
+        // console.error("CSRF Token Error:", csrfError);
         showToast("Failed to get CSRF token", "error");
         return;
       }
@@ -71,20 +71,20 @@ const DepositModal = ({ visible, onClose, accountId, onSubmit }) => {
           }
         );
       } catch (postError) {
-        console.error("POST Request Error:", postError);
+        // console.error("POST Request Error:", postError);
         showToast(postError?.message || "Deposit failed. Please try again.", "error");
         return;
       }
 
-      console.log("Deposit Response:", depositRes, "Type:", typeof depositRes);
+      // console.log("Deposit Response:", depositRes, "Type:", typeof depositRes);
 
       // Parse response if it's a string
       let parsedRes = depositRes;
       if (typeof depositRes === 'string') {
         try {
           parsedRes = JSON.parse(depositRes);
-        } catch (e) {
-          console.error("Failed to parse response:", e);
+        } catch {
+          // console.error("Failed to parse response:", e);
           parsedRes = depositRes;
         }
       }
@@ -96,8 +96,8 @@ const DepositModal = ({ visible, onClose, accountId, onSubmit }) => {
         // SEND RESULT TO PARENT COMPONENT
         try {
           if (onSubmit) onSubmit(parsedRes);
-        } catch (submitError) {
-          console.error("Submit callback error:", submitError);
+        } catch  {
+          // console.error("Submit callback error:", submitError);
           // Still show success even if callback fails
         }
 
@@ -109,7 +109,7 @@ const DepositModal = ({ visible, onClose, accountId, onSubmit }) => {
         showToast("Deposit failed. Please try again.", "error");
       }
     } catch (err) {
-      console.error("DEPOSIT ERROR:", err);
+      // console.error("DEPOSIT ERROR:", err);
       showToast(typeof err?.message === 'string' ? err.message : "Deposit failed. Please try again.", "error");
     } finally {
       setLoading(false);

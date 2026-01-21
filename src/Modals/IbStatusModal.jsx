@@ -36,20 +36,20 @@ export default function IbStatusModal({
 
   const fetchPATCH = async (payload) => {
     try {
-      console.log("Patching to /api/ib-user/" + userId + "/ib-status/ with:", payload);
+      // console.log("Patching to /api/ib-user/" + userId + "/ib-status/ with:", payload);
       const result = await apiClient.patch(
         `/api/ib-user/${userId}/ib-status/`,
         payload
       );
-      console.log("PATCH response:", result);
+      // console.log("PATCH response:", result);
       return result;
     } catch (err) {
-      console.error("PATCH error details:", {
-        message: err.message,
-        status: err.status,
-        response: err.response,
-        url: `/api/ib-user/${userId}/ib-status/`,
-      });
+      // // console.error("PATCH error details:", {
+      //   message: err.message,
+      //   status: err.status,
+      //   response: err.response,
+      //   url: `/api/ib-user/${userId}/ib-status/`,
+      // });
       throw err;
     }
   };
@@ -79,8 +79,8 @@ export default function IbStatusModal({
           profile_name: statusRes?.ib_profile?.name || "None",
           commission: statusRes?.ib_profile?.commission || 0,
         });
-      } catch (err) {
-        console.error("IB status load error:", err);
+      } catch {
+        // console.error("IB status load error:", err);
         alert("Error loading IB status");
       } finally {
         if (!cancelled) setLoading(false);
@@ -119,8 +119,8 @@ export default function IbStatusModal({
       });
 
       alert(`IB ${statusRes?.is_ib ? "Enabled" : "Disabled"}`);
-    } catch (err) {
-      console.error(err);
+    } catch {
+      // console.error(err);
       alert("Failed to update IB status");
     }
   };
@@ -142,8 +142,8 @@ export default function IbStatusModal({
       }));
 
       alert(`Profile "${profile.name}" saved`);
-    } catch (err) {
-      console.error("Failed to save profile:", err);
+    } catch  {
+      // console.error("Failed to save profile:", err);
       alert("Failed to save profile selection");
     }
   };

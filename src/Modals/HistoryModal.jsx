@@ -21,8 +21,8 @@ const HistoryModal = ({ visible, onClose, accountId, activeTab, setActiveTab }) 
     try {
       const response = await apiClient.get(`/trading-account/${accountId}/history/?days_back=${selectedDays}`);
       setHistoryData(response);
-    } catch (error) {
-      console.error('Error fetching history:', error);
+    } catch {
+      // console.error('Error fetching history:', error);
     } finally {
       setLoading(false);
     }

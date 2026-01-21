@@ -45,7 +45,7 @@ const BankCryptoModal = ({
       setLoading(true);
       try {
         const endpoint = `/ib-user/${userId}/bank-details/`;
-        console.log("Fetching bank details from:", endpoint);
+        // console.log("Fetching bank details from:", endpoint);
         const bankData = await adminApiClient.get(endpoint);
 
         if (cancelled) return;
@@ -73,8 +73,8 @@ const BankCryptoModal = ({
 
         setData(newData);
         setOriginalData(newData);
-      } catch (e) {
-        console.error(e);
+      } catch {
+        // console.error(e);
         const empty = {
           bankName: "",
           accountNumber: "",
@@ -111,7 +111,7 @@ const BankCryptoModal = ({
     setLoading(true);
     try {
       const endpoint = `/ib-user/${userId}/bank-details/`;
-      console.log("Saving bank details to:", endpoint);
+      // console.log("Saving bank details to:", endpoint);
       await adminApiClient.post(endpoint, {
         bank_name: data.bankName,
         account_number: data.accountNumber,
@@ -124,8 +124,8 @@ const BankCryptoModal = ({
       setOriginalData(data);
       setIsEditMode(false);
       onSave?.(data);
-    } catch (e) {
-      console.error(e);
+    } catch  {
+      // console.error(e);
       alert("Error saving details");
     } finally {
       setLoading(false);

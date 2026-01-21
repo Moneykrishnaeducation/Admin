@@ -68,7 +68,7 @@ const ChangeStatusModal = ({
           setAvailableRoles(data.available_roles || []);
           setStatus(data.role || displayStatus);
         } catch (err) {
-          console.error("Fetch user data error:", err);
+          // console.error("Fetch user data error:", err);
           alert(`Error fetching user data: ${err.message}`);
         } finally {
           setFetchLoading(false);
@@ -111,7 +111,7 @@ const ChangeStatusModal = ({
       alert(`Role updated: ${response.old_role} → ${response.new_role}`);
       onClose && onClose();
     } catch (err) {
-      console.error("Status update error:", err);
+      // console.error("Status update error:", err);
       alert(`Error: ${err.message}`);
       fetchUserData();
     } finally {

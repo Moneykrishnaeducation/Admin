@@ -25,8 +25,8 @@ function getCookie(name) {
         }
       }
     }
-  } catch (e) {
-    console.error('Error parsing cookie:', e);
+  } catch  {
+    //console.error('Error parsing cookie:', e);
   }
   return '';
 }
@@ -99,7 +99,7 @@ const Header = ({ isSidebarOpen, setIsSidebarOpen }) => {
         if (userNameCookie) setUserName(userNameCookie);
       } catch (err) {
         // ignore malformed JSON
-        console.debug('Error loading user name from cookies:', err);
+        //console.debug('Error loading user name from cookies:', err);
       }
     };
 
@@ -133,11 +133,11 @@ const Header = ({ isSidebarOpen, setIsSidebarOpen }) => {
         });
         
         if (!response.ok) {
-          console.warn('Logout API returned status:', response.status);
+          //console.warn('Logout API returned status:', response.status);
           // Continue with logout even if API fails - cookies will be cleared by the backend response
         }
       } catch (error) {
-        console.error('Failed to call logout API:', error);
+        //console.error('Failed to call logout API:', error);
         // Continue with logout even if API fails
       }
 

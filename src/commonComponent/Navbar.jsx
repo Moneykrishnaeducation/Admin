@@ -31,8 +31,8 @@ function getCookie(name) {
         }
       }
     }
-  } catch (e) {
-    console.error('Error parsing cookie:', e);
+  } catch  {
+    //console.error('Error parsing cookie:', e);
   }
   return '';
 }
@@ -56,12 +56,12 @@ const Navbar = ({ isSidebarOpen, setIsSidebarOpen }) => {
             const userFromCookie = JSON.parse(userCookie);
             if (userFromCookie?.role) {
               currentRole = userFromCookie.role;
-              console.debug('Role from user cookie:', currentRole);
+              //console.debug('Role from user cookie:', currentRole);
               setRole(currentRole);
               return;
             }
-          } catch (e) {
-            console.debug('Failed to parse user cookie:', e);
+          } catch  {
+            //console.debug('Failed to parse user cookie:', e);
           }
         }
 
@@ -69,14 +69,14 @@ const Navbar = ({ isSidebarOpen, setIsSidebarOpen }) => {
         const cookieRole = getCookie('userRole') || getCookie('user_role');
         if (cookieRole) {
           currentRole = cookieRole;
-          console.debug('Role from role cookie:', currentRole);
+          //console.debug('Role from role cookie:', currentRole);
         } else {
-          console.debug('No role found in cookies, defaulting to manager');
+          //console.debug('No role found in cookies, defaulting to manager');
         }
 
         setRole(currentRole);
-      } catch (e) {
-        console.error('Error reading user role:', e);
+      } catch  {
+        //console.error('Error reading user role:', e);
         setRole("manager");
       }
     };

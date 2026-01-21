@@ -36,8 +36,8 @@ const ChatBot = () => {
             const userData = JSON.parse(userCookie);
             setUserRole(userData.role || null);
             return;
-          } catch (e) {
-            console.debug("Could not parse user cookie");
+          } catch  {
+            //console.debug("Could not parse user cookie");
           }
         }
         
@@ -47,7 +47,7 @@ const ChatBot = () => {
           setUserRole(role);
         }
       } catch (err) {
-        console.error("Error getting user role:", err);
+        //console.error("Error getting user role:", err);
       }
     };
     
@@ -145,7 +145,7 @@ const ChatBot = () => {
             body: JSON.stringify({ client_id: selectedClientId }),
           });
         } catch (err) {
-          console.error("Error marking messages as read:", err);
+          //console.error("Error marking messages as read:", err);
         }
       };
       
@@ -238,7 +238,7 @@ const ChatBot = () => {
       
       setError(null);
     } catch (err) {
-      console.error("Error loading clients:", err);
+      //console.error("Error loading clients:", err);
       setError(err.message);
     }
   };
@@ -286,7 +286,7 @@ const ChatBot = () => {
         [clientId]: newMessages.length,
       }));
     } catch (err) {
-      console.error("Error loading messages:", err);
+      //console.error("Error loading messages:", err);
     }
   };
 

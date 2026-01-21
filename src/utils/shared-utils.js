@@ -176,13 +176,13 @@ Object.assign(window.tradingUtils, {
         try {
             // Tokens are now in HttpOnly cookies managed by the backend
             // Token refresh is handled automatically by the server
-            console.log('🔄 Token refresh is handled server-side via HttpOnly cookies');
+            // console.log('🔄 Token refresh is handled server-side via HttpOnly cookies');
             
             // Authentication is maintained via HttpOnly cookies
             this.authState.authenticated = true;
             return null;
         } catch (error) {
-            console.error('Token refresh error:', error);
+            // console.error('Token refresh error:', error);
             throw error;
         }
     },
@@ -379,7 +379,7 @@ Object.assign(window.sharedUtils, {
         // Tokens are in HttpOnly cookies managed by the server
         try {
             // Token refresh is handled automatically by the backend
-            console.log('🔄 Token refresh handled server-side via HttpOnly cookies');
+            // console.log('🔄 Token refresh handled server-side via HttpOnly cookies');
             return null;
 
             if (!response.ok) {
@@ -392,7 +392,7 @@ Object.assign(window.sharedUtils, {
 
             return null;  // Tokens are in HttpOnly cookies
         } catch (error) {
-            console.error('Token refresh failed:', error);
+            // console.error('Token refresh failed:', error);
             throw error;
         }
     }

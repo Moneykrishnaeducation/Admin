@@ -92,11 +92,11 @@ const TradingAccountModal = ({
         const data = await apiClient.get(endpoint);
 
         // apiClient.get may return parsed JSON (object/array) or plain text (string)
-        if (typeof data === 'string') {
-          console.error('Expected JSON from apiClient.get but received text. Snippet:', data.slice(0,800));
-          if (!cancelled) setAccountsState([]);
-          return;
-        }
+        // if (typeof data === 'string') {
+        //   console.error('Expected JSON from apiClient.get but received text. Snippet:', data.slice(0,800));
+        //   if (!cancelled) setAccountsState([]);
+        //   return;
+        // }
 
         const items = data?.data || data?.accounts || data || [];
         const mapped = (Array.isArray(items) ? items : []).map((u) => ({
@@ -113,8 +113,8 @@ const TradingAccountModal = ({
         }));
 
         if (!cancelled) setAccountsState(mapped);
-      } catch (err) {
-        console.error("Failed to fetch trading accounts for user", userId, err);
+      } catch  {
+        // console.error("Failed to fetch trading accounts for user", userId, err);
         if (!cancelled) setAccountsState([]);
       }
     })();
@@ -131,17 +131,17 @@ const TradingAccountModal = ({
   // ======================================
 
   const handleOperationSubmit = (operationType, payload = {}) => {
-    console.log(`${operationType} submitted:`, {
-      account: selectedAccount?.accountId,
-      payload,
-      // legacy states (kept for backward compatibility)
-      depositAmount,
-      withdrawAmount,
-      creditAmount,
-      leverage,
-      algoEnabled,
-    });
-    // TODO: Call API based on operationType and payload
+    // console.log(`${operationType} submitted:`, {
+    //   account: selectedAccount?.accountId,
+    //   payload,
+    //   // legacy states (kept for backward compatibility)
+    //   depositAmount,
+    //   withdrawAmount,
+    //   creditAmount,
+    //   leverage,
+    //   algoEnabled,
+    // });
+    // // TODO: Call API based on operationType and payload
     resetOperationForm();
   };
 

@@ -14,12 +14,12 @@
 
   // Prevent double execution
   if (window.authUtilsInitialized) {
-    console.log('⚠️ Auth utils already initialized, skipping...');
+    // console.log('⚠️ Auth utils already initialized, skipping...');
     return;
   }
   window.authUtilsInitialized = true;
 
-  console.log('🔧 Loading Auth Utils v3.0.0 - Cookie-Based Authentication');
+  // console.log('🔧 Loading Auth Utils v3.0.0 - Cookie-Based Authentication');
 
   // Enhanced auth utilities with cookie-based storage
   window.authUtils = {
@@ -39,7 +39,7 @@
       if (this.state.initialized) return;
       
       this.state.initialized = true;
-      console.log('🔐 Auth utils initialized (Cookie-based)');
+      // console.log('🔐 Auth utils initialized (Cookie-based)');
     },
 
     /**
@@ -78,7 +78,7 @@
         
         return false;
       } catch (error) {
-        console.error('Auth check failed:', error);
+        // console.error('Auth check failed:', error);
         this.state.authenticated = false;
         return false;
       } finally {
@@ -180,10 +180,10 @@
   window.authUtils.init();
 
   // Debugging: Check cookie presence
-  console.log('Debug - Cookie Check:', {
-    user: document.cookie.includes('user'), // should be true before logout
-    user_role: document.cookie.includes('user_role') // should be false
-  });
+  // console.log('Debug - Cookie Check:', {
+  //   user: document.cookie.includes('user'), // should be true before logout
+  //   user_role: document.cookie.includes('user_role') // should be false
+  // });
 
   // Wrap global fetch to detect 401/403 responses and force logout
   try {
@@ -196,7 +196,7 @@
           const response = await _originalFetch(input, init);
 
           if (response && (response.status === 401 || response.status === 403)) {
-            console.debug('[Auth Utils] Detected 401/403, performing logout flow');
+            // console.debug('[Auth Utils] Detected 401/403, performing logout flow');
 
             // Attempt server-side logout to clear HttpOnly cookies
             try {
@@ -205,8 +205,8 @@
                 credentials: 'include',
                 headers: { 'Content-Type': 'application/json' },
               });
-            } catch (e) {
-              console.debug('[Auth Utils] Logout endpoint call failed:', e);
+            } catch {
+              // console.debug('[Auth Utils] Logout endpoint call failed:', e);
             }
 
             // Clear any client-side cookies we can access
@@ -216,14 +216,14 @@
               document.cookie = 'user_role=; Max-Age=0; path=/';
               document.cookie = 'userName=; Max-Age=0; path=/';
               document.cookie = 'userEmail=; Max-Age=0; path=/';
-            } catch (e) {
-              console.debug('[Auth Utils] Clearing cookies failed:', e);
+            } catch {
+              // console.debug('[Auth Utils] Clearing cookies failed:', e);
             }
 
             // Notify other tabs and redirect to login/root
             try {
               localStorage.setItem('authLogout', String(Date.now()));
-            } catch (e) {
+            } catch  {
               // ignore
             }
 
@@ -245,7 +245,7 @@
       };
     }
   } catch (e) {
-    console.error('[Auth Utils] Failed to wrap fetch:', e);
+    // console.error('[Auth Utils] Failed to wrap fetch:', e);
   }
 
 })();

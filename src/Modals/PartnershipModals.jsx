@@ -99,8 +99,8 @@ const PartnershipModals = ({
           if (!mounted) return;
           setFetchedGroups(data.available_groups || []);
         })
-        .catch((err) => {
-          console.error('Failed to load trading groups', err);
+        .catch(() => {
+          // console.error('Failed to load trading groups', err);
         });
     }
     return () => {
