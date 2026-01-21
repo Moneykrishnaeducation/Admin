@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { useTheme } from "../context/ThemeContext";
 import TableStructure from "../commonComponent/TableStructure";
 import { apiCall } from "../utils/api";
+import { AiOutlineClose } from "react-icons/ai";
 
 /* =====================================================
    CONFIG
@@ -131,13 +132,11 @@ const Tickets = ({ isAdmin = false }) => {
   };
 
   const [detailVisible, setDetailVisible] = useState(false);
-  const [selectedTicket, setSelectedTicket] = useState(null);
   const [ticketDetail, setTicketDetail] = useState(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [detailError, setDetailError] = useState(null);
 
   const openDetailModal = async (id) => {
-    setSelectedTicket(id);
     setDetailVisible(true);
     setDetailLoading(true);
     setDetailError(null);
@@ -145,7 +144,7 @@ const Tickets = ({ isAdmin = false }) => {
     try {
       const res = await apiCall(`${isAdmin ? ADMIN_TICKETS_API : USER_TICKETS_API}${id}/`, { method: 'GET' });
       setTicketDetail(res);
-    } catch (err) {
+    } catch {
       setDetailError('Failed to load ticket details');
     } finally {
       setDetailLoading(false);
@@ -320,11 +319,24 @@ const Tickets = ({ isAdmin = false }) => {
           />
         )}
         {detailVisible && (
-          <div className="fixed inset-0 z-60 flex items-center justify-center bg-black bg-opacity-50">
+                  <div
+                    className={`fixed inset-0 z-60 flex items-center justify-center backdrop-blur-sm transition-colors
+                      ${isDarkMode
+                        ? 'bg-black/70'
+                        : 'bg-white/60'}
+                    `}
+                  >
             <div className={`relative w-full max-w-2xl mx-4 rounded-lg shadow-xl ${isDarkMode ? 'bg-gray-900 text-yellow-300' : 'bg-white text-black'} border ${isDarkMode ? 'border-yellow-700' : 'border-gray-200'}`}>
               <div className="flex items-center justify-between p-4 border-b" style={{ borderColor: isDarkMode ? '#b8860b33' : '#e5e7eb' }}>
-                <h3 className={`text-lg font-bold ${isDarkMode ? 'text-yellow-400' : 'text-yellow-600'}`}>Ticket Details</h3>
-                <button onClick={() => { setDetailVisible(false); setTicketDetail(null); setSelectedTicket(null); }} className="p-1" aria-label="Close detail">X</button>
+                <h3 className={`text-lg text-center font-bold ${isDarkMode ? 'text-yellow-400' : 'text-yellow-600'}`}>Ticket Details</h3>
+                <button
+                  onClick={() => { setDetailVisible(false); setTicketDetail(null); setSelectedTicket(null); }}
+                  className={`flex items-center justify-center w-8 h-8 rounded-full border-2 transition
+                    ${isDarkMode ? 'border-yellow-400 bg-gray-900 hover:bg-yellow-400/20' : 'border-yellow-600 bg-white hover:bg-yellow-400/20'}`}
+                  aria-label="Close detail"
+                >
+                  <AiOutlineClose size={20} className={isDarkMode ? 'text-yellow-400' : 'text-yellow-600'} />
+                </button>
               </div>
               <div className="p-4">
                 {detailLoading ? (
@@ -333,28 +345,59 @@ const Tickets = ({ isAdmin = false }) => {
                   <div className="text-center py-8 text-red-500">{detailError}</div>
                 ) : ticketDetail ? (
                   <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div className={`p-3 rounded ${isDarkMode ? 'bg-gray-800' : 'bg-gray-50'}`}><div className="font-semibold">User Name</div><div>{ticketDetail.username || (ticketDetail.created_by && ticketDetail.created_by.username) || '-'}</div></div>
-                    <div className={`p-3 rounded ${isDarkMode ? 'bg-gray-800' : 'bg-gray-50'}`}><div className="font-semibold">User ID</div><div>{ticketDetail.user_id ?? (ticketDetail.created_by && (ticketDetail.created_by.id ?? ticketDetail.created_by.pk)) ?? '-'}</div></div>
-                    <div className={`p-3 rounded ${isDarkMode ? 'bg-gray-800' : 'bg-gray-50'}`}><div className="font-semibold">Subject</div><div>{ticketDetail.subject || '-'}</div></div>
-                    <div className={`p-3 rounded ${isDarkMode ? 'bg-gray-800' : 'bg-gray-50'}`}><div className="font-semibold">Status</div><div>{ticketDetail.status || '-'}</div></div>
-                    <div className={`col-span-2 p-3 rounded ${isDarkMode ? 'bg-gray-800' : 'bg-gray-50'}`}><div className="font-semibold">Description</div><div className="mt-1 whitespace-pre-wrap">{ticketDetail.description || '-'}</div></div>
+                    <div className={`p-3 rounded ${isDarkMode ? 'bg-gray-800' : 'bg-gray-50'}`}>
+                      <div className={`font-bold ${isDarkMode ? 'text-yellow-400' : 'text-yellow-600'}`}>User Name</div>
+                      <div className={`${isDarkMode ? 'text-white' : 'text-black'}`}>{ticketDetail.username || (ticketDetail.created_by && ticketDetail.created_by.username) || '-'}</div>
+                    </div>
+                    <div className={`p-3 rounded ${isDarkMode ? 'bg-gray-800' : 'bg-gray-50'}`}>
+                      <div className={`font-bold ${isDarkMode ? 'text-yellow-400' : 'text-yellow-600'}`}>User ID</div>
+                      <div className={`${isDarkMode ? 'text-white' : 'text-black'}`}>{ticketDetail.user_id ?? (ticketDetail.created_by && (ticketDetail.created_by.id ?? ticketDetail.created_by.pk)) ?? '-'}</div>
+                    </div>
+                    <div className={`p-3 rounded ${isDarkMode ? 'bg-gray-800' : 'bg-gray-50'}`}>
+                      <div className={`font-bold ${isDarkMode ? 'text-yellow-400' : 'text-yellow-600'}`}>Subject</div>
+                      <div className={`${isDarkMode ? 'text-white' : 'text-black'}`}>{ticketDetail.subject || '-'}</div>
+                    </div>
+                    <div className={`p-3 rounded ${isDarkMode ? 'bg-gray-800' : 'bg-gray-50'}`}>
+                      <div className={`font-bold ${isDarkMode ? 'text-yellow-400' : 'text-yellow-600'}`}>Status</div>
+                      <div className={`${isDarkMode ? 'text-white' : 'text-black'}`}>{ticketDetail.status || '-'}</div>
+                    </div>
+                    <div className={`col-span-2 p-3 rounded ${isDarkMode ? 'bg-gray-800' : 'bg-gray-50'}`}>
+                      <div className={`font-bold ${isDarkMode ? 'text-yellow-400' : 'text-yellow-600'}`}>Description</div>
+                      <div className={`mt-1 whitespace-pre-wrap ${isDarkMode ? 'text-white' : 'text-black'}`}>{ticketDetail.description || '-'}</div>
+                    </div>
 
                     <div className={`col-span-2 p-3 rounded ${isDarkMode ? 'bg-gray-800' : 'bg-gray-50'}`}>
-                      <div className="font-semibold">Attachments</div>
+                      <div className={`font-bold ${isDarkMode ? 'text-yellow-400' : 'text-yellow-600'}`}>Attachments</div>
                       <div className="mt-2">
                         {Array.isArray(ticketDetail.messages) && ticketDetail.messages.length > 0 ? (
-                          <ul className="list-disc list-inside">
-                            {ticketDetail.messages.map((m) => (
-                              m.file ? (
-                                <li key={m.id} className="mt-1">
-                                  <a href={m.file} target="_blank" rel="noopener noreferrer" download className="text-blue-500 hover:underline">
-                                    {m.file.split('/').pop() || 'attachment'}
-                                  </a>
-                                  <span className="ml-2 text-xs text-gray-400">— uploaded by {m.sender_name || (m.sender && m.sender.username) || 'user'}</span>
-                                </li>
-                              ) : null
-                            ))}
-                          </ul>
+                          <div>
+                            {ticketDetail.messages.map((m, idx) => {
+                              if (!m.file) return null;
+                              const fileUrl = m.file;
+                              const filename = fileUrl.split('/').pop();
+                              const isImage = /\.(jpg|jpeg|png|gif|bmp|webp)$/i.test(filename);
+                              return (
+                                <div key={m.id || idx} className={`mt-1 ${isDarkMode ? 'text-white' : 'text-black'}`} style={{minWidth: 120}}>
+                                  {fileUrl ? (
+                                    <div className="flex flex-col items-center gap-2">
+                                      {isImage ? (
+                                        <a href={fileUrl} target="_blank" rel="noreferrer">
+                                          <img src={fileUrl} alt={filename} style={{ maxHeight: 200, maxWidth: 400, borderRadius: 6, border: '1px solid #FFD700', cursor: 'pointer' }} />
+                                        </a>
+                                      ) : (
+                                        <a href={fileUrl} target="_blank" rel="noreferrer" className="underline text-yellow-400">
+                                          {filename}
+                                        </a>
+                                      )}
+                                      <a href={fileUrl} download className="text-xs text-yellow-500 underline mt-1">Download</a>
+                                    </div>
+                                  ) : (
+                                    <span className={`${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>{filename}</span>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
                         ) : (
                           <div className="text-sm text-gray-500">No attachments</div>
                         )}
