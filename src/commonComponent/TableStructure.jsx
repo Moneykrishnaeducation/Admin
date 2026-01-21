@@ -9,7 +9,7 @@ const TableStructure = ({
   actionsColumn,
   onRowClick,
   initialPageSize = 10,
-  pageSizeOptions = [5, 10, 20, 50],
+  pageSizeOptions = [5, 10, 20, 50,100,500,1000],
   serverSide = false,
   onFetch, // async ({ page, pageSize, query }) => ({ data: [], total: number })
   topActions = null, // React node to render at top-left of table controls

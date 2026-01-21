@@ -8,8 +8,82 @@ const Activities = () => {
   const [error, setError] = useState(null);
   const [_total, setTotal] = useState(0);
 
-  // Server-side fetch handler for TableStructure
-  const handleFetch = useCallback(async ({ page = 1, pageSize = 100, query = "" } = {}) => {
+  // Fetch all data by paginating through all pages
+  const fetchAllData = useCallback(async () => {
+    setError(null);
+    let endpoint;
+    if (activeLog === "error") {
+      endpoint = "/api/activity/error-logs/";
+    } else if (activeLog === "client") {
+      endpoint = "/api/activity/client-logs/";
+    } else {
+      endpoint = "/api/activity/staff/";
+    }
+
+    try {
+      const client = typeof window !== "undefined" && window.adminApiClient ? window.adminApiClient : null;
+      let allData = [];
+      let page = 1;
+      let hasMore = true;
+      const pageSize = 100; // Fetch 100 per page and combine all
+
+      while (hasMore) {
+        const params = new URLSearchParams();
+        params.set("page", String(page));
+        params.set("pageSize", String(pageSize));
+
+        let resJson;
+        if (client && typeof client.get === "function") {
+          resJson = await client.get(`${endpoint}?${params.toString()}`);
+        } else {
+          const headers = { "Content-Type": "application/json" };
+          const res = await fetch(`${endpoint}?${params.toString()}`, { credentials: "include", headers });
+          if (!res.ok) throw new Error(`Failed to fetch ${endpoint}: ${res.status}`);
+          resJson = await res.json();
+        }
+
+        const raw = Array.isArray(resJson.data)
+          ? resJson.data
+          : Array.isArray(resJson.results)
+          ? resJson.results
+          : Array.isArray(resJson)
+          ? resJson
+          : [];
+
+        if (raw.length === 0) {
+          hasMore = false;
+          break;
+        }
+
+        const mapped = raw.map((item, idx) => ({
+          id: item.id ?? item.pk ?? idx,
+          time: item.time ?? item.created_at ?? item.timestamp ?? item.date ?? null,
+          user: item.user ?? item.username ?? item.email ?? item.name ?? "Unknown",
+          activity: item.activity ?? item.action ?? item.event ?? "",
+          statusCode: item.status_code ?? item.statusCode ?? "-",
+          ipAddress: item.ip_address ?? item.ip ?? item.ipAddress ?? "",
+          userAgent: item.user_agent ?? item.userAgent ?? "",
+        }));
+
+        allData = [...allData, ...mapped];
+
+        // Check if we got less than pageSize, meaning we've reached the end
+        if (raw.length < pageSize) {
+          hasMore = false;
+        } else {
+          page++;
+        }
+      }
+
+      return { data: allData, total: allData.length };
+    } catch (err) {
+      setError(err.message || String(err));
+      return { data: [], total: 0 };
+    }
+  }, [activeLog]);
+
+  // Server-side fetch handler for TableStructure (for search/filter if needed)
+  const handleFetch = useCallback(async ({ page = 1, pageSize = 1000, query = "" } = {}) => {
     setError(null);
     let endpoint;
     if (activeLog === "error") {
@@ -65,13 +139,13 @@ const Activities = () => {
 
   const data = useMemo(() => logs, [logs]);
 
-  // Fetch once when activeLog changes
+  // Fetch all data when activeLog changes
   useEffect(() => {
     let mounted = true;
     (async () => {
       setLoading(true);
       try {
-        const res = await handleFetch();
+        const res = await fetchAllData();
         if (!mounted) return;
         setLogs(res.data || []);
         setTotal(res.total || 0);
@@ -85,7 +159,7 @@ const Activities = () => {
     return () => {
       mounted = false;
     };
-  }, [activeLog]);
+  }, [fetchAllData]);
 
   const columns = [
     {
