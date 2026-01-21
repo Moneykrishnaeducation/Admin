@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { X, MessageCircle, Send, AlertCircle, RefreshCw, Trash2, Menu } from "lucide-react";
+import { X, MessageCircle, Send, AlertCircle, RefreshCw, Trash2, Menu, ImagePlus } from "lucide-react";
 import { useTheme } from "../context/ThemeContext";
 import { getCookie } from "../utils/api";
 
@@ -20,6 +20,8 @@ const ChatBot = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true); // Mobile sidebar state
   const [userRole, setUserRole] = useState(null); // Track user role
   const [adminProfiles, setAdminProfiles] = useState({}); // Store admin profile pictures
+  const [selectedImage, setSelectedImage] = useState(null); // Store selected image file
+  const [imagePreview, setImagePreview] = useState(null); // Preview URL for selected image
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
   const previousMessageCountRef = useRef(0);
@@ -364,6 +366,7 @@ const ChatBot = () => {
         sender_name: msg.sender_name || "User",
         sender_id: msg.sender,
         sender_profile_pic: msg.sender_profile_pic || null,
+        image_url: msg.image_url || null,
         admin_sender_name: msg.admin_sender_name || null,
         timestamp: msg.timestamp,
         is_read: msg.is_read,
@@ -408,7 +411,7 @@ const ChatBot = () => {
   };
 
   const handleSend = async () => {
-    if (!input.trim() || loading || !selectedClientId) return;
+    if ((!input.trim() && !selectedImage) || loading || !selectedClientId) return;
 
     const messageText = input;
     setInput("");
@@ -416,19 +419,27 @@ const ChatBot = () => {
     setError(null);
 
     try {
+      // Use FormData to support file upload
+      const formData = new FormData();
+      formData.append("message", messageText);
+      formData.append("recipient_id", selectedClientId);
+      if (selectedImage) {
+        formData.append("image", selectedImage);
+      }
+
       const response = await fetch("/api/chat/admin/send/", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
           "X-CSRFToken": getCookie("csrftoken"),
         },
-        body: JSON.stringify({
-          message: messageText,
-          recipient_id: selectedClientId,
-        }),
+        body: formData,
       });
 
       if (!response.ok) throw new Error("Failed to send message");
+
+      // Clear image after sending
+      setSelectedImage(null);
+      setImagePreview(null);
 
       // Reload messages
       await loadMessagesForClient(selectedClientId);
@@ -437,6 +448,27 @@ const ChatBot = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Handle image selection
+  const handleImageSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (file && file.type.startsWith('image/')) {
+      setSelectedImage(file);
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setImagePreview(event.target?.result);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      setError('Please select a valid image file');
+    }
+  };
+
+  // Clear selected image
+  const clearImage = () => {
+    setSelectedImage(null);
+    setImagePreview(null);
   };
 
   const handleDeleteMessage = async (messageId) => {
@@ -725,6 +757,35 @@ const ChatBot = () => {
                                   </div>
                                 )}
                                 
+                                {/* Image Display if present */}
+                                {msg.image_url && (
+                                  <img
+                                    src={msg.image_url}
+                                    alt="Chat attachment"
+                                    className="max-w-sm max-h-40 rounded-lg mb-2 cursor-pointer hover:opacity-80 transition-opacity"
+                                    onClick={() => {
+                                      const modal = document.createElement("div");
+                                      modal.className = `fixed inset-0 z-50 flex items-center justify-center ${isDarkMode ? "bg-black/90" : "bg-black/70"}`;
+                                      modal.innerHTML = `
+                                        <div class="relative max-w-2xl max-h-screen flex flex-col items-center justify-center">
+                                          <img src="${msg.image_url}" alt="Full size" class="max-w-full max-h-[80vh] rounded-lg"/>
+                                          <button class="absolute top-4 right-4 p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors" id="closeBtn">
+                                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                          </button>
+                                        </div>
+                                      `;
+                                      document.body.appendChild(modal);
+                                      
+                                      const closeBtn = modal.querySelector("#closeBtn");
+                                      closeBtn.addEventListener("click", () => modal.remove());
+                                      
+                                      modal.addEventListener("click", (e) => {
+                                        if (e.target === modal) modal.remove();
+                                      });
+                                    }}
+                                  />
+                                )}
+                                
                                 <div
                                   className={`px-3 py-2 rounded-lg text-xs break-words relative group/message transition-all hover:shadow-md ${
                                     msg.sender === "admin"
@@ -785,8 +846,48 @@ const ChatBot = () => {
                     </div>
 
                     {/* Input */}
-                    <div className={`p-4 border-t ${isDarkMode ? "border-gray-700 bg-gray-900/50" : "border-gray-300 bg-gray-50"} backdrop-blur-sm`}>
+                    <div className={`p-4 border-t ${isDarkMode ? "border-gray-700 bg-gray-900/50" : "border-gray-300 bg-gray-50"} backdrop-blur-sm space-y-2`}>
+                      {/* Image Preview */}
+                      {imagePreview && (
+                        <div className="relative inline-block">
+                          <img
+                            src={imagePreview}
+                            alt="Preview"
+                            className="max-h-32 rounded-lg"
+                          />
+                          <button
+                            onClick={clearImage}
+                            className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1"
+                            title="Remove image"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      )}
+
                       <div className="flex items-end gap-2">
+                        {/* Image Upload Input */}
+                        <input
+                          type="file"
+                          id="image-upload"
+                          accept="image/*"
+                          onChange={handleImageSelect}
+                          className="hidden"
+                        />
+                        
+                        <button
+                          onClick={() => document.getElementById('image-upload')?.click()}
+                          disabled={loading}
+                          className={`p-3 rounded-2xl transition-all duration-300 ${
+                            isDarkMode
+                              ? "bg-gray-700 hover:bg-gray-600 text-gray-300 hover:text-yellow-400"
+                              : "bg-gray-200 hover:bg-gray-300 text-gray-700 hover:text-yellow-600"
+                          } disabled:opacity-50 disabled:cursor-not-allowed`}
+                          title="Attach image"
+                        >
+                          <ImagePlus className="w-5 h-5" />
+                        </button>
+
                         <div className="flex-1 relative group">
                           <input
                             type="text"
@@ -819,16 +920,16 @@ const ChatBot = () => {
                         
                         <button
                           onClick={handleSend}
-                          disabled={!input.trim() || loading}
+                          disabled={(!input.trim() && !selectedImage) || loading}
                           className={`group flex items-center justify-center gap-2 px-4 py-3 rounded-2xl font-semibold transition-all duration-300 transform disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100 ${
-                            input.trim() && !loading
+                            (input.trim() || selectedImage) && !loading
                               ? `${isDarkMode 
                                   ? "bg-gradient-to-br from-yellow-400 to-yellow-500 hover:from-yellow-300 hover:to-yellow-400 shadow-lg hover:shadow-xl hover:shadow-yellow-500/50 hover:scale-105 active:scale-95" 
                                   : "bg-gradient-to-br from-yellow-400 to-yellow-500 hover:from-yellow-300 hover:to-yellow-400 shadow-lg hover:shadow-xl hover:shadow-yellow-400/50 hover:scale-105 active:scale-95"
                                 } text-black`
                               : `${isDarkMode ? "bg-gray-700 text-gray-400" : "bg-gray-200 text-gray-400"}`
                           }`}
-                          title={!input.trim() ? "Type a message first" : "Send message (Enter)"}
+                          title={!input.trim() && !selectedImage ? "Type a message or select an image" : "Send message (Enter)"}
                         >
                           <Send className="w-4 h-4" />
                           {loading && (
