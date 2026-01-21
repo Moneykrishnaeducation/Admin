@@ -152,8 +152,8 @@ const ManagerDemo = () => {
       setIsInitialLoading(false);
 
       return { data: pageData, total };
-    } catch (err) {
-      console.error("Failed to fetch demo accounts page:", err);
+    } catch  {
+      // console.error("Failed to fetch demo accounts page:", err);
       return { data: [], total: 0 };
     }
   }, [refreshKey]);
@@ -185,8 +185,8 @@ const ManagerDemo = () => {
       const data = await get(`trading-account/${row.account_id}/history/?days_back=30`);
       setViewData(data);
       setViewModal(true);
-    } catch (err) {
-      console.error("Failed to load account history:", err);
+    } catch  {
+      // console.error("Failed to load account history:", err);
       alert("Failed to load account history.");
     }
   };
@@ -203,8 +203,8 @@ const ManagerDemo = () => {
 
       // trigger table refresh
       setRefreshKey((k) => k + 1);
-    } catch (err) {
-      console.error(err);
+    } catch {
+      // console.error(err);
       alert("Failed to reset leverage.");
     }
   };
@@ -222,8 +222,8 @@ const ManagerDemo = () => {
 
       // trigger table refresh
       setRefreshKey((k) => k + 1);
-    } catch (err) {
-      console.error(err);
+    } catch  {
+      // console.error(err);
       alert("Failed to reset balance.");
     }
   };
@@ -268,8 +268,8 @@ const ManagerDemo = () => {
       setAccountStatusMap((prev) => ({ ...prev, [accountId]: !isEnabled }));
       alert(`${isEnabled ? 'Disabled' : 'Enabled'} successfully.`);
       setRefreshKey((k) => k + 1);
-    } catch (err) {
-      console.error(err);
+    } catch  {
+      // console.error(err);
       alert('Failed to change account status.');
     }
   };

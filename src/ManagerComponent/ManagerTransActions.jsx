@@ -18,9 +18,9 @@ class ErrorBoundary extends React.Component {
     return { hasError: true };
   }
 
-  componentDidCatch(_error, errorInfo) {
-    console.error("Error caught by ErrorBoundary:", _error, errorInfo);
-  }
+  // componentDidCatch(_error, errorInfo) {
+  //   // console.error("Error caught by ErrorBoundary:", _error, errorInfo);
+  // }
 
   render() {
     if (this.state.hasError) {
@@ -76,7 +76,7 @@ export default function ManagerTransactions() {
 const onFetch = useCallback(
   async ({ page: p = 1, pageSize: ps = 10, query = "" } = {}) => {
     try {
-      console.log("[onFetch] Pagination Triggered:", p, ps);
+      // console.log("[onFetch] Pagination Triggered:", p, ps);
 
       // UPDATE LOCAL STATE SO TABLE KNOWS ACTIVE PAGE
       setPage(p);
@@ -170,8 +170,8 @@ const onFetch = useCallback(
       });
 
       return { data: mappedData, total: totalCount };
-    } catch (error) {
-      console.error("Error fetching transactions:", error);
+    } catch {
+      // console.error("Error fetching transactions:", error);
       setTokenMissing(true);
       return { data: [], total: 0 };
     }
@@ -313,8 +313,8 @@ const onFetch = useCallback(
       });
 
       return mappedData;
-    } catch (error) {
-      console.error("Error fetching all transactions:", error);
+    } catch  {
+      // console.error("Error fetching all transactions:", error);
       return [];
     }
   };

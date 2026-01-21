@@ -31,7 +31,7 @@ const MamAccount = () => {
   // Handler for View button
   // Use mamAccountId for the trading account ID
   const handleViewHistory = (mamAccountId) => {
-    console.log('View button clicked with mamAccountId:', mamAccountId);
+    // console.log('View button clicked with mamAccountId:', mamAccountId);
     setSelectedAccountId(mamAccountId);
     setHistoryActiveTab("transactions");
     setHistoryModalVisible(true);
@@ -53,7 +53,7 @@ const MamAccount = () => {
       Cell: (cellValue, row) => {
         // cellValue is the mamAccountId, row is the full row data
         const mamAccountId = cellValue;
-        console.log('Cell rendered with cellValue:', cellValue, 'row:', row);
+        // console.log('Cell rendered with cellValue:', cellValue, 'row:', row);
         return (
           <button
             className="px-3 py-1 bg-yellow-400 text-black rounded hover:bg-yellow-500 transition text-xs font-semibold"
@@ -61,7 +61,7 @@ const MamAccount = () => {
               if (mamAccountId) {
                 handleViewHistory(mamAccountId);
               } else {
-                console.warn('No mamAccountId found');
+                // console.warn('No mamAccountId found');
               }
             }}
           >
@@ -93,7 +93,7 @@ const MamAccount = () => {
               if (tradingAccountId) {
                 handleViewHistory(tradingAccountId);
               } else {
-                console.warn('No tradingAccountId found');
+                // console.warn('No tradingAccountId found');
               }
             }}
           >
@@ -158,7 +158,7 @@ const MamAccount = () => {
             payoutFrequency: item.payout_frequency ?? item.payoutFrequency ?? '',
             accountId: item.account_id ?? item.accountId ?? '',
           };
-          console.log('Mapped MAM item:', mappedItem);
+          // console.log('Mapped MAM item:', mappedItem);
           return mappedItem;
         }
 
@@ -182,10 +182,10 @@ const MamAccount = () => {
         };
       });
 
-      console.log('Returning data from handleFetch:', { data: mapped, total });
+      // console.log('Returning data from handleFetch:', { data: mapped, total });
       return { data: mapped, total };
-    } catch (err) {
-      console.error('MAM fetch error', err);
+    } catch  {
+      // console.error('MAM fetch error', err);
       return { data: [], total: 0 };
     }
   }, [activeTab]);

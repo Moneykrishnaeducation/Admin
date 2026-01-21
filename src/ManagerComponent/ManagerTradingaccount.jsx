@@ -61,8 +61,8 @@ const ManagerTradingaccount = () => {
           }));
           setData(mapped);
           return { data: mapped, total };
-        } catch (err) {
-          console.error("Failed to load users:", err);
+        } catch  {
+          // console.error("Failed to load users:", err);
           return { data: [], total: 0 };
         }
       },
@@ -89,15 +89,15 @@ const ManagerTradingaccount = () => {
                 ...item,
                 openPositions: response.account_summary?.open_positions || 0,
               };
-            } catch (error) {
-              console.error(`Error fetching positions for account ${item.accountId}:`, error);
+            } catch () {
+              // console.error(`Error fetching positions for account ${item.accountId}:`, error);
               return item;
             }
           })
         );
         setData(updatedData);
       } catch (error) {
-        console.error('Error fetching open positions:', error);
+        // console.error('Error fetching open positions:', error);
       }
     };
 
@@ -110,7 +110,7 @@ const ManagerTradingaccount = () => {
       const response = await apiClient.get(`/trading-account/${accountId}/history/?days_back=${days}`);
       setHistoryData(response);
     } catch (error) {
-      console.error('Error fetching history:', error);
+      // console.error('Error fetching history:', error);
     }
   };
 
@@ -172,7 +172,7 @@ const ManagerTradingaccount = () => {
                 );
               }
             } catch (error) {
-              console.error('Error fetching history:', error);
+              // console.error('Error fetching history:', error);
             }
           }}
         >

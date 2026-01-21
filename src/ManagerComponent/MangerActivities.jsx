@@ -59,7 +59,7 @@ const ManagerActivities = () => {
         totalCount = resJson.count || resJson.results.length;
       }
 
-      console.log("Mapped items:", items.length, "Total:", totalCount);
+      // console.log("Mapped items:", items.length, "Total:", totalCount);
 
       const mapped = items.map((item, idx) => ({
         id: item.id ?? item.pk ?? idx,
@@ -123,12 +123,12 @@ const ManagerActivities = () => {
   ];
 
   const handlePageChange = (newPage) => {
-    console.log("Page changed to:", newPage);
+    // console.log("Page changed to:", newPage);
     setPage(newPage);
   };
 
   const handlePageSizeChange = (newPageSize) => {
-    console.log("Page size changed to:", newPageSize);
+    // console.log("Page size changed to:", newPageSize);
     setPageSize(newPageSize);
     setPage(1); // Reset to first page when page size changes
   };
