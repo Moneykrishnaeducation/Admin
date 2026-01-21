@@ -66,11 +66,9 @@ const PendingRequest = () => {
       const response = await get("commissioning-profiles/");
       if (Array.isArray(response)) {
         setCommissionProfiles(response);
-      } else {
-        console.error("Unexpected profiles response:", response);
       }
     } catch (error) {
-      console.error("Failed to fetch profiles:", error);
+      // ignore
     }
   };
 
@@ -135,8 +133,6 @@ const PendingRequest = () => {
 
       const fullUrl = `${API_BASE}/${fullEndpoint}`;
 
-      console.log(`[handleAction] POSTing to: ${fullUrl}`); // Log the exact URL being called
-
       const response = await fetch(fullUrl, {
         method: method,
         headers: {
@@ -152,11 +148,9 @@ const PendingRequest = () => {
         loadTabData(tab); // Reload list data after action success
       } else {
         const errorText = await response.text();
-        console.error(`Failed to ${action} request ${id}. Status: ${response.status}`, errorText);
         alert(`Failed to ${action} request ${id}. Check console for backend error details.`);
       }
     } catch (error) {
-      console.error("Error in handleAction:", error);
       alert(`Error: Failed to ${action} request ${id}`);
     }
   };
@@ -485,8 +479,6 @@ const PendingRequest = () => {
       // Assuming 'get' utility correctly prepends API_BASE and handles headers
       const response = await get(endpoint);
 
-      console.log(`[PendingRequest] Data received for tab "${tab}":`, response);
-
       let respData = response;
       let dataArray = [];
 
@@ -509,7 +501,6 @@ const PendingRequest = () => {
       }
       setTableData(dataArray);
     } catch (error) {
-      console.error("Error loading tab data:", error);
       setTableData([]);
     } finally {
       setLoading(false);

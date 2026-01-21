@@ -70,7 +70,7 @@ const MailForm = () => {
         count = await getActiveUsersCount();
         setActiveUsersCount(count);
       } catch (e) {
-        console.warn('Could not get active users count before broadcast', e);
+        // ignore
       }
 
       const client = window && window.adminApiClient ? window.adminApiClient : null;

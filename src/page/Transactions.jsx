@@ -15,7 +15,6 @@ class ErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error, info) {
-    console.error("ErrorBoundary:", error, info);
   }
   render() {
     if (this.state.hasError) {
@@ -117,7 +116,6 @@ export default function Transactions() {
           });
 
           if (!res.ok) {
-            console.error(`Failed to fetch ${url}: ${res.status} ${res.statusText}`);
             throw new Error("Network error");
           }
 
@@ -141,7 +139,6 @@ export default function Transactions() {
           });
 
           if (!res.ok) {
-            console.error(`Failed to fetch ${url}: ${res.status} ${res.statusText}`);
             throw new Error("Network error");
           }
 
@@ -256,7 +253,6 @@ export default function Transactions() {
 
         return { data: mapped, total };
       } catch (e) {
-        console.error("Transactions fetch error:", e);
         setTokenMissing(true);
         return { data: [], total: 0 };
       }

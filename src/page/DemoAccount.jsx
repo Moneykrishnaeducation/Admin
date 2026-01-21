@@ -152,7 +152,6 @@ const DemoAccount = () => {
 
       return { data: pageData, total };
     } catch (err) {
-      console.error("Failed to fetch demo accounts page:", err);
       return { data: [], total: 0 };
     }
   }, [isInitialLoading]);
@@ -182,7 +181,6 @@ const DemoAccount = () => {
       setViewData(data);
       setViewModal(true);
     } catch (err) {
-      console.error("Failed to load account history:", err);
       alert("Failed to load account history.");
     }
   };
@@ -213,7 +211,6 @@ const DemoAccount = () => {
       setIsInitialLoading(true);
       setRefreshKey((k) => k + 1);
     } catch (err) {
-      console.error(err);
       alert("Failed to reset leverage");
     }
   };
@@ -231,7 +228,6 @@ const DemoAccount = () => {
       setIsInitialLoading(true);
       setRefreshKey((k) => k + 1);
     } catch (err) {
-      console.error(err);
       alert("Failed to reset balance.");
     }
   };
@@ -253,7 +249,6 @@ const DemoAccount = () => {
 
       alert(`${isEnabled ? "Disabled" : "Enabled"} successfully.`);
     } catch (err) {
-      console.error(err);
       alert("Failed to change account status.");
     }
   };

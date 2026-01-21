@@ -187,7 +187,6 @@ const MamAccount = () => {
 
       showToast(`Account ${acctId} ${result.is_enabled ? 'Enabled' : 'Disabled'}`, 'success');
     } catch (error) {
-      console.error('Error updating account status:', error);
       showToast('Failed to update account status: ' + error.message, 'error');
     }
   };
@@ -366,7 +365,6 @@ const MamAccount = () => {
       setData(mapped);
       return { data: mapped, total };
     } catch (err) {
-      console.error('MAM fetch error', err);
       return { data: [], total: 0 };
     }
   }, [activeTab]);

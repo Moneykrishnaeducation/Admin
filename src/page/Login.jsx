@@ -41,12 +41,9 @@ async function ensureCsrf(baseUrl) {
   for (const ep of endpoints) {
     try {
       // send a GET to attempt to receive a Set-Cookie: csrftoken
-      console.debug('[ensureCsrf] trying', `${baseUrl}${ep}`);
       const res = await axios.get(`${baseUrl}${ep}`, { withCredentials: true });
-      console.debug('[ensureCsrf] got', res.status, 'for', ep, 'cookie now=', getCookie('csrftoken'));
     } catch (e) {
       // ignore errors — some endpoints may 404
-      console.debug('[ensureCsrf] error for', ep, e && e.message);
     }
     if (getCookie('csrftoken')) return;
   }
@@ -183,8 +180,6 @@ const Login = () => {
       try {
         const apiBaseUrl = `${window.location.protocol}//${window.location.host}`;
         await ensureCsrf(apiBaseUrl);
-        console.debug('[login] csrftoken cookie=', getCookie('csrftoken'));
-        console.debug('[login] headers will include X-CSRFToken=', getCookie('csrftoken'));
         const response = await axios.post(
           `${apiBaseUrl}/api/login/`,
           { email, password },
@@ -218,8 +213,6 @@ const Login = () => {
         setVerificationError('');
         const apiBaseUrl = `${window.location.protocol}//${window.location.host}`;
         await ensureCsrf(apiBaseUrl);
-        console.debug('[verify] csrftoken cookie=', getCookie('csrftoken'));
-        console.debug('[verify] sending X-CSRFToken=', getCookie('csrftoken'));
         const response = await axios.post(
           `${apiBaseUrl}/api/verify-otp/`,
           { email: signInEmail, otp: verificationCode },
@@ -248,9 +241,6 @@ const Login = () => {
         const role = getUserFromCookies()?.role || 'manager';
         navigateAfterDelay(role === 'admin' ? '/dashboard' : '/manager/dashboard');
       } catch (err) {
-        console.debug('[verify] document.cookie=', document.cookie);
-        console.debug('[verify] response headers=', err.response?.headers);
-        console.debug('[verify] response data=', err.response?.data);
         setVerificationError(err.response?.data?.error || 'OTP verification failed');
       } finally {
         setLoading(false);
@@ -262,8 +252,6 @@ const Login = () => {
         setLoading(true);
         const apiBaseUrl = `${window.location.protocol}//${window.location.host}`;
         await ensureCsrf(apiBaseUrl);
-        console.debug('[resend] csrftoken cookie=', getCookie('csrftoken'));
-        console.debug('[resend] document.cookie=', document.cookie);
         await axios.post(
           `${apiBaseUrl}/api/resend-login-otp/`,
           { email: signInEmail },
@@ -281,8 +269,6 @@ const Login = () => {
           });
         }, 1000);
       } catch (err) {
-        console.debug('[resend] response headers=', err.response?.headers);
-        console.debug('[resend] response data=', err.response?.data);
         setVerificationError(err.response?.data?.error || 'Failed to resend OTP');
       } finally {
         setLoading(false);

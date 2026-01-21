@@ -37,7 +37,6 @@ const Dashboard = () => {
           setError("Failed to fetch activities");
         }
       } catch (err) {
-        console.error(err);
         setError("Failed to load dashboard");
       } finally {
         setLoading(false);
@@ -89,7 +88,6 @@ const Dashboard = () => {
         link.click();
       })
       .catch((err) => {
-        console.error(err);
         alert("Failed to download CSV. Make sure you are logged in.");
       });
   };

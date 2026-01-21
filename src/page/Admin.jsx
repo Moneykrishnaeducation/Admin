@@ -101,7 +101,6 @@ const AdminManagerList = () => {
 
       setList(mapped);
     } catch (err) {
-      console.error("Failed to load admins:", err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -189,7 +188,6 @@ const AdminManagerList = () => {
         showMessage('Created', body?.message || 'Admin/manager created');
       }
     } catch (err) {
-      console.error('Create admin error:', err);
       showMessage('Error creating admin', err.message);
     } finally {
       setCreateLoading(false);
@@ -233,7 +231,6 @@ const AdminManagerList = () => {
       // Remove from list
       setList((prev) => prev.filter((u) => u.id !== item.id));
     } catch (err) {
-      console.error('Delete user error:', err);
       showMessage('Error deleting user', err.message);
     }
   };

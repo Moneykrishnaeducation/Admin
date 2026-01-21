@@ -253,7 +253,6 @@ export default function GroupConfiguration() {
         setLastUpdated(config.last_updated);
       }
     } catch (err) {
-      console.error("Failed to load groups:", err);
     } finally {
       setLoading(false);
     }
@@ -305,7 +304,6 @@ export default function GroupConfiguration() {
         setLastUpdated(new Date().toLocaleString());
       }
     } catch (err) {
-      console.error("Failed to fetch groups:", err);
     } finally {
       setLoading(false);
     }

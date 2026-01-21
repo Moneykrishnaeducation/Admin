@@ -121,7 +121,6 @@ const Tickets = ({ isAdmin = false }) => {
         };
       });
     } catch (err) {
-      console.error("Failed to open ticket:", err);
       setError(`Failed to update ticket: ${err.message}`);
     }
   };
@@ -147,7 +146,6 @@ const Tickets = ({ isAdmin = false }) => {
       const res = await apiCall(`${isAdmin ? ADMIN_TICKETS_API : USER_TICKETS_API}${id}/`, { method: 'GET' });
       setTicketDetail(res);
     } catch (err) {
-      console.warn('Failed to load ticket detail', err);
       setDetailError('Failed to load ticket details');
     } finally {
       setDetailLoading(false);
@@ -177,7 +175,6 @@ const Tickets = ({ isAdmin = false }) => {
         };
       });
     } catch (err) {
-      console.error("Failed to close ticket:", err);
       setError(`Failed to update ticket: ${err.message}`);
     }
   };
