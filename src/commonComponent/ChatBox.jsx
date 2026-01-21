@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { X, MessageCircle, Send, AlertCircle, RefreshCw, Trash2 } from "lucide-react";
+import { X, MessageCircle, Send, AlertCircle, RefreshCw, Trash2, Menu } from "lucide-react";
 import { useTheme } from "../context/ThemeContext";
 import { getCookie } from "../utils/api";
 
@@ -17,11 +17,42 @@ const ChatBot = () => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [clientUnreadCounts, setClientUnreadCounts] = useState({});
   const [messageCounts, setMessageCounts] = useState({});
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true); // Mobile sidebar state
+  const [userRole, setUserRole] = useState(null); // Track user role
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
   const previousMessageCountRef = useRef(0);
   const isInitialLoadRef = useRef(true);
   const messageCountWhenOpenedRef = useRef(0);
+
+  // Get user role on component mount
+  useEffect(() => {
+    const getUserRole = () => {
+      try {
+        // Try to get user from cookie
+        const userCookie = getCookie("user");
+        if (userCookie) {
+          try {
+            const userData = JSON.parse(userCookie);
+            setUserRole(userData.role || null);
+            return;
+          } catch (e) {
+            console.debug("Could not parse user cookie");
+          }
+        }
+        
+        // Try to get user role from a separate role cookie
+        const role = getCookie("userRole") || getCookie("user_role");
+        if (role) {
+          setUserRole(role);
+        }
+      } catch (err) {
+        console.error("Error getting user role:", err);
+      }
+    };
+    
+    getUserRole();
+  }, []);
 
   // Smart scroll and unread count tracking
   useEffect(() => {
@@ -125,6 +156,9 @@ const ChatBot = () => {
         ...prev,
         [selectedClientId]: 0,
       }));
+      
+      // Close sidebar on mobile when client is selected
+      setIsSidebarOpen(false);
     }
   }, [selectedClientId]);
 
@@ -327,6 +361,11 @@ const ChatBot = () => {
   // Calculate total unread count from all clients
   const totalUnreadCount = Object.values(clientUnreadCounts).reduce((sum, count) => sum + count, 0);
 
+  // Hide chatbot for managers
+  if (userRole === "manager") {
+    return null;
+  }
+
   return (
     <>
       <style>
@@ -387,13 +426,23 @@ const ChatBot = () => {
               isDarkMode ? "bg-black border-gray-700" : "bg-white border-gray-300"
             } border rounded-xl shadow-lg flex flex-col overflow-hidden`}
           >
-            {/* Header */}
+            {/* Header with mobile menu button */}
             <div
               className={`header-fade ${
                 isDarkMode ? "bg-gray-900 text-white" : "bg-gray-100 text-black"
               } px-4 py-3 font-bold flex justify-between items-center`}
             >
-              <span>Admin Chat Panel</span>
+              <div className="flex items-center gap-3">
+                {/* Mobile menu button - visible only on small screens */}
+                <button
+                  onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                  className="sm:hidden p-1.5 hover:bg-gray-400/20 rounded-lg transition-all"
+                  title={isSidebarOpen ? "Hide clients" : "Show clients"}
+                >
+                  <Menu className="w-5 h-5" />
+                </button>
+                <span>{selectedClientId ? "Chat Messages" : "Admin Chat Panel"}</span>
+              </div>
               <button
                 onClick={() => setIsOpen(false)}
                 className="hover:bg-red-500 hover:text-white rounded-lg p-1.5 transition-all duration-200"
@@ -411,12 +460,14 @@ const ChatBot = () => {
               </div>
             )}
 
-            <div className="flex flex-1 overflow-hidden gap-2 p-2">
-              {/* Clients list */}
+            <div className="flex flex-1 overflow-hidden gap-2 p-2 relative">
+              {/* Clients list - hidden on mobile unless sidebar is open */}
               <div
-                className={`w-48 ${
+                className={`absolute sm:relative w-48 h-full sm:h-auto ${
                   isDarkMode ? "bg-gradient-to-b from-gray-800 to-gray-900" : "bg-gradient-to-b from-blue-50 to-blue-100"
-                } rounded-lg border ${isDarkMode ? "border-blue-600" : "border-blue-300"} overflow-hidden flex flex-col shadow-lg`}
+                } rounded-lg border ${isDarkMode ? "border-blue-600" : "border-blue-300"} overflow-hidden flex flex-col shadow-lg transition-all duration-300 z-40 ${
+                  isSidebarOpen ? "left-0 sm:left-auto" : "-left-full sm:left-auto"
+                }`}
               >
                 <div className={`px-3 py-3 font-bold text-sm border-b ${
                   isDarkMode ? "bg-blue-900 text-blue-100 border-blue-700" : "bg-blue-500 text-white border-blue-400"
@@ -468,6 +519,14 @@ const ChatBot = () => {
                   )}
                 </div>
               </div>
+
+              {/* Mobile overlay when sidebar is open */}
+              {isSidebarOpen && (
+                <div
+                  className="sm:hidden absolute inset-0 bg-black/50 z-30 rounded-lg"
+                  onClick={() => setIsSidebarOpen(false)}
+                />
+              )}
 
               {/* Messages area */}
               <div className="flex-1 flex flex-col border rounded-lg border-gray-700 overflow-hidden">
