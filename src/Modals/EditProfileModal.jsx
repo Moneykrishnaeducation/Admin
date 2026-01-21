@@ -81,8 +81,8 @@ const [originalForm, setOriginalForm] = useState(null); // To restore on cancel
       setOriginalForm(mapped); // store original (READONLY)
       setEditMode(false); // ensure default is readonly mode
 
-    } catch (err) {
-      console.error("User load error:", err);
+    } catch{
+      // console.error("User load error:", err);
     } finally {
       setLoading(false);
     }
@@ -135,8 +135,8 @@ const [originalForm, setOriginalForm] = useState(null); // To restore on cancel
         setLoadingParent(false);
         return parentIbId;
       }
-    } catch (err) {
-      console.error("Error fetching parent IB:", err);
+    } catch {
+      // console.error("Error fetching parent IB:", err);
       setForm((prev) => ({
         ...prev,
         parentIbId: "",
@@ -167,8 +167,8 @@ const [originalForm, setOriginalForm] = useState(null); // To restore on cancel
       }
 
       return data?.user_id || null;
-    } catch (err) {
-      console.error("Error fetching created by user:", err);
+    } catch  {
+      // console.error("Error fetching created by user:", err);
       return null;
     }
   };
@@ -220,8 +220,8 @@ const [originalForm, setOriginalForm] = useState(null); // To restore on cancel
       setSaving(false);
       setEditMode(false);
       onClose();
-    } catch (err) {
-      console.error("PATCH error:", err);
+    } catch  {
+      // console.error("PATCH error:", err);
       alert("Failed to update profile.");
       setSaving(false);
     }

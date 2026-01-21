@@ -26,8 +26,8 @@ const ChangeUserProfileModal = ({
     try {
       const data = await apiClient.get("/api/available-groups/");
       setGroups(data?.available_groups || data?.groups || []);
-    } catch (err) {
-      console.error("Failed to fetch groups:", err);
+    } catch{
+      // console.error("Failed to fetch groups:", err);
       setGroups([]);
     } finally {
       setLoading(false);
@@ -53,7 +53,7 @@ const ChangeUserProfileModal = ({
       onSubmit(selectedGroup);
       setSelectedGroup("");
     } catch (err) {
-      console.error("Failed to update trading group:", err);
+      // console.error("Failed to update trading group:", err);
       alert("Failed to update trading group: " + (err?.message || "Unknown error"));
     } finally {
       setLoading(false);

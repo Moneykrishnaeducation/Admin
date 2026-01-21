@@ -36,7 +36,7 @@ window.AdminAccountUtils = {
             this.cache.lastUpdate = Date.now();
             return user;
         } catch (error) {
-            console.error(`Failed to fetch user ${userId}:`, error);
+            // console.error(`Failed to fetch user ${userId}:`, error);
             throw error;
         }
     },
@@ -65,7 +65,7 @@ window.AdminAccountUtils = {
             this.cache.lastUpdate = Date.now();
             return accounts;
         } catch (error) {
-            console.error(`Failed to fetch trading accounts for user ${userId}:`, error);
+            // console.error(`Failed to fetch trading accounts for user ${userId}:`, error);
             throw error;
         }
     },
@@ -115,7 +115,7 @@ window.AdminAccountUtils = {
             
             return result;
         } catch (error) {
-            console.error(`Failed to update account ${accountId} status:`, error);
+            // console.error(`Failed to update account ${accountId} status:`, error);
             throw error;
         }
     },
@@ -157,7 +157,7 @@ window.AdminAccountUtils = {
             
             return result;
         } catch (error) {
-            console.error(`Failed to update account ${accountId} balance:`, error);
+            // console.error(`Failed to update account ${accountId} balance:`, error);
             throw error;
         }
     },
@@ -180,7 +180,7 @@ window.AdminAccountUtils = {
             const endpoint = `/api/verification/${userId}/status/`;
             return await AdminAPI.call(endpoint);
         } catch (error) {
-            console.error(`Failed to fetch verification status for user ${userId}:`, error);
+            // console.error(`Failed to fetch verification status for user ${userId}:`, error);
             throw error;
         }
     },
@@ -200,7 +200,7 @@ window.AdminAccountUtils = {
                 reason
             });
         } catch (error) {
-            console.error(`Failed to update verification status for user ${userId}:`, error);
+            // console.error(`Failed to update verification status for user ${userId}:`, error);
             throw error;
         }
     },
@@ -220,7 +220,7 @@ window.AdminAccountUtils = {
                 reason
             });
         } catch (error) {
-            console.error(`Failed to toggle lock for user ${userId}:`, error);
+            // console.error(`Failed to toggle lock for user ${userId}:`, error);
             throw error;
         }
     },
@@ -235,7 +235,7 @@ window.AdminAccountUtils = {
             const endpoint = `/api/users/${userId}/reset-password/`;
             return await AdminAPI.call(endpoint, 'POST');
         } catch (error) {
-            console.error(`Failed to reset password for user ${userId}:`, error);
+            // console.error(`Failed to reset password for user ${userId}:`, error);
             throw error;
         }
     },
@@ -250,7 +250,7 @@ window.AdminAccountUtils = {
             const endpoint = `/api/users/${userId}/bank-details/`;
             return await AdminAPI.call(endpoint);
         } catch (error) {
-            console.error(`Failed to fetch bank details for user ${userId}:`, error);
+            // console.error(`Failed to fetch bank details for user ${userId}:`, error);
             throw error;
         }
     },
@@ -268,7 +268,7 @@ window.AdminAccountUtils = {
             if (profileName) payload.profile_name = profileName;
             return await AdminAPI.call(endpoint, 'PATCH', payload);
         } catch (error) {
-            console.error(`Failed to approve IB request ${requestId}:`, error);
+            // console.error(`Failed to approve IB request ${requestId}:`, error);
             throw error;
         }
     },
@@ -286,7 +286,7 @@ window.AdminAccountUtils = {
             const payload = { status: 'rejected', reason };
             return await AdminAPI.call(endpoint, 'PATCH', payload);
         } catch (error) {
-            console.error(`Failed to reject IB request ${requestId}:`, error);
+            // console.error(`Failed to reject IB request ${requestId}:`, error);
             throw error;
         }
     },
@@ -301,7 +301,7 @@ window.AdminAccountUtils = {
             const endpoint = `/api/admin/bank-detail-request/${requestId}/approve/`;
             return await AdminAPI.call(endpoint, 'PATCH');
         } catch (error) {
-            console.error(`Failed to approve bank details request ${requestId}:`, error);
+            // console.error(`Failed to approve bank details request ${requestId}:`, error);
             throw error;
         }
     },
@@ -317,7 +317,7 @@ window.AdminAccountUtils = {
             const endpoint = `/api/admin/bank-detail-request/${requestId}/reject/`;
             return await AdminAPI.call(endpoint, 'PATCH', { reason });
         } catch (error) {
-            console.error(`Failed to reject bank details request ${requestId}:`, error);
+            // console.error(`Failed to reject bank details request ${requestId}:`, error);
             throw error;
         }
     },
@@ -332,7 +332,7 @@ window.AdminAccountUtils = {
             const endpoint = `/api/users/${userId}/crypto-details/`;
             return await AdminAPI.call(endpoint);
         } catch (error) {
-            console.error(`Failed to fetch crypto details for user ${userId}:`, error);
+            // console.error(`Failed to fetch crypto details for user ${userId}:`, error);
             throw error;
         }
     },
@@ -347,7 +347,7 @@ window.AdminAccountUtils = {
             const endpoint = `/api/admin/crypto-detail/${requestId}/approve/`;
             return await AdminAPI.call(endpoint, 'PATCH');
         } catch (error) {
-            console.error(`Failed to approve crypto details request ${requestId}:`, error);
+            // console.error(`Failed to approve crypto details request ${requestId}:`, error);
             throw error;
         }
     },
@@ -363,7 +363,7 @@ window.AdminAccountUtils = {
             const endpoint = `/api/admin/crypto-detail/${requestId}/reject/`;
             return await AdminAPI.call(endpoint, 'PATCH', { reason });
         } catch (error) {
-            console.error(`Failed to reject crypto details request ${requestId}:`, error);
+            // console.error(`Failed to reject crypto details request ${requestId}:`, error);
             throw error;
         }
     },
@@ -377,7 +377,7 @@ window.AdminAccountUtils = {
             const endpoint = `/api/admin/verification/pending/`;
             return await AdminAPI.call(endpoint);
         } catch (error) {
-            console.error('Failed to fetch pending verifications:', error);
+            // console.error('Failed to fetch pending verifications:', error);
             throw error;
         }
     },
@@ -391,7 +391,7 @@ window.AdminAccountUtils = {
             const endpoint = `/api/verification/analytics/`;
             return await AdminAPI.call(endpoint);
         } catch (error) {
-            console.error('Failed to fetch verification analytics:', error);
+            // console.error('Failed to fetch verification analytics:', error);
             throw error;
         }
     }
@@ -399,5 +399,5 @@ window.AdminAccountUtils = {
 
 // Initialize when document is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('🔧 Admin Account Utils initialized');
+    // console.log('🔧 Admin Account Utils initialized');
 });

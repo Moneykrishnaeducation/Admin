@@ -34,7 +34,7 @@ const TableStructure = ({
     let cancelled = false;
     const timer = setTimeout(async () => {
       if (!onFetch) {
-        console.warn("TableStructure: serverSide=true but no onFetch provided. Falling back to client-side behavior.");
+        // console.warn("TableStructure: serverSide=true but no onFetch provided. Falling back to client-side behavior.");
         if (!cancelled) setHasFetched(true);
         return;
       }
@@ -44,8 +44,8 @@ const TableStructure = ({
         if (cancelled) return;
         setServerData(Array.isArray(res.data) ? res.data : []);
         setTotal(typeof res.total === "number" ? res.total : 0);
-      } catch (err) {
-        console.error("Error fetching server-side data for TableStructure:", err);
+      } catch {
+        // console.error("Error fetching server-side data for TableStructure:", err);
       } finally {
         if (!cancelled) {
           setLoading(false);

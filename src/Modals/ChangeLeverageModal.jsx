@@ -62,7 +62,7 @@ const ChangeLeverageModal = ({
   })();
 
   useEffect(() => {
-    console.debug("ChangeLeverageModal: resolvedAccountId=", resolvedAccountId, "accountIdProp=", accountId);
+    // console.debug("ChangeLeverageModal: resolvedAccountId=", resolvedAccountId, "accountIdProp=", accountId);
   }, [resolvedAccountId, accountId]);
 
   /* ---------------- HELPERS ---------------- */
@@ -103,8 +103,8 @@ const ChangeLeverageModal = ({
       });
       onUpdate(newLeverage);
       onClose();
-    } catch (error) {
-      console.error("Leverage update failed:", error);
+    } catch  {
+      // console.error("Leverage update failed:", error);
       alert("Failed to update leverage");
     } finally {
       setLoading(false);
@@ -131,8 +131,8 @@ const ChangeLeverageModal = ({
       setNewLeverage(currentLeverage);
       onUpdate(currentLeverage);
       onClose();
-    } catch (error) {
-      console.error("Reset leverage failed:", error);
+    } catch {
+      // console.error("Reset leverage failed:", error);
       alert("Failed to reset leverage");
     } finally {
       setLoading(false);

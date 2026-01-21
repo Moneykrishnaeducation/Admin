@@ -103,8 +103,8 @@ const ManagerUser = () => {
         }));
         setData(mapped);
         return { data: mapped, total };
-      } catch (err) {
-        console.error("Failed to load users:", err);
+      } catch  {
+        // console.error("Failed to load users:", err);
         return { data: [], total: 0 };
       }
     },
@@ -191,7 +191,7 @@ const ManagerUser = () => {
       }
 
       const result = await response.json();
-      console.log("User created successfully:", result);
+      // console.log("User created successfully:", result);
 
       // Refresh the table data
       if (handleTableFetch) {
@@ -212,7 +212,7 @@ const ManagerUser = () => {
         confirmPassword: "",
       });
     } catch (error) {
-      console.error("Error creating user:", error);
+      // console.error("Error creating user:", error);
       showToast(`Error: ${error.message}`, "error");
     }
   };
@@ -301,7 +301,7 @@ const ManagerUser = () => {
     }
     setUploadingId(true);
     try {
-      console.log("Uploading ID for", verifyRow?.id, idFile.name);
+      // console.log("Uploading ID for", verifyRow?.id, idFile.name);
       setTimeout(() => setUploadingId(false), 700);
     } catch (err) {
       setUploadingId(false);
@@ -316,7 +316,7 @@ const ManagerUser = () => {
     }
     setUploadingAddress(true);
     try {
-      console.log("Uploading Address for", verifyRow?.id, addressFile.name);
+      // console.log("Uploading Address for", verifyRow?.id, addressFile.name);
       setTimeout(() => setUploadingAddress(false), 700);
     } catch (err) {
       setUploadingAddress(false);
@@ -354,7 +354,7 @@ const ManagerUser = () => {
   };
 
   const handleSaveBankCrypto = (data) => {
-    console.log("Bank/Crypto save data for user id", bankCryptoRow?.id, data);
+    // console.log("Bank/Crypto save data for user id", bankCryptoRow?.id, data);
     // TODO: Call API to save bank/crypto details here
     setBankCryptoModalVisible(false);
     setBankCryptoRow(null);
@@ -376,13 +376,13 @@ const ManagerUser = () => {
 
 
   const handleStatusUpdate = (newStatus) => {
-    console.log('Updated user', changeStatusRow?.id, 'to status:', newStatus);
+    // console.log('Updated user', changeStatusRow?.id, 'to status:', newStatus);
     // TODO: Call API to update user status
     setChangeStatusModalVisible(false);
     setChangeStatusRow(null);
   };
   const handleSaveProfile = (profileData) => {
-    console.log("Saving profile for user", editProfileRow?.id, profileData);
+    // console.log("Saving profile for user", editProfileRow?.id, profileData);
     // TODO: Call API to save profile data including image
     setEditProfileModalVisible(false);
     setEditProfileRow(null);

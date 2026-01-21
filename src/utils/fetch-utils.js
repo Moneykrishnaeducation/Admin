@@ -85,7 +85,7 @@ class AdminAuthenticatedFetch {
             fullUrl = prefix + (url.startsWith('/') ? url.slice(1) : url);
         }
 
-        console.debug(`[AdminAuthenticatedFetch] ${options.method || 'GET'} ${fullUrl}`);
+        // console.debug(`[AdminAuthenticatedFetch] ${options.method || 'GET'} ${fullUrl}`);
 
         let headers;
         // For FormData, don't use default headers to avoid Content-Type conflict
@@ -111,14 +111,14 @@ class AdminAuthenticatedFetch {
 
             // Handle authentication errors
             if (response.status === 401) {
-                console.warn('Authentication failed - redirecting to login');
+                // console.warn('Authentication failed - redirecting to login');
                 this.handleAuthError();
                 throw new Error('Authentication failed');
             }
 
             // Handle authorization errors
             if (response.status === 403) {
-                console.warn('Authorization failed - insufficient permissions');
+                // console.warn('Authorization failed - insufficient permissions');
                 this.handleForbiddenError();
                 throw new Error('Insufficient permissions');
             }
@@ -132,8 +132,8 @@ class AdminAuthenticatedFetch {
             let responseText = '';
             try {
                 responseText = await response.text();
-            } catch (readError) {
-                console.warn('Failed to read response body:', readError);
+            } catch  {
+                // console.warn('Failed to read response body:', readError);
                 return {};
             }
             
@@ -142,8 +142,8 @@ class AdminAuthenticatedFetch {
             if (responseText && typeof responseText === 'string') {
                 try {
                     trimmedText = responseText.trim();
-                } catch (trimError) {
-                    console.warn('Failed to trim response:', trimError);
+                } catch {
+                    // console.warn('Failed to trim response:', trimError);
                     trimmedText = '';
                 }
             }
@@ -157,13 +157,13 @@ class AdminAuthenticatedFetch {
             try {
                 const parsed = JSON.parse(trimmedText);
                 return parsed;
-            } catch (parseError) {
+            } catch  {
                 // If not valid JSON, return as plain text
-                console.warn('Response is not valid JSON');
+                // console.warn('Response is not valid JSON');
                 return responseText;
             }
         } catch (error) {
-            console.error('[AdminAuthenticatedFetch] Error:', error);
+            // console.error('[AdminAuthenticatedFetch] Error:', error);
             throw error;
         }
     }

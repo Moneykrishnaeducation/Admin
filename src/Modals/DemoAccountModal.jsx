@@ -123,8 +123,8 @@ export default function DemoAccountModal({ isOpen, onClose, userRow, isDarkMode 
         if (isInitialLoading) setIsInitialLoading(false);
 
         return { data: pageData, total };
-      } catch (err) {
-        console.error("Failed to fetch demo accounts page:", err);
+      } catch  {
+        // console.error("Failed to fetch demo accounts page:", err);
         return { data: [], total: 0 };
       }
     },
@@ -155,8 +155,8 @@ export default function DemoAccountModal({ isOpen, onClose, userRow, isDarkMode 
       const data = await get(`trading-account/${row.account_id}/history/?days_back=30`);
       setViewData(data);
       setViewModal(true);
-    } catch (err) {
-      console.error("Failed to load account history:", err);
+    } catch  {
+      // console.error("Failed to load account history:", err);
       alert("Failed to load account history.");
     }
   };
@@ -180,8 +180,8 @@ export default function DemoAccountModal({ isOpen, onClose, userRow, isDarkMode 
       alert("Leverage updated successfully");
       setLeverageModal(false);
       setRefreshKey((k) => k + 1);
-    } catch (err) {
-      console.error(err);
+    } catch {
+      // console.error(err);
       alert("Failed to reset leverage");
     }
   };
@@ -195,8 +195,8 @@ export default function DemoAccountModal({ isOpen, onClose, userRow, isDarkMode 
       setBalanceModal(false);
       setSelectedRow(null);
       setRefreshKey((k) => k + 1);
-    } catch (err) {
-      console.error(err);
+    } catch {
+      // console.error(err);
       alert("Failed to reset balance.");
     }
   };
@@ -212,7 +212,7 @@ export default function DemoAccountModal({ isOpen, onClose, userRow, isDarkMode 
 
       alert(`${isEnabled ? "Disabled" : "Enabled"} successfully.`);
     } catch (err) {
-      console.error(err);
+      // console.error(err);
       const errorMessage = err?.response?.data?.error || err?.response?.data?.detail || err?.message || "Failed to change account status.";
       alert(errorMessage);
     }

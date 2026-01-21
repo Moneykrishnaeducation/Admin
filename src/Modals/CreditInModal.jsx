@@ -44,8 +44,8 @@ const CreditInModal = ({ visible, onClose, accountId, onSubmit }) => {
       try {
         const csrfRes = await client.get("/api/csrf/");
         csrfToken = csrfRes?.csrfToken;
-      } catch (csrfError) {
-        console.error("CSRF Token Error:", csrfError);
+      } catch {
+        // console.error("CSRF Token Error:", csrfError);
         showToast("Failed to get CSRF token", "error");
         return;
       }
@@ -72,7 +72,7 @@ const CreditInModal = ({ visible, onClose, accountId, onSubmit }) => {
           }
         );
       } catch (postError) {
-        console.error("POST Request Error:", postError);
+        // console.error("POST Request Error:", postError);
         showToast(postError?.message || "Credit In failed. Please try again.", "error");
         return;
       }
@@ -87,8 +87,8 @@ const CreditInModal = ({ visible, onClose, accountId, onSubmit }) => {
       if (typeof creditRes === 'string') {
         try {
           parsedRes = JSON.parse(creditRes);
-        } catch (e) {
-          console.error("Failed to parse response:", e);
+        } catch  {
+          // console.error("Failed to parse response:", e);
           parsedRes = creditRes;
         }
       }
@@ -98,8 +98,8 @@ const CreditInModal = ({ visible, onClose, accountId, onSubmit }) => {
         
         try {
           if (onSubmit) onSubmit(parsedRes);
-        } catch (submitError) {
-          console.error("Submit callback error:", submitError);
+        } catch  {
+          // console.error("Submit callback error:", submitError);
         }
 
         setAmount("");
@@ -109,7 +109,7 @@ const CreditInModal = ({ visible, onClose, accountId, onSubmit }) => {
         showToast("Credit In failed. Please try again.", "error");
       }
     } catch (err) {
-      console.error("CREDIT-IN ERROR:", err);
+      // console.error("CREDIT-IN ERROR:", err);
       showToast(typeof err?.message === 'string' ? err.message : "Credit In failed. Please try again.", "error");
     } finally {
       setLoading(false);

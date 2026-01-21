@@ -44,8 +44,8 @@ const CreditOutModal = ({ visible, onClose, accountId, onSubmit }) => {
       try {
         const csrfRes = await client.get("/api/csrf/");
         csrfToken = csrfRes?.csrfToken;
-      } catch (csrfError) {
-        console.error("CSRF Token Error:", csrfError);
+      } catch  {
+        // console.error("CSRF Token Error:", csrfError);
         showToast("Failed to get CSRF token", "error");
         return;
       }
@@ -73,8 +73,8 @@ const CreditOutModal = ({ visible, onClose, accountId, onSubmit }) => {
             },
           }
         );
-      } catch (postError) {
-        console.error("POST Request Error:", postError);
+      } catch (postError) { 
+        // console.error("POST Request Error:", postError);
         showToast(postError?.message || "Credit Out failed. Please try again.", "error");
         return;
       }
@@ -89,8 +89,8 @@ const CreditOutModal = ({ visible, onClose, accountId, onSubmit }) => {
       if (typeof response === 'string') {
         try {
           parsedRes = JSON.parse(response);
-        } catch (e) {
-          console.error("Failed to parse response:", e);
+        } catch {
+        // console.error("Failed to parse response:", e);
           parsedRes = response;
         }
       }
@@ -100,8 +100,8 @@ const CreditOutModal = ({ visible, onClose, accountId, onSubmit }) => {
         
         try {
           if (onSubmit) onSubmit(parsedRes);
-        } catch (submitError) {
-          console.error("Submit callback error:", submitError);
+        } catch  {
+        // console.error("Submit callback error:", submitError);
         }
 
         setAmount("");
@@ -111,7 +111,7 @@ const CreditOutModal = ({ visible, onClose, accountId, onSubmit }) => {
         showToast("Credit Out failed. Please try again.", "error");
       }
     } catch (err) {
-      console.error("CREDIT OUT ERROR:", err);
+    // console.error("CREDIT OUT ERROR:", err);
       showToast(typeof err?.message === 'string' ? err.message : "Credit Out failed. Please try again.", "error");
     } finally {
       setLoading(false);

@@ -64,8 +64,8 @@ const ManagerDashboard = () => {
       } else {
         setError("Failed to fetch activities");
       }
-    } catch (err) {
-      console.error(err);
+    } catch  {
+      // console.error(err);
       setError("Failed to load dashboard");
     } finally {
       setLoading(false);
@@ -79,7 +79,7 @@ const ManagerDashboard = () => {
     const handleMessage = (event) => {
       if (event.data.type === 'MANAGER_STATUS' && event.data.status) {
         window.__managerStatus = event.data.status;
-        console.log('Dashboard iframe received manager_status:', event.data.status);
+        // console.log('Dashboard iframe received manager_status:', event.data.status);
         // Refetch data with the new manager_status
         loadDashboardData();
       }

@@ -65,8 +65,8 @@ const TicketsModal = ({ visible, onClose, userId: userIdProp, userName, isDarkMo
         setTickets((prev) => prev.filter((t) => (t.id ?? t.pk ?? t.ticket_id) !== idVal));
       }
 
-    } catch (err) {
-      console.warn('Failed to change ticket status', err);
+    } catch  {
+      // console.warn('Failed to change ticket status', err);
       setDetailError('Failed to update ticket status');
     } finally {
       setDetailLoading(false);
@@ -161,7 +161,7 @@ const TicketsModal = ({ visible, onClose, userId: userIdProp, userName, isDarkMo
         got = extractTickets(res, activeTab) || [];
       } catch (err) {
         if (err.name === 'AbortError') return;
-        console.warn('Tickets fetch failed:', err.message || err);
+        // console.warn('Tickets fetch failed:', err.message || err);
         const errMsg = err.message || 'Failed to load tickets';
         if (mounted) {
           setError(errMsg);
@@ -308,8 +308,8 @@ const TicketsModal = ({ visible, onClose, userId: userIdProp, userName, isDarkMo
                                 const res = await apiClient.get(`/api/tickets/${id}/`, { Accept: 'application/json' });
                                 if (typeof res === 'string') throw new Error('Non-JSON response');
                                 setTicketDetail(res);
-                              } catch (err) {
-                                console.warn('Failed to load ticket detail', err);
+                              } catch {
+                                // console.warn('Failed to load ticket detail', err);
                                 setDetailError('Failed to load ticket details');
                               } finally {
                                 setDetailLoading(false);

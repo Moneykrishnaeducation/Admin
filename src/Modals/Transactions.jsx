@@ -50,7 +50,7 @@ const Transactions = ({ visible, onClose, accountId, isDarkMode }) => {
       setTotalPending(data.total_pending || 0);
       setUserName(data.user_name || "");
     } catch (err) {
-      console.error("Fetch transactions error:", err);
+      // console.error("Fetch transactions error:", err);
       alert(`Error fetching transactions: ${err.message}`);
     } finally {
       setLoading(false);

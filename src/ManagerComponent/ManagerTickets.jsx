@@ -20,8 +20,8 @@ function getCookie(name) {
         }
       }
     }
-  } catch (e) {
-    console.error('Error parsing cookie:', e);
+  } catch {
+    // console.error('Error parsing cookie:', e);
   }
   return '';
 }
@@ -54,8 +54,8 @@ const ManagerTickets = () => {
     try {
       const data = await get("tickets/");
       setTickets(data);
-    } catch (err) {
-      console.error("Error fetching tickets:", err);
+    } catch  {
+      // console.error("Error fetching tickets:", err);
     }
   }, []);
 
@@ -83,7 +83,7 @@ const ManagerTickets = () => {
       setActivePage("view");
       fetchTickets();
     } catch (err) {
-      console.error("Error creating ticket:", err);
+      // console.error("Error creating ticket:", err);
       alert("Failed to create ticket: " + (err.message || "Unknown error"));
     }
   };
@@ -121,8 +121,8 @@ const ManagerTickets = () => {
       setShowOpenModal(false);
       setSelectedTicketId(null);
       alert("Ticket opened successfully!")
-    } catch (err) {
-      console.error("Error opening ticket:", err);
+    } catch  {
+      // console.error("Error opening ticket:", err);
       alert("Failed to open ticket.");
     }
   };
@@ -144,8 +144,8 @@ const ManagerTickets = () => {
         }
         return updated;
       });
-    } catch (err) {
-      console.error("Error closing ticket:", err);
+    } catch  {
+      // console.error("Error closing ticket:", err);
       alert("Error closing ticket");
     }
   };

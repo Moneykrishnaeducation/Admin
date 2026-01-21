@@ -57,8 +57,8 @@ const WithdrawModal = ({ visible, onClose, accountId, onSubmit }) => {
       try {
         const csrfRes = await client.get("/api/csrf/");
         csrfToken = csrfRes?.csrfToken;
-      } catch (csrfError) {
-        console.error("CSRF Token Error:", csrfError);
+      } catch {
+        // console.error("CSRF Token Error:", csrfError);
         showToast("Failed to get CSRF token", "error");
         return;
       }
@@ -81,7 +81,7 @@ const WithdrawModal = ({ visible, onClose, accountId, onSubmit }) => {
           headers: { "X-CSRFToken": csrfToken },
         });
       } catch (postError) {
-        console.error("POST Request Error:", postError);
+        // console.error("POST Request Error:", postError);
         showToast(postError?.message || "Withdraw failed. Please try again.", "error");
         return;
       }
@@ -91,8 +91,8 @@ const WithdrawModal = ({ visible, onClose, accountId, onSubmit }) => {
       if (typeof withdrawRes === 'string') {
         try {
           parsedRes = JSON.parse(withdrawRes);
-        } catch (e) {
-          console.error("Failed to parse response:", e);
+        } catch {
+          // console.error("Failed to parse response:", e);
           parsedRes = withdrawRes;
         }
       }
@@ -102,8 +102,8 @@ const WithdrawModal = ({ visible, onClose, accountId, onSubmit }) => {
         
         try {
           if (onSubmit) onSubmit(parsedRes);
-        } catch (submitError) {
-          console.error("Submit callback error:", submitError);
+        } catch  {
+          // console.error("Submit callback error:", submitError);
         }
 
         setAmount("");
@@ -113,7 +113,7 @@ const WithdrawModal = ({ visible, onClose, accountId, onSubmit }) => {
         showToast("Withdraw failed. Please try again.", "error");
       }
     } catch (err) {
-      console.error("WITHDRAW ERROR:", err);
+      // console.error("WITHDRAW ERROR:", err);
       showToast(typeof err?.message === 'string' ? err.message : "Withdraw failed. Please try again.", "error");
     } finally {
       setLoading(false);

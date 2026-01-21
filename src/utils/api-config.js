@@ -40,13 +40,13 @@ const USE_TEST_ENDPOINTS = shouldUseTestEndpoints();
 export { API_BASE };
 
 // Debug logging
-console.log('🔧 Admin API Configuration:', {
-    hostname: window.location.hostname,
-    isSubdomain: window.location.hostname.includes('admin.'),
-    apiBase: API_BASE,
-    useTestEndpoints: USE_TEST_ENDPOINTS,
-    fullOrigin: window.location.origin
-});
+// console.log('🔧 Admin API Configuration:', {
+//     hostname: window.location.hostname,
+//     isSubdomain: window.location.hostname.includes('admin.'),
+//     apiBase: API_BASE,
+//     useTestEndpoints: USE_TEST_ENDPOINTS,
+//     fullOrigin: window.location.origin
+// });
 
 // Helper function for authenticated API requests
 // Uses HttpOnly cookies automatically - no need to manually add Authorization header
@@ -78,7 +78,7 @@ export async function get(endpoint) {
         const data = await response.json();
         return data;
     } catch (error) {
-        console.error('API call failed:', error);
+        // console.error('API call failed:', error);
         throw error;
     }
 }
@@ -113,7 +113,7 @@ export async function post(endpoint, data, isFormData = false) {
             return responseData;
         }
     } catch (error) {
-        console.error('API POST request failed:', error);
+        // console.error('API POST request failed:', error);
         throw error;
     }
 }
@@ -130,7 +130,7 @@ export async function patch(endpoint, data) {
         const responseData = await response.json();
         return responseData;
     } catch (error) {
-        console.error('API PATCH request failed:', error);
+        // console.error('API PATCH request failed:', error);
         throw error;
     }
 }
@@ -143,10 +143,10 @@ window.API = {
             const endpoint = USE_TEST_ENDPOINTS ? '/api/test/dashboard/stats/' : '/api/dashboard/stats/';
             const response = await fetchWithAuth(endpoint);
             const data = await response.json();
-            console.log('📊 Dashboard stats loaded:', data);
+            // console.log('📊 Dashboard stats loaded:', data);
             return data;
         } catch (error) {
-            console.error('❌ Failed to load dashboard stats:', error);
+            // console.error('❌ Failed to load dashboard stats:', error);
             throw error;
         }
     },
@@ -157,10 +157,10 @@ window.API = {
             const endpoint = USE_TEST_ENDPOINTS ? '/api/test/recent-transactions/' : '/api/recent-transactions/';
             const response = await fetchWithAuth(endpoint);
             const data = await response.json();
-            console.log('📋 Recent transactions loaded:', data);
+            // console.log('📋 Recent transactions loaded:', data);
             return data;
         } catch (error) {
-            console.error('❌ Failed to load recent transactions:', error);
+            // console.error('❌ Failed to load recent transactions:', error);
             throw error;
         }
     },
@@ -169,10 +169,10 @@ window.API = {
     async postData(endpoint, data) {
         try {
             const result = await post(endpoint, data);
-            console.log('POST request successful:', result);
+            // console.log('POST request successful:', result);
             return result;
         } catch (error) {
-            console.error('POST request failed:', error);
+            // console.error('POST request failed:', error);
             throw error;
         }
     }
@@ -180,5 +180,5 @@ window.API = {
 
 window.API_BASE = API_BASE;
 
-console.log('✅ Admin API object initialized:', window.API);
+// console.log('✅ Admin API object initialized:', window.API);
 

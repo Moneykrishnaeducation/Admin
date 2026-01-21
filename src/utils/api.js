@@ -47,8 +47,8 @@ export function handleUnauthorized() {
       // Force redirect immediately
       window.location.replace('/');
     }
-  } catch (error) {
-    console.error('Immediate logout failed:', error);
+  } catch  {
+    // console.error('Immediate logout failed:', error);
     // Always redirect as last resort
     window.location.replace('/');
   }
@@ -109,7 +109,7 @@ export const apiCall = async (endpoint, options = {}) => {
     }
     return await response.json();
   } catch (error) {
-    console.error('API call error:', error);
+    // console.error('API call error:', error);
     throw error;
   }
 };
@@ -142,8 +142,8 @@ export const getCSRFToken = async () => {
       const data = await response.json();
       return data.csrfToken;
     }
-  } catch (error) {
-    console.error('Failed to fetch CSRF token:', error);
+  } catch {
+    // console.error('Failed to fetch CSRF token:', error);
   }
   return null;
 };
@@ -164,7 +164,7 @@ export const useCurrentPage = () => {
 // Cross-tab logout is now handled via backend session management
 export const triggerCrossTabLogout = () => {
   // Logout will be coordinated server-side via session cookies
-  console.log('Logout triggered - handled server-side via session management');
+  // console.log('Logout triggered - handled server-side via session management');
 };
 
 // Current page is managed through React Router - no need for localStorage
