@@ -28,16 +28,17 @@ function RequireAuth({ children }) {
           credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
         });
-      } catch (e) {
-        console.debug('[Routes] Logout API call failed:', e);
+      } 
+      catch {
+        // console.debug('[Routes] Logout API call failed:', e);
       }
 
       try {
         document.cookie = 'user=; Max-Age=0; path=/';
         document.cookie = 'userRole=; Max-Age=0; path=/';
         document.cookie = 'user_role=; Max-Age=0; path=/';
-      } catch (e) {
-        console.debug('[Routes] Clearing cookies failed:', e);
+      } catch {
+        // console.debug('[Routes] Clearing cookies failed:', e);
       }
     })();
 
@@ -205,8 +206,8 @@ function getCookie(name) {
         }
       }
     }
-  } catch (e) {
-    console.error('Error parsing cookie:', e);
+  } catch {
+    // console.error('Error parsing cookie:', e);
   }
   return '';
 }
@@ -222,22 +223,22 @@ function getUserRole() {
       try {
         const userFromCookie = JSON.parse(userCookie);
         if (userFromCookie?.role) {
-          console.debug('[Routes] Role from user cookie:', userFromCookie.role);
+          // console.debug('[Routes] Role from user cookie:', userFromCookie.role);
           return userFromCookie.role;
         }
-      } catch (e) {
-        console.debug('[Routes] Failed to parse user cookie:', e);
+      } catch {
+        // console.debug('[Routes] Failed to parse user cookie:', e);
       }
     }
     
     // Fallback: check individual role cookies
     const cookieRole = getCookie('userRole') || getCookie('user_role');
     if (cookieRole) {
-      console.debug('[Routes] Role from role cookie:', cookieRole);
+      // console.debug('[Routes] Role from role cookie:', cookieRole);
       return cookieRole;
     }
-  } catch (e) {
-    console.error('[Routes] Error reading user role:', e);
+  } catch {
+    // console.error('[Routes] Error reading user role:', e);
   }
   
   return role;
