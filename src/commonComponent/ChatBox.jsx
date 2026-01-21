@@ -4,29 +4,48 @@ import { useTheme } from "../context/ThemeContext";
 import { getCookie } from "../utils/api";
 
 // Emoji picker component
-const EmojiPicker = ({ onEmojiSelect, isDarkMode }) => {
-  const emojis = [
-    "😀", "😂", "😍", "🥰", "😘", "😁", "🤣", "😊",
-    "😄", "😆", "😅", "🤗", "☺️", "😌", "😍", "🥳",
-    "😎", "🤓", "🧐", "😕", "😔", "😲", "😳", "😍",
-    "👍", "👎", "👏", "🙏", "🤝", "💪", "👊", "✊",
-    "❤️", "💔", "💕", "💖", "💗", "💘", "💝", "💟",
-    "🎉", "🎊", "🎈", "🎁", "🎀", "🎂", "🍰", "🎃",
-    "✨", "⭐", "🌟", "💫", "⚡", "🔥", "💯", "🚀",
-    "👀", "👋", "🙌", "🤲", "🤜", "🤛", "🙏", "💃",
-  ];
+const EmojiPicker = ({ onEmojiSelect, isDarkMode, onClose }) => {
+  const emojiCategories = {
+    "Smileys": ["😀", "😂", "😍", "🥰", "😘", "😁", "🤣", "😊", "😄", "😆", "😅", "🤗", "😌", "🥳", "😎", "🤓"],
+    "Gestures": ["👍", "👎", "👏", "🙏", "🤝", "💪", "👊", "✊", "👋", "🙌", "🤲", "💃"],
+    "Hearts": ["❤️", "💔", "💕", "💖", "💗", "💘", "💝", "💟"],
+    "Celebrate": ["🎉", "🎊", "🎈", "🎁", "🎀", "🎂", "🍰", "🎃"],
+    "Symbols": ["✨", "⭐", "🌟", "💫", "⚡", "🔥", "💯", "🚀"],
+  };
 
   return (
-    <div className={`grid grid-cols-8 gap-2 p-3 rounded-lg ${isDarkMode ? "bg-gray-800 border border-gray-700" : "bg-white border border-gray-200"} shadow-lg`}>
-      {emojis.map((emoji, index) => (
+    <div className={`rounded-xl shadow-2xl border ${isDarkMode ? "bg-gray-900 border-gray-700" : "bg-white border-gray-300"} p-5 w-80 overflow-y-auto scrollbar-thin ${isDarkMode ? "scrollbar-thumb-gray-700 scrollbar-track-gray-800" : "scrollbar-thumb-gray-300 scrollbar-track-gray-100"}`} style={{ maxHeight: '450px' }}>
+      {/* Close Button */}
+      <div className="flex justify-end mb-3">
         <button
-          key={index}
-          onClick={() => onEmojiSelect(emoji)}
-          className={`text-2xl p-2 rounded hover:scale-125 transition-transform ${isDarkMode ? "hover:bg-gray-700" : "hover:bg-gray-100"}`}
-          title={emoji}
+          onClick={onClose}
+          className={`p-1 rounded-lg transition-all ${isDarkMode ? "hover:bg-gray-800 text-gray-400 hover:text-red-400" : "hover:bg-gray-200 text-gray-600 hover:text-red-600"}`}
+          title="Close emoji picker"
+          aria-label="Close"
         >
-          {emoji}
+          <X className="w-5 h-5" />
         </button>
+      </div>
+
+      {Object.entries(emojiCategories).map(([category, emojis]) => (
+        <div key={category} className="mb-5">
+          <div className={`text-xs font-bold mb-3 px-3 py-1.5 rounded-md uppercase tracking-wider ${isDarkMode ? "text-yellow-400 bg-gray-800" : "text-yellow-700 bg-yellow-50"}`}>
+            {category}
+          </div>
+          <div className="grid grid-cols-8 gap-2">
+            {emojis.map((emoji, index) => (
+              <button
+                key={`${category}-${index}`}
+                onClick={() => onEmojiSelect(emoji)}
+                className={`text-2xl p-3 rounded-lg transition-all duration-150 hover:scale-110 hover:shadow-lg hover:z-10 ${isDarkMode ? "hover:bg-gray-800" : "hover:bg-gray-200"} active:scale-95`}
+                title={emoji}
+                aria-label={emoji}
+              >
+                {emoji}
+              </button>
+            ))}
+          </div>
+        </div>
       ))}
     </div>
   );
@@ -941,8 +960,8 @@ const ChatBot = () => {
                           
                           {/* Emoji Picker Popup */}
                           {showEmojiPicker && (
-                            <div className="absolute bottom-12 left-0 z-50">
-                              <EmojiPicker onEmojiSelect={handleEmojiSelect} isDarkMode={isDarkMode} />
+                            <div className="absolute bottom-14 left-0 z-50 animate-in fade-in slide-in-from-bottom-2 duration-200">
+                              <EmojiPicker onEmojiSelect={handleEmojiSelect} isDarkMode={isDarkMode} onClose={() => setShowEmojiPicker(false)} />
                             </div>
                           )}
                         </div>
