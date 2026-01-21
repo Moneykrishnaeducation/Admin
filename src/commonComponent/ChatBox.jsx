@@ -946,11 +946,6 @@ const ChatBot = () => {
                             </div>
                           )}
                         </div>
-                          } disabled:opacity-50 disabled:cursor-not-allowed`}
-                          title="Attach image"
-                        >
-                          <ImagePlus className="w-5 h-5" />
-                        </button>
 
                         <div className="flex-1 relative group">
                           <input
