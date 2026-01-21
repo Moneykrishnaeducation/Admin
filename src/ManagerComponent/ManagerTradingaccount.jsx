@@ -89,14 +89,14 @@ const ManagerTradingaccount = () => {
                 ...item,
                 openPositions: response.account_summary?.open_positions || 0,
               };
-            } catch () {
+            } catch{
               // console.error(`Error fetching positions for account ${item.accountId}:`, error);
               return item;
             }
           })
         );
         setData(updatedData);
-      } catch (error) {
+      } catch  {
         // console.error('Error fetching open positions:', error);
       }
     };
@@ -109,7 +109,7 @@ const ManagerTradingaccount = () => {
       const apiClient = new AdminAuthenticatedFetch('/api');
       const response = await apiClient.get(`/trading-account/${accountId}/history/?days_back=${days}`);
       setHistoryData(response);
-    } catch (error) {
+    } catch {
       // console.error('Error fetching history:', error);
     }
   };
@@ -171,7 +171,7 @@ const ManagerTradingaccount = () => {
                   )
                 );
               }
-            } catch (error) {
+            } catch {
               // console.error('Error fetching history:', error);
             }
           }}
