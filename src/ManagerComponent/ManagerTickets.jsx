@@ -4,39 +4,15 @@ import { useTheme } from "../context/ThemeContext";
 import { get, post, patch } from "../utils/api-config";
 import TableStructure from "../commonComponent/TableStructure";
 
-// Helper to get cookie value
-function getCookie(name) {
-  try {
-    const nameEQ = name + "=";
-    const cookies = document.cookie.split(';');
-    for (let i = 0; i < cookies.length; i++) {
-      let cookie = cookies[i].trim();
-      if (cookie.indexOf(nameEQ) === 0) {
-        let value = cookie.substring(nameEQ.length);
-        try {
-          return decodeURIComponent(value);
-        } catch {
-          return value;
-        }
-      }
-    }
-  } catch {
-    // console.error('Error parsing cookie:', e);
-  }
-  return '';
-}
+// ...existing code...
 
 const ManagerTickets = () => {
   const { isDarkMode } = useTheme();
 
-  const [activePage, setActivePage] = useState("create");
+  const [activePage, setActivePage] = useState("view");
   const [activeTab, setActiveTab] = useState("Open");
 
-  const [userId] = useState(() => {
-    // User data is now stored in cookies set by backend
-    // Get from user cookie if available, otherwise empty string
-    return getCookie('user_id') || getCookie('username') || '';
-  });
+  // Removed unused userId to fix ESLint no-unused-vars
 
   const [tickets, setTickets] = useState({
     open: [],
@@ -48,6 +24,7 @@ const ManagerTickets = () => {
 
   const [showOpenModal, setShowOpenModal] = useState(false);
   const [selectedTicketId, setSelectedTicketId] = useState(null);
+    const [selectedFiles, setSelectedFiles] = useState([]);
 
   // FETCH ALL TICKETS
   const fetchTickets = useCallback(async () => {
@@ -60,8 +37,17 @@ const ManagerTickets = () => {
   }, []);
 
   useEffect(() => {
-    fetchTickets(); // eslint-disable-line
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    fetchTickets();
   }, []);
+
+  // ---------------------------------------------------
+  // FILE HANDLING
+  // ---------------------------------------------------
+    const handleFileChange = (e) => {
+      const files = Array.from(e.target.files);
+      setSelectedFiles(files);
+    };
 
   // ---------------------------------------------------
   // CREATE TICKET (FULLY FIXED)
@@ -81,6 +67,7 @@ const ManagerTickets = () => {
 
       alert("Ticket created successfully!");
       setActivePage("view");
+      setSelectedFiles([]);
       fetchTickets();
     } catch (err) {
       // console.error("Error creating ticket:", err);
@@ -164,7 +151,28 @@ const ManagerTickets = () => {
     { Header: "Username", accessor: "username" },
     { Header: "Subject", accessor: "subject" },
     { Header: "Description", accessor: "description" },
-    { Header: "Status", accessor: "status" },
+    {
+      Header: "Status",
+      accessor: "status",
+      Cell: (status) => {
+        const s = (status || "").toLowerCase();
+        let statusColor = "bg-gray-500 text-white";
+        let statusLabel = "Unknown";
+        if (s === "open") {
+          statusColor = "bg-green-400 text-black";
+          statusLabel = "Open";
+        } else if (s === "pending") {
+          statusColor = "bg-yellow-500 text-black";
+          statusLabel = "Pending";
+        } else if (s === "closed") {
+          statusColor = "bg-gray-700 text-yellow-300";
+          statusLabel = "Closed";
+        }
+        return (
+          <span className={`px-2 py-1 rounded text-xs font-semibold ${statusColor}`}>{statusLabel}</span>
+        );
+      }
+    }
   ];
 
   const dataForTable = useMemo(() => {
@@ -185,12 +193,12 @@ const ManagerTickets = () => {
       {/* TOP BUTTONS */}
       <header className="text-center mb-6">
         <h2 className="text-2xl md:text-3xl font-bold text-yellow-400">
-          Support Tickets
+          Manager Tickets
         </h2>
-        <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 mt-4 w-full">
+        <div className="flex justify-end mt-4 w-full">
           <button
             onClick={() => setActivePage("create")}
-            className={`w-full sm:w-auto flex items-center justify-center gap-2 font-semibold px-6 py-3 rounded-md transition ${
+            className={`flex items-center gap-2 font-semibold px-6 py-2 rounded-md transition ${
               activePage === "create"
                 ? "bg-yellow-400 text-black"
                 : "bg-gray-700 text-yellow-300 hover:bg-gray-600"
@@ -199,40 +207,12 @@ const ManagerTickets = () => {
             <Plus size={18} />
             Create
           </button>
-          <button
-            onClick={() => setActivePage("view")}
-            className={`w-full sm:w-auto flex items-center justify-center gap-2 font-semibold px-6 py-3 rounded-md transition ${
-              activePage === "view"
-                ? "bg-yellow-400 text-black"
-                : "bg-gray-700 text-yellow-300 hover:bg-gray-600"
-            }`}
-          >
-            View Tickets
-          </button>
         </div>
       </header>
 
-      {/* VIEW PAGE */}
-      {activePage === "view" && (
+      {/* SHOW TABLE ONLY IF NOT IN CREATE MODE */}
+      {activePage !== "create" && (
         <>
-
-          {/* TABS */}
-          <div className="flex flex-col sm:flex-row justify-center mt-6 gap-4 sm:gap-10 mb-6 w-full">
-            {["Open", "Pending", "Closed"].map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`w-full sm:w-auto justify-center px-6 py-3 rounded-md font-semibold transition ${
-                  activeTab === tab
-                    ? "bg-yellow-400 text-black"
-                    : "bg-gray-700 text-yellow-300"
-                }`}
-              >
-                {tab}
-              </button>
-            ))}
-          </div>
-
           {/* TABLE */}
           <div
             className={`rounded-lg border ${
@@ -241,6 +221,22 @@ const ManagerTickets = () => {
                 : "border-gray-300 bg-white"
             } shadow-md p-4`}
           >
+            {/* TABS */}
+            <div className="flex flex-col sm:flex-row justify-center mt-6 gap-4 sm:gap-10 mb-6 w-full">
+              {["Open", "Pending", "Closed"].map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`w-full sm:w-auto min-w-[220px] justify-center px-10 py-2 rounded-md font-semibold transition ${
+                    activeTab === tab
+                      ? "bg-yellow-400 text-black"
+                      : "bg-gray-700 text-yellow-300"
+                  }`}
+                >
+                  {tab}
+                </button>
+              ))}
+            </div>
             <TableStructure
               columns={columns}
               data={dataForTable}
@@ -255,7 +251,6 @@ const ManagerTickets = () => {
                           >
                             Open
                           </button>
-                          
                         );
                       }
                       if (activeTab === "pending") {
@@ -350,14 +345,26 @@ const ManagerTickets = () => {
                   <p className="text-sm text-gray-400">
                     Accepted: JPG, JPEG, PNG, PDF (Max 1 MB)
                   </p>
+                  {selectedFiles.length > 0 && (
+                    <div className="mt-2 text-center">
+                      <span className="block text-sm font-semibold text-yellow-400 mb-1">Selected Files:</span>
+                      <ul className="text-xs text-gray-300 inline-block">
+                        {selectedFiles.map((file, idx) => (
+                          <li key={idx}>{file.name}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                   <input
                     type="file"
                     name="documents"
                     ref={fileInputRef}
+                    onChange={handleFileChange}
                     hidden
                     multiple
                   />
                 </div>
+                  
               </div>
 
               <div className="flex justify-center">
