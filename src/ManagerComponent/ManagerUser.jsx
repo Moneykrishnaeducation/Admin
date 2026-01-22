@@ -947,7 +947,7 @@ const ManagerUser = () => {
         />
       )}
 
-      {/* Tickets Modal */}
+     {/* Tickets Modal */}
       {ticketsModalVisible && ticketsRow && (
         <TicketsModal
           visible={ticketsModalVisible}
@@ -955,6 +955,7 @@ const ManagerUser = () => {
             setTicketsModalVisible(false);
             setTicketsRow(null);
           }}
+          userId={ticketsRow?.userId}
           userName={ticketsRow?.name}
           isDarkMode={isDarkMode}
         />
