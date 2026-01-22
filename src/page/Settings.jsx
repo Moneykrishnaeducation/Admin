@@ -1,8 +1,39 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useTheme } from "../context/ThemeContext";
+import { useNavigate } from "react-router-dom";
+
+// Helper to get cookie value
+function getCookie(name) {
+  try {
+    const nameEQ = name + "=";
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+      let cookie = cookies[i].trim();
+      if (cookie.indexOf(nameEQ) === 0) {
+        return decodeURIComponent(cookie.substring(nameEQ.length));
+      }
+    }
+  } catch {}
+  return null;
+}
+
+// Check if user is superuser
+function isSuperuser() {
+  try {
+    const userCookie = getCookie('user');
+    if (userCookie) {
+      const user = JSON.parse(userCookie);
+      return user?.is_superuser === true || user?.is_superuser === 'true';
+    }
+  } catch {}
+  return false;
+}
 
 const Settings = () => {
   const { isDarkMode } = useTheme();
+  const navigate = useNavigate();
+  const [superuserCheckDone, setSuperuserCheckDone] = useState(false);
+  const [isSuperuserUser, setIsSuperuserUser] = useState(false);
   const [serverData, setServerData] = useState({
     serverIP: "",
     loginID: "",
@@ -15,6 +46,13 @@ const Settings = () => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
   const mounted = useRef(true);
+
+  // Check superuser status on component mount
+  useEffect(() => {
+    const superuser = isSuperuser();
+    setIsSuperuserUser(superuser);
+    setSuperuserCheckDone(true);
+  }, []);
 
   useEffect(() => {
     mounted.current = true;
@@ -150,6 +188,28 @@ const Settings = () => {
       setSaving(false);
     }
   };
+
+  // If superuser check is done but user is not a superuser, show access denied
+  if (superuserCheckDone && !isSuperuserUser) {
+    return (
+      <div className={`font-sans ${isDarkMode ? 'text-gray-200' : 'bg-white text-black'} p-6 max-w-[1200px] mx-auto rounded-lg min-h-screen flex items-center justify-center`}>
+        <div className={`text-center p-8 rounded-lg border-2 ${isDarkMode ? 'border-red-500 bg-red-900/20' : 'border-red-400 bg-red-100'}`}>
+          <h1 className={`text-3xl font-bold mb-4 ${isDarkMode ? 'text-red-400' : 'text-red-600'}`}>
+            Access Denied
+          </h1>
+          <p className={`text-lg mb-6 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+            Only superusers can access the Settings page.
+          </p>
+          <button
+            onClick={() => navigate("/dashboard")}
+            className="px-6 py-2 bg-yellow-500 text-black rounded-md hover:bg-yellow-600 transition-colors"
+          >
+            Go to Dashboard
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={`bg-transparent ${isDarkMode ? 'text-yellow-400' : 'text-gray-900'} flex flex-col items-center justify-center p-4 sm:p-6 md:p-8`}>
