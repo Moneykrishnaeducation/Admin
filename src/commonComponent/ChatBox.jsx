@@ -686,11 +686,17 @@ const ChatBot = () => {
 
         {/* Chat box */}
         {isOpen && (
-          <div
-            className={`chatbox-enter mt-3 w-full sm:w-[900px] h-[600px] max-w-sm sm:max-w-none ${
-              isDarkMode ? "bg-black border-gray-700" : "bg-white border-gray-300"
-            } border rounded-xl shadow-lg flex flex-col overflow-hidden`}
-          >
+          <>
+            {/* Backdrop overlay - click to close */}
+            <div
+              className="fixed inset-0 bg-black/20 z-40"
+              onClick={() => setIsOpen(false)}
+            />
+            <div
+              className={`chatbox-enter mt-3 w-full sm:w-[900px] h-[600px] max-w-sm sm:max-w-none ${
+                isDarkMode ? "bg-black border-gray-700" : "bg-white border-gray-300"
+              } border rounded-xl shadow-lg flex flex-col overflow-hidden relative z-50`}
+            >
             {/* Header with mobile menu button */}
             <div
               className={`header-fade ${
@@ -1102,7 +1108,8 @@ const ChatBot = () => {
                 )}
               </div>
             </div>
-          </div>
+            </div>
+          </>
         )}
       </div>
     </>
