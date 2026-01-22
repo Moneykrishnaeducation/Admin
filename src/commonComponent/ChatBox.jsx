@@ -71,6 +71,7 @@ const ChatBot = () => {
   const [selectedImage, setSelectedImage] = useState(null); // Store selected image file
   const [imagePreview, setImagePreview] = useState(null); // Preview URL for selected image
   const [showEmojiPicker, setShowEmojiPicker] = useState(false); // Toggle emoji picker visibility
+  const [isDragging, setIsDragging] = useState(false); // Track drag and drop state
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
   const previousMessageCountRef = useRef(0);
@@ -526,6 +527,66 @@ const ChatBot = () => {
     setImagePreview(null);
   };
 
+  // Handle image paste from clipboard
+  const handlePaste = (e) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+
+    for (let item of items) {
+      if (item.type.startsWith('image/')) {
+        e.preventDefault();
+        const file = item.getAsFile();
+        if (file) {
+          setSelectedImage(file);
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            setImagePreview(event.target?.result);
+          };
+          reader.readAsDataURL(file);
+          setError(null);
+        }
+        break;
+      }
+    }
+  };
+
+  // Handle drag over
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  // Handle drag leave
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  // Handle drop
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    const files = e.dataTransfer?.files;
+    if (!files) return;
+
+    for (let file of files) {
+      if (file.type.startsWith('image/')) {
+        setSelectedImage(file);
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          setImagePreview(event.target?.result);
+        };
+        reader.readAsDataURL(file);
+        setError(null);
+        break;
+      }
+    }
+  };
+
   const handleDeleteMessage = async (messageId) => {
     if (!window.confirm("Are you sure you want to delete this message?")) return;
 
@@ -901,7 +962,15 @@ const ChatBot = () => {
                     </div>
 
                     {/* Input */}
-                    <div className={`p-4 border-t ${isDarkMode ? "border-gray-700 bg-gray-900/50" : "border-gray-300 bg-gray-50"} backdrop-blur-sm space-y-2`}>
+                    <div className={`p-4 border-t ${isDarkMode ? "border-gray-700 bg-gray-900/50" : "border-gray-300 bg-gray-50"} backdrop-blur-sm space-y-2`}
+                      onDragOver={handleDragOver}
+                      onDragLeave={handleDragLeave}
+                      onDrop={handleDrop}
+                    >
+                      {/* Drag overlay */}
+                      {isDragging && (
+                        <div className={`absolute inset-0 rounded-lg pointer-events-none transition-all ${isDarkMode ? "bg-yellow-500/10 border-2 border-yellow-400" : "bg-yellow-400/10 border-2 border-yellow-500"}`} />
+                      )}
                       {/* Image Preview */}
                       {imagePreview && (
                         <div className="relative inline-block">
@@ -972,7 +1041,8 @@ const ChatBot = () => {
                             value={input}
                             onChange={(e) => setInput(e.target.value)}
                             onKeyDown={(e) => e.key === "Enter" && handleSend()}
-                            placeholder="Type a message..."
+                            onPaste={handlePaste}
+                            placeholder="Type a message or paste an image..."
                             disabled={loading}
                             className={`w-full px-4 py-3 rounded-2xl text-sm transition-all duration-300 ${
                               isDarkMode 
