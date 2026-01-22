@@ -1374,39 +1374,36 @@ const Partnership = () => {
 
   return (
     <div className="p-4">
-      <div className="flex gap-4 mb-4">
+      <div className="flex gap-3 mb-4 items-center">
         <button
-          className={`px-4 py-2 rounded-md font-semibold ${activeTab === "partnerList" ? "bg-yellow-400 text-black" : "bg-gray-400"
+          className={`px-4 py-2 rounded-md font-semibold transition ${activeTab === "partnerList" ? "bg-yellow-400 text-black shadow-md" : "bg-gray-400 text-white hover:bg-gray-500"
             }`}
           onClick={() => setActiveTab("partnerList")}
         >
           Partner List
         </button>
         <button
-          className={`px-4 py-2 rounded-md font-semibold ${activeTab === "withdrawalRequest" ? "bg-yellow-400 text-black" : "bg-gray-400"
+          className={`px-4 py-2 rounded-md font-semibold transition ${activeTab === "withdrawalRequest" ? "bg-yellow-400 text-black shadow-md" : "bg-gray-400 text-white hover:bg-gray-500"
             }`}
           onClick={() => setActiveTab("withdrawalRequest")}
         >
           Withdrawal History
         </button>
         <button
-          className={`px-4 py-2 rounded-md font-semibold ${activeTab === "withdrawalPending" ? "bg-yellow-400 text-black" : "bg-gray-400"
+          className={`px-4 py-2 rounded-md font-semibold transition ${activeTab === "withdrawalPending" ? "bg-yellow-400 text-black shadow-md" : "bg-gray-400 text-white hover:bg-gray-500"
             }`}
           onClick={() => setActiveTab("withdrawalPending")}
         >
           Withdrawal Pending
         </button>
-      </div>
-
-      <div className="flex justify-between mb-4">
         <button
-          className="bg-gray-300 text-black px-3 py-1 rounded-md"
+          className="bg-yellow-500 text-black px-4 py-2 rounded-md font-semibold hover:bg-yellow-600 transition shadow-md ml-auto"
           onClick={() => handleOpenCommissionModal(false)}
         >
           View list
         </button>
         <button
-          className="bg-blue-500 text-white px-3 py-1 rounded-md hover:bg-blue-600"
+          className="bg-yellow-500 text-black px-4 py-2 rounded-md font-semibold hover:bg-yellow-600 transition shadow-md"
           onClick={() => {
             setEditRowId(null);
             setEditedRowData({});
