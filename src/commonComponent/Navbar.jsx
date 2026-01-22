@@ -170,13 +170,13 @@ const Navbar = ({ isSidebarOpen, setIsSidebarOpen }) => {
           ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"}
           w-[70vw] sm:w-[50vw] md:w-[40vw] lg:w-[18vw]
           ${isDarkMode ? "bg-black text-white" : "bg-white text-black"}
-          shadow-lg px-3 py-3`}
+          shadow-lg px-3 py-5`}
       >
-        {/* Header */}
-        <div className="flex items-center justify-center mb-4">
-          <Link to={`${basePath}/dashboard`}>
+        {/* Logo */}
+        <div id="logo" className="mb-10 flex items-center justify-between">
+          <Link to={`${basePath}/`} onClick={() => setIsMobileView && setIsSidebarOpen(false)}>
             <img
-              className="h-10 object-contain cursor-pointer"
+              className="h-10 object-contain cursor-pointer hover:scale-105 transition-transform duration-300"
               src={`/static/admin/logo.svg`}
               alt="Logo"
             />
@@ -185,39 +185,40 @@ const Navbar = ({ isSidebarOpen, setIsSidebarOpen }) => {
           {/* Close button (mobile only) */}
           {isMobileView && (
             <button className="ml-auto" onClick={() => setIsSidebarOpen(false)}>
-              <X />
+              <X size={20} />
             </button>
           )}
         </div>
 
-        {/* Navigation */}
-        <div className="flex flex-col gap-2">
+        {/* Navigation Links */}
+        <div id="nav-content" className="flex flex-col gap-3">
           {menuItems.map((item) => {
-            const isActive = location.pathname.startsWith(item.path);
+            const isActive = location.pathname === item.path;
             const Icon = item.icon;
+
+            const baseTextClass = isDarkMode ? 'text-gray-300 hover:text-yellow-400 hover:bg-gray-900' : 'text-gray-700 hover:text-yellow-400 hover:bg-gray-100';
+            const activeClass = 'bg-gradient-to-r from-yellow-600 via-yellow-500 to-yellow-400 text-black shadow-[0_0_20px_#FFD700]';
+            const hoverBorderClass = isDarkMode ? 'hover:border-white' : 'hover:border-black';
+
+            const itemClass = `flex items-center gap-4 px-5 py-1.5 rounded-md text-sm font-medium transition-all duration-200 relative ${isActive ? activeClass : baseTextClass}`;
+
+            const content = (
+              <>
+                <span className={`absolute inset-0 rounded-md border-2 border-transparent ${hoverBorderClass} pointer-events-none transition-all duration-200`}></span>
+                <Icon className={`text-xl relative z-10 ${isActive ? 'text-black' : 'text-yellow-400'} transition-all duration-200`} size={20} />
+                <span className="relative z-10">{item.label}</span>
+              </>
+            );
 
             return (
               <Link
                 key={item.path}
                 to={item.path}
                 onClick={isMobileView ? () => setIsSidebarOpen(false) : undefined}
-                className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition
-                  ${!isActive ? isDarkMode 
-                        ? "bg-gradient-to-t from-gray-700 to-black shadow-lg hover:bg-gradient-to-r from-gray-700 to-black shadow-lg" 
-                        : "bg-gradient-to-t from-gray-100 to-white shadow-xl hover:bg-gradient-to-r from-gray-100 to-white shadow-xl" : ""}
-                  ${
-                    isActive
-                      ? "bg-yellow-500 text-black shadow-md"
-                      : "hover:bg-yellow-500"
-                  }`}
+                className={itemClass}
+                aria-current={isActive ? 'page' : undefined}
               >
-                <Icon
-                  className={`${
-                    isActive ? "text-black" : "text-yellow-400"
-                  }`}
-                  size={18}
-                />
-                {item.label}
+                {content}
               </Link>
             );
           })}
