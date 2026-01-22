@@ -127,7 +127,7 @@ const Navbar = ({ isSidebarOpen, setIsSidebarOpen }) => {
     { path: "/propfirm", icon: Handshake, label: "Prop Firm" },
     { path: "/partnership", icon: Handshake, label: "Partnership" },
     { path: "/transactions", icon: Repeat, label: "Transactions" },
-    { path: "/mail", icon: Monitor, label: "Mailbox" },
+    ...(isSuperuser ? [{ path: "/mail", icon: Monitor, label: "Mailbox" }] : []),
     { path: "/tickets", icon: Ticket, label: "Ticket" },
     { path: "/activities", icon: Calendar, label: "Activities" },
     ...(isSuperuser ? [{ path: "/admin", icon: Headphones, label: "Admin" }] : []),
