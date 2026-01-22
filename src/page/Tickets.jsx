@@ -369,6 +369,7 @@ const Tickets = ({ isAdmin = false }) => {
                     <div className={`col-span-2 p-3 rounded ${isDarkMode ? 'bg-gray-800' : 'bg-gray-50'}`}>
                       <div className={`font-bold ${isDarkMode ? 'text-yellow-400' : 'text-yellow-600'}`}>Attachments</div>
                       <div className="mt-2">
+                        {/* Show attachments from messages, attachments, file/files, or nested data/message.file for manager tickets */}
                         {Array.isArray(ticketDetail.messages) && ticketDetail.messages.length > 0 ? (
                           <div>
                             {ticketDetail.messages.map((m, idx) => {
@@ -398,6 +399,144 @@ const Tickets = ({ isAdmin = false }) => {
                               );
                             })}
                           </div>
+                        ) : Array.isArray(ticketDetail.attachments) && ticketDetail.attachments.length > 0 ? (
+                          <div>
+                            {ticketDetail.attachments.map((fileUrl, idx) => {
+                              if (!fileUrl) return null;
+                              const filename = fileUrl.split('/').pop();
+                              const isImage = /\.(jpg|jpeg|png|gif|bmp|webp)$/i.test(filename);
+                              return (
+                                <div key={idx} className={`mt-1 ${isDarkMode ? 'text-white' : 'text-black'}`} style={{minWidth: 120}}>
+                                  <div className="flex flex-col items-center gap-2">
+                                    {isImage ? (
+                                      <a href={fileUrl} target="_blank" rel="noreferrer">
+                                        <img src={fileUrl} alt={filename} style={{ maxHeight: 200, maxWidth: 400, borderRadius: 6, border: '1px solid #FFD700', cursor: 'pointer' }} />
+                                      </a>
+                                    ) : (
+                                      <a href={fileUrl} target="_blank" rel="noreferrer" className="underline text-yellow-400">
+                                        {filename}
+                                      </a>
+                                    )}
+                                    <a href={fileUrl} download className="text-xs text-yellow-500 underline mt-1">Download</a>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        ) : ticketDetail.file ? (
+                          (() => {
+                            const fileUrl = ticketDetail.file;
+                            const filename = fileUrl.split('/').pop();
+                            const isImage = /\.(jpg|jpeg|png|gif|bmp|webp)$/i.test(filename);
+                            return (
+                              <div className={`mt-1 ${isDarkMode ? 'text-white' : 'text-black'}`} style={{minWidth: 120}}>
+                                <div className="flex flex-col items-center gap-2">
+                                  {isImage ? (
+                                    <a href={fileUrl} target="_blank" rel="noreferrer">
+                                      <img src={fileUrl} alt={filename} style={{ maxHeight: 200, maxWidth: 400, borderRadius: 6, border: '1px solid #FFD700', cursor: 'pointer' }} />
+                                    </a>
+                                  ) : (
+                                    <a href={fileUrl} target="_blank" rel="noreferrer" className="underline text-yellow-400">
+                                      {filename}
+                                    </a>
+                                  )}
+                                  <a href={fileUrl} download className="text-xs text-yellow-500 underline mt-1">Download</a>
+                                </div>
+                              </div>
+                            );
+                          })()
+                        ) : Array.isArray(ticketDetail.files) && ticketDetail.files.length > 0 ? (
+                          <div>
+                            {ticketDetail.files.map((fileUrl, idx) => {
+                              if (!fileUrl) return null;
+                              const filename = fileUrl.split('/').pop();
+                              const isImage = /\.(jpg|jpeg|png|gif|bmp|webp)$/i.test(filename);
+                              return (
+                                <div key={idx} className={`mt-1 ${isDarkMode ? 'text-white' : 'text-black'}`} style={{minWidth: 120}}>
+                                  <div className="flex flex-col items-center gap-2">
+                                    {isImage ? (
+                                      <a href={fileUrl} target="_blank" rel="noreferrer">
+                                        <img src={fileUrl} alt={filename} style={{ maxHeight: 200, maxWidth: 400, borderRadius: 6, border: '1px solid #FFD700', cursor: 'pointer' }} />
+                                      </a>
+                                    ) : (
+                                      <a href={fileUrl} target="_blank" rel="noreferrer" className="underline text-yellow-400">
+                                        {filename}
+                                      </a>
+                                    )}
+                                    <a href={fileUrl} download className="text-xs text-yellow-500 underline mt-1">Download</a>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        ) : ticketDetail.data && ticketDetail.data.file ? (
+                          (() => {
+                            const fileUrl = ticketDetail.data.file;
+                            const filename = fileUrl.split('/').pop();
+                            const isImage = /\.(jpg|jpeg|png|gif|bmp|webp)$/i.test(filename);
+                            return (
+                              <div className={`mt-1 ${isDarkMode ? 'text-white' : 'text-black'}`} style={{minWidth: 120}}>
+                                <div className="flex flex-col items-center gap-2">
+                                  {isImage ? (
+                                    <a href={fileUrl} target="_blank" rel="noreferrer">
+                                      <img src={fileUrl} alt={filename} style={{ maxHeight: 200, maxWidth: 400, borderRadius: 6, border: '1px solid #FFD700', cursor: 'pointer' }} />
+                                    </a>
+                                  ) : (
+                                    <a href={fileUrl} target="_blank" rel="noreferrer" className="underline text-yellow-400">
+                                      {filename}
+                                    </a>
+                                  )}
+                                  <a href={fileUrl} download className="text-xs text-yellow-500 underline mt-1">Download</a>
+                                </div>
+                              </div>
+                            );
+                          })()
+                        ) : ticketDetail.data && Array.isArray(ticketDetail.data.files) && ticketDetail.data.files.length > 0 ? (
+                          <div>
+                            {ticketDetail.data.files.map((fileUrl, idx) => {
+                              if (!fileUrl) return null;
+                              const filename = fileUrl.split('/').pop();
+                              const isImage = /\.(jpg|jpeg|png|gif|bmp|webp)$/i.test(filename);
+                              return (
+                                <div key={idx} className={`mt-1 ${isDarkMode ? 'text-white' : 'text-black'}`} style={{minWidth: 120}}>
+                                  <div className="flex flex-col items-center gap-2">
+                                    {isImage ? (
+                                      <a href={fileUrl} target="_blank" rel="noreferrer">
+                                        <img src={fileUrl} alt={filename} style={{ maxHeight: 200, maxWidth: 400, borderRadius: 6, border: '1px solid #FFD700', cursor: 'pointer' }} />
+                                      </a>
+                                    ) : (
+                                      <a href={fileUrl} target="_blank" rel="noreferrer" className="underline text-yellow-400">
+                                        {filename}
+                                      </a>
+                                    )}
+                                    <a href={fileUrl} download className="text-xs text-yellow-500 underline mt-1">Download</a>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        ) : ticketDetail.message && ticketDetail.message.file ? (
+                          (() => {
+                            const fileUrl = ticketDetail.message.file;
+                            const filename = fileUrl.split('/').pop();
+                            const isImage = /\.(jpg|jpeg|png|gif|bmp|webp)$/i.test(filename);
+                            return (
+                              <div className={`mt-1 ${isDarkMode ? 'text-white' : 'text-black'}`} style={{minWidth: 120}}>
+                                <div className="flex flex-col items-center gap-2">
+                                  {isImage ? (
+                                    <a href={fileUrl} target="_blank" rel="noreferrer">
+                                      <img src={fileUrl} alt={filename} style={{ maxHeight: 200, maxWidth: 400, borderRadius: 6, border: '1px solid #FFD700', cursor: 'pointer' }} />
+                                    </a>
+                                  ) : (
+                                    <a href={fileUrl} target="_blank" rel="noreferrer" className="underline text-yellow-400">
+                                      {filename}
+                                    </a>
+                                  )}
+                                  <a href={fileUrl} download className="text-xs text-yellow-500 underline mt-1">Download</a>
+                                </div>
+                              </div>
+                            );
+                          })()
                         ) : (
                           <div className="text-sm text-gray-500">No attachments</div>
                         )}
