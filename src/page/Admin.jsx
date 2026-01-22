@@ -6,6 +6,46 @@ import ChangeStatusModal from "../Modals/ChangeStatusModal";
 import ConfirmModal from "../Modals/ConfirmModal";
 import MessageModal from "../Modals/MessageModal";
 
+// Helper to get a cookie value
+function getCookie(name) {
+  try {
+    const nameEQ = name + "=";
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+      let cookie = cookies[i].trim();
+      if (cookie.indexOf(nameEQ) === 0) {
+        let value = cookie.substring(nameEQ.length);
+        try {
+          return decodeURIComponent(value);
+        } catch {
+          return value;
+        }
+      }
+    }
+  } catch {
+    //console.error('Error parsing cookie:', e);
+  }
+  return '';
+}
+
+// Helper to check if user is superuser
+function isSuperuser() {
+  try {
+    const userCookie = getCookie('user');
+    if (userCookie) {
+      try {
+        const userFromCookie = JSON.parse(userCookie);
+        return userFromCookie?.is_superuser === true || userFromCookie?.is_superuser === 'true';
+      } catch {
+        return false;
+      }
+    }
+  } catch {
+    return false;
+  }
+  return false;
+}
+
 const AdminManagerList = () => {
   const navigate = useNavigate();
   const { isDarkMode } = useTheme();
@@ -15,6 +55,8 @@ const AdminManagerList = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1); // Pagination state
+  const [isSuperuserUser, setIsSuperuserUser] = useState(false);
+  const [superuserCheckDone, setSuperuserCheckDone] = useState(false);
 
   const [statusModalOpen, setStatusModalOpen] = useState(false);
   const [selectedUserRow, setSelectedUserRow] = useState(null);
@@ -31,6 +73,18 @@ const AdminManagerList = () => {
     setMessageOpen(true);
   };
 
+  // Check superuser status on component mount
+  useEffect(() => {
+    const superuser = isSuperuser();
+    setIsSuperuserUser(superuser);
+    setSuperuserCheckDone(true);
+    
+    if (!superuser) {
+      setError('Access Denied: Only superusers can manage admin users.');
+      setLoading(false);
+    }
+  }, []);
+
   const rowsPerPage = 10; // 10 rows per page
 
   const [form, setForm] = useState({
@@ -44,6 +98,12 @@ const AdminManagerList = () => {
 
   // Fetch Admins
   const fetchAdmins = async () => {
+    // Don't fetch if not a superuser
+    if (!isSuperuserUser) {
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     setError(null);
 

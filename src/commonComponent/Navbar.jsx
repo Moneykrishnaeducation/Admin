@@ -42,11 +42,13 @@ const Navbar = ({ isSidebarOpen, setIsSidebarOpen }) => {
   const location = useLocation();
   const [isMobileView, setIsMobileView] = React.useState(false);
   const [role, setRole] = React.useState("manager");
+  const [isSuperuser, setIsSuperuser] = React.useState(false);
 
   // User role - read from cookies only
   React.useEffect(() => {
     const updateRole = () => {
       let currentRole = "manager";
+      let superuserStatus = false;
 
       try {
         // Check user cookie first
@@ -56,8 +58,9 @@ const Navbar = ({ isSidebarOpen, setIsSidebarOpen }) => {
             const userFromCookie = JSON.parse(userCookie);
             if (userFromCookie?.role) {
               currentRole = userFromCookie.role;
-              //console.debug('Role from user cookie:', currentRole);
+              superuserStatus = userFromCookie?.is_superuser === true || userFromCookie?.is_superuser === 'true';
               setRole(currentRole);
+              setIsSuperuser(superuserStatus);
               return;
             }
           } catch  {
@@ -75,9 +78,11 @@ const Navbar = ({ isSidebarOpen, setIsSidebarOpen }) => {
         }
 
         setRole(currentRole);
+        setIsSuperuser(superuserStatus);
       } catch  {
         //console.error('Error reading user role:', e);
         setRole("manager");
+        setIsSuperuser(false);
       }
     };
 
@@ -112,7 +117,7 @@ const Navbar = ({ isSidebarOpen, setIsSidebarOpen }) => {
 
   /* ---------------- Menu Definitions ---------------- */
 
-  const adminMenuItems = [
+  const adminMenuItems = React.useMemo(() => [
     { path: "/dashboard", icon: Home, label: "Dashboard" },
     { path: "/user", icon: Users, label: "User" },
     { path: "/pendingrequest", icon: CreditCard, label: "Pending request" },
@@ -125,9 +130,9 @@ const Navbar = ({ isSidebarOpen, setIsSidebarOpen }) => {
     { path: "/mail", icon: Monitor, label: "Mailbox" },
     { path: "/tickets", icon: Ticket, label: "Ticket" },
     { path: "/activities", icon: Calendar, label: "Activities" },
-    { path: "/admin", icon: Headphones, label: "Admin" },
-    { path: "/settings", icon: CreditCard, label: "Settings" },
-  ];
+    ...(isSuperuser ? [{ path: "/admin", icon: Headphones, label: "Admin" }] : []),
+    ...(isSuperuser ? [{ path: "/settings", icon: CreditCard, label: "Settings" }] : []),
+  ], [isSuperuser]);
 
   const managerMenuItems = [
     { path: "/dashboard", icon: Home, label: "Dashboard" },
