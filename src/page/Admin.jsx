@@ -79,10 +79,8 @@ const AdminManagerList = () => {
     setIsSuperuserUser(superuser);
     setSuperuserCheckDone(true);
     
-    if (!superuser) {
-      setError('Access Denied: Only superusers can manage admin users.');
-      setLoading(false);
-    }
+    // Always fetch admins for all admins
+    fetchAdmins();
   }, []);
 
   const rowsPerPage = 10; // 10 rows per page
@@ -98,12 +96,6 @@ const AdminManagerList = () => {
 
   // Fetch Admins
   const fetchAdmins = async () => {
-    // Don't fetch if not a superuser
-    if (!isSuperuserUser) {
-      setLoading(false);
-      return;
-    }
-
     setLoading(true);
     setError(null);
 
@@ -166,10 +158,6 @@ const AdminManagerList = () => {
       setLoading(false);
     }
   };
-
-  useEffect(() => {
-    fetchAdmins();
-  }, [isSuperuserUser]);
 
   // Filtered list based on search input
   const filtered = list.filter(

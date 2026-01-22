@@ -130,7 +130,7 @@ const Navbar = ({ isSidebarOpen, setIsSidebarOpen }) => {
     ...(isSuperuser ? [{ path: "/mail", icon: Monitor, label: "Mailbox" }] : []),
     { path: "/tickets", icon: Ticket, label: "Ticket" },
     { path: "/activities", icon: Calendar, label: "Activities" },
-    ...(isSuperuser ? [{ path: "/admin", icon: Headphones, label: "Admin" }] : []),
+    { path: "/admin", icon: Headphones, label: "Admin" },
     ...(isSuperuser ? [{ path: "/settings", icon: CreditCard, label: "Settings" }] : []),
   ], [isSuperuser]);
 
