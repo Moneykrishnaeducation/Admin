@@ -10,6 +10,38 @@ const MamAccount = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("mam"); // "mam" or "investor"
+  // For expanded manager rows (showing clients)
+  const [expandedManagers, setExpandedManagers] = useState({}); // { mamAccountId: { loading, error, clients: [] } }
+  // Fetch clients for a manager (investors under a MAM account)
+  const fetchClientsForManager = async (mamAccountId) => {
+    setExpandedManagers((prev) => ({
+      ...prev,
+      [mamAccountId]: { loading: true, error: null, clients: [] },
+    }));
+    try {
+      const endpoint = `/api/investor-accounts/?mam_id=${encodeURIComponent(mamAccountId)}`;
+      const headers = { 'Content-Type': 'application/json' };
+      let resJson;
+      const client = window && window.adminApiClient ? window.adminApiClient : null;
+      if (client && typeof client.get === 'function') {
+        resJson = await client.get(endpoint);
+      } else {
+        const res = await fetch(endpoint, { credentials: 'include', headers });
+        if (!res.ok) throw new Error(`Failed to fetch clients: ${res.status}`);
+        resJson = await res.json();
+      }
+      const items = Array.isArray(resJson.data) ? resJson.data : (Array.isArray(resJson) ? resJson : (resJson.results || []));
+      setExpandedManagers((prev) => ({
+        ...prev,
+        [mamAccountId]: { loading: false, error: null, clients: items },
+      }));
+    } catch (err) {
+      setExpandedManagers((prev) => ({
+        ...prev,
+        [mamAccountId]: { loading: false, error: err.message, clients: [] },
+      }));
+    }
+  };
 
 
   useEffect(() => {
@@ -38,6 +70,31 @@ const MamAccount = () => {
   };
 
   const columnsMam = [
+    {
+      Header: "",
+      accessor: "expand",
+      Cell: (cellValue, row) => {
+        const mamAccountId = row.mamAccountId;
+        const expanded = expandedManagers[mamAccountId];
+        return (
+          <button
+            className="px-2 py-1 mr-2 bg-gray-200 rounded hover:bg-gray-300 text-xs"
+            onClick={() => {
+              if (!expanded) fetchClientsForManager(mamAccountId);
+              setExpandedManagers((prev) =>
+                prev[mamAccountId]
+                  ? Object.fromEntries(Object.entries(prev).filter(([k]) => k !== mamAccountId))
+                  : { ...prev, [mamAccountId]: { loading: true, error: null, clients: [] } }
+              );
+              if (!expanded) fetchClientsForManager(mamAccountId);
+            }}
+            aria-label={expanded ? "Collapse" : "Expand"}
+          >
+            {expanded ? "-" : "+"}
+          </button>
+        );
+      },
+    },
     { Header: "User ID", accessor: "userId" },
     { Header: "Name", accessor: "name" },
     { Header: "Manager Email", accessor: "managerEmail" },
@@ -51,17 +108,13 @@ const MamAccount = () => {
       Header: "Action",
       accessor: "mamAccountId",
       Cell: (cellValue, row) => {
-        // cellValue is the mamAccountId, row is the full row data
         const mamAccountId = cellValue;
-        // console.log('Cell rendered with cellValue:', cellValue, 'row:', row);
         return (
           <button
             className="px-3 py-1 bg-yellow-400 text-black rounded hover:bg-yellow-500 transition text-xs font-semibold"
             onClick={() => {
               if (mamAccountId) {
                 handleViewHistory(mamAccountId);
-              } else {
-                // console.warn('No mamAccountId found');
               }
             }}
           >
@@ -193,8 +246,6 @@ const MamAccount = () => {
   return (
     <div className="p-6 max-w-9xl mx-auto relative">
       {/* Background blur for table when modal is open */}
-      
-
       <div className="flex gap-4 mb-4  relative">
         <button
           className={`px-5 py-2 rounded-md font-semibold ${
@@ -229,13 +280,79 @@ const MamAccount = () => {
       </div>
 
       <div>
-        <TableStructure
-          key={activeTab}
-          columns={columns}
-          data={[]}
-          serverSide={true}
-          onFetch={handleFetch}
-        />
+        {/* Custom rendering for expandable MAM rows */}
+        {activeTab === "mam" ? (
+          <TableStructure
+            key={activeTab}
+            columns={columns}
+            data={[]}
+            serverSide={true}
+            onFetch={async (params) => {
+              const result = await handleFetch(params);
+              // Attach expanded state to each row for rendering
+              result.data = result.data.map((row) => ({ ...row, _isManager: true }));
+              return result;
+            }}
+            rowRenderer={(row, rowIndex) => {
+              const mamAccountId = row.mamAccountId;
+              const expanded = expandedManagers[mamAccountId];
+              return (
+                <React.Fragment key={mamAccountId}>
+                  {/* Manager row */}
+                  <tr>
+                    {columns.map((col, colIdx) => (
+                      <td key={colIdx} className="border px-2 py-1">{col.Cell ? col.Cell(row[col.accessor], row) : row[col.accessor]}</td>
+                    ))}
+                  </tr>
+                  {/* Expanded client rows */}
+                  {expanded && (
+                    <tr>
+                      <td colSpan={columns.length} className="bg-gray-50 px-4 py-2">
+                        {expanded.loading && <div>Loading clients...</div>}
+                        {expanded.error && <div className="text-red-500">Error: {expanded.error}</div>}
+                        {!expanded.loading && !expanded.error && expanded.clients.length === 0 && (
+                          <div>No clients found for this manager.</div>
+                        )}
+                        {!expanded.loading && !expanded.error && expanded.clients.length > 0 && (
+                          <table className="w-full text-xs mt-2 border">
+                            <thead>
+                              <tr className="bg-gray-200">
+                                <th>Investor Name</th>
+                                <th>Investor Email</th>
+                                <th>Trading Account ID</th>
+                                <th>Amount Invested</th>
+                                <th>Profit</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {expanded.clients.map((client, idx) => (
+                                <tr key={client.id || idx} className="border-b">
+                                  <td>{client.username || client.investorName || `${client.first_name || ''} ${client.last_name || ''}`}</td>
+                                  <td>{client.email || client.investorEmail || client.investor_email}</td>
+                                  <td>{client.account_id || client.tradingAccountId || client.trading_account_id}</td>
+                                  <td>{client.amount_invested || client.amountInvested || client.balance || client.equity || 0}</td>
+                                  <td>{client.profit || client.total_profit || 0}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        )}
+                      </td>
+                    </tr>
+                  )}
+                </React.Fragment>
+              );
+            }}
+          />
+        ) : (
+          <TableStructure
+            key={activeTab}
+            columns={columns}
+            data={[]}
+            serverSide={true}
+            onFetch={handleFetch}
+          />
+        )}
       </div>
 
       {/* History Modal rendered outside the TableStructure for proper state updates */}
@@ -246,8 +363,6 @@ const MamAccount = () => {
         activeTab={historyActiveTab}
         setActiveTab={setHistoryActiveTab}
       />
-
-      
     </div>
   );
 };
