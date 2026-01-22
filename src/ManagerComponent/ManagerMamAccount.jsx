@@ -70,34 +70,10 @@ const MamAccount = () => {
   };
 
   const columnsMam = [
-    {
-      Header: "",
-      accessor: "expand",
-      Cell: (cellValue, row) => {
-        const mamAccountId = row.mamAccountId;
-        const expanded = expandedManagers[mamAccountId];
-        return (
-          <button
-            className="px-2 py-1 mr-2 bg-gray-200 rounded hover:bg-gray-300 text-xs"
-            onClick={() => {
-              if (!expanded) fetchClientsForManager(mamAccountId);
-              setExpandedManagers((prev) =>
-                prev[mamAccountId]
-                  ? Object.fromEntries(Object.entries(prev).filter(([k]) => k !== mamAccountId))
-                  : { ...prev, [mamAccountId]: { loading: true, error: null, clients: [] } }
-              );
-              if (!expanded) fetchClientsForManager(mamAccountId);
-            }}
-            aria-label={expanded ? "Collapse" : "Expand"}
-          >
-            {expanded ? "-" : "+"}
-          </button>
-        );
-      },
-    },
+    // ...removed expand/collapse button column...
     { Header: "User ID", accessor: "userId" },
     { Header: "Name", accessor: "name" },
-    { Header: "Manager Email", accessor: "managerEmail" },
+    { Header: "MAM Email", accessor: "managerEmail" },
     { Header: "MAM Account ID", accessor: "mamAccountId" },
     { Header: "Account Balance", accessor: "accountBalance" },
     { Header: "Total Profit", accessor: "totalProfit" },
@@ -343,6 +319,7 @@ const MamAccount = () => {
                 </React.Fragment>
               );
             }}
+            showRefresh={false}
           />
         ) : (
           <TableStructure
@@ -351,6 +328,7 @@ const MamAccount = () => {
             data={[]}
             serverSide={true}
             onFetch={handleFetch}
+            showRefresh={false}
           />
         )}
       </div>
