@@ -90,15 +90,19 @@ const Partnership = () => {
     {
       Header: "Status",
       accessor: "status",
-      Cell: (value) => (
-        <span className={value === "approved" ? "text-green-500 font-semibold" : "text-red-500 font-semibold"}>
-          {value.charAt(0).toUpperCase() + value.slice(1)}
+      Cell: (value, row) => (
+        <span>
+          <span className={value === "approved" ? "text-green-500 font-semibold" : "text-red-500 font-semibold"}>
+            {value.charAt(0).toUpperCase() + value.slice(1)}
+          </span>
+          {value === "approved" && row.approvedBy ? (
+            <div className="text-sm mt-1">(By : {row.approvedBy})</div>
+          ) : ''}
         </span>
       )
     },
     { Header: "Created At", accessor: "createdAt" },
     { Header: "Approved At", accessor: "approvedAt" },
-    { Header: "Approved By", accessor: "approvedBy" },
   ];
 
   const withdrawalRequestActions = (row) => {
@@ -256,7 +260,7 @@ const Partnership = () => {
           // 'type' column removed from UI; we still keep raw value on _raw if needed
           amount: it.amount ?? it.value ?? "",
           status: it.status ?? "",
-          createdAt: it.created_at ?? it.createdAt ?? it.date ?? "",
+          createdAt: it.created_at ? it.created_at.split('.')[0] : (it.createdAt ?? it.date ?? ""),
           _raw: it,
         }));
       }

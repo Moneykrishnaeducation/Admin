@@ -169,7 +169,7 @@ const AdminManagerList = () => {
 
   useEffect(() => {
     fetchAdmins();
-  }, []);
+  }, [isSuperuserUser]);
 
   // Filtered list based on search input
   const filtered = list.filter(
