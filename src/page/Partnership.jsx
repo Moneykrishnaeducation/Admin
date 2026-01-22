@@ -1374,45 +1374,49 @@ const Partnership = () => {
 
   return (
     <div className="p-4">
-      <div className="flex gap-3 mb-4 items-center">
-        <button
-          className={`px-4 py-2 rounded-md font-semibold transition ${activeTab === "partnerList" ? "bg-yellow-400 text-black shadow-md" : "bg-gray-400 text-white hover:bg-gray-500"
-            }`}
-          onClick={() => setActiveTab("partnerList")}
-        >
-          Partner List
-        </button>
-        <button
-          className={`px-4 py-2 rounded-md font-semibold transition ${activeTab === "withdrawalRequest" ? "bg-yellow-400 text-black shadow-md" : "bg-gray-400 text-white hover:bg-gray-500"
-            }`}
-          onClick={() => setActiveTab("withdrawalRequest")}
-        >
-          Withdrawal History
-        </button>
-        <button
-          className={`px-4 py-2 rounded-md font-semibold transition ${activeTab === "withdrawalPending" ? "bg-yellow-400 text-black shadow-md" : "bg-gray-400 text-white hover:bg-gray-500"
-            }`}
-          onClick={() => setActiveTab("withdrawalPending")}
-        >
-          Withdrawal Pending
-        </button>
-        <button
-          className="bg-yellow-500 text-black px-4 py-2 rounded-md font-semibold hover:bg-yellow-600 transition shadow-md ml-auto"
-          onClick={() => handleOpenCommissionModal(false)}
-        >
-          View list
-        </button>
-        <button
-          className="bg-yellow-500 text-black px-4 py-2 rounded-md font-semibold hover:bg-yellow-600 transition shadow-md"
-          onClick={() => {
-            setEditRowId(null);
-            setEditedRowData({});
-            setNewProfile({ profileName: "", usdPerLot: "", isPercentageBased: false, levelPercentages: "", selectedGroups: [] });
-            handleOpenCommissionModal(true);
-          }}
-        >
-          +Create
-        </button>
+      <div className="flex flex-col sm:flex-row gap-3 mb-4 items-stretch sm:items-center">
+        <div className="flex flex-col sm:flex-row gap-3 flex-1">
+          <button
+            className={`px-4 py-2 rounded-md font-semibold transition text-center ${activeTab === "partnerList" ? "bg-yellow-400 text-black shadow-md" : "bg-gray-400 text-white hover:bg-gray-500"
+              }`}
+            onClick={() => setActiveTab("partnerList")}
+          >
+            Partner List
+          </button>
+          <button
+            className={`px-4 py-2 rounded-md font-semibold transition text-center ${activeTab === "withdrawalRequest" ? "bg-yellow-400 text-black shadow-md" : "bg-gray-400 text-white hover:bg-gray-500"
+              }`}
+            onClick={() => setActiveTab("withdrawalRequest")}
+          >
+            Withdrawal History
+          </button>
+          <button
+            className={`px-4 py-2 rounded-md font-semibold transition text-center ${activeTab === "withdrawalPending" ? "bg-yellow-400 text-black shadow-md" : "bg-gray-400 text-white hover:bg-gray-500"
+              }`}
+            onClick={() => setActiveTab("withdrawalPending")}
+          >
+            Withdrawal Pending
+          </button>
+        </div>
+        <div className="flex flex-col sm:flex-row gap-3 sm:ml-auto">
+          <button
+            className="bg-yellow-500 text-black px-4 py-2 rounded-md font-semibold hover:bg-yellow-600 transition shadow-md text-center"
+            onClick={() => handleOpenCommissionModal(false)}
+          >
+            View list
+          </button>
+          <button
+            className="bg-yellow-500 text-black px-4 py-2 rounded-md font-semibold hover:bg-yellow-600 transition shadow-md text-center"
+            onClick={() => {
+              setEditRowId(null);
+              setEditedRowData({});
+              setNewProfile({ profileName: "", usdPerLot: "", isPercentageBased: false, levelPercentages: "", selectedGroups: [] });
+              handleOpenCommissionModal(true);
+            }}
+          >
+            +Create
+          </button>
+        </div>
       </div>
 
       {/* Top pagination removed per request */}
