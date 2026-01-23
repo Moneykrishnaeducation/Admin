@@ -170,6 +170,21 @@ const Login = () => {
 
       return () => axios.interceptors.request.eject(interceptor);
     }, []);
+    
+    useEffect(() => {
+      try {
+        const user = getUserFromCookies();
+        if (user && Object.keys(user).length) {
+          const role = user.role || 'manager';
+          // short delay so any UI/animations can settle
+          setTimeout(() => {
+            navigate(role === 'admin' ? '/dashboard' : '/manager/dashboard');
+          }, 120);
+        }
+      } catch (e) {
+        // fail silently
+      }
+    }, []);
 
     const handleSubmit = async (e) => {
       e.preventDefault();
