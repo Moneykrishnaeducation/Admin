@@ -59,6 +59,16 @@ import { useTheme } from "../context/ThemeContext";
 
 const MamAccount = () => {
   const { isDarkMode = true } = useTheme() || {};
+
+  // THEME CLASSES
+  const blurOverlayCls = isDarkMode
+    ? "fixed inset-0 bg-black-400 bg-opacity-40 backdrop-blur-md z-40"
+    : "fixed inset-0 bg-white-400 bg-opacity-40 backdrop-blur-md z-40";
+
+  const activeTabCls = "bg-yellow-400 text-black";
+  const inactiveTabCls = isDarkMode
+    ? "bg-gray-700 text-yellow-300"
+    : "bg-gray-300 text-gray-800";
   const location = useLocation();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("mam"); // "mam" or "investor"
@@ -342,15 +352,15 @@ const MamAccount = () => {
     <div className={`p-6 max-w-9xl mx-auto relative ${isDarkMode ? 'bg-black' : 'bg-white'}`}>
       {/* Background blur for table when modal is open */}
       {(depositModalOpen || withdrawModalOpen || creditInModalOpen || creditOutModalOpen || disableModalOpen || historyModalOpen) && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm z-40"></div>
+        <div className={blurOverlayCls}></div>
       )}
 
       <div className="flex gap-4 mb-4  relative">
         <button
           className={`px-5 py-2 rounded-full font-semibold ${
             activeTab === "mam"
-              ? "bg-yellow-400 text-black"
-              : "bg-gray-700 text-yellow-300"
+              ? activeTabCls
+              : inactiveTabCls
           }`}
           onClick={() => {
             setActiveTab("mam");
@@ -364,8 +374,8 @@ const MamAccount = () => {
         <button
           className={`px-5 py-2 rounded-full font-semibold ${
             activeTab === "investor"
-              ? "bg-yellow-400 text-black"
-              : "bg-gray-700 text-yellow-300"
+              ? activeTabCls
+              : inactiveTabCls
           }`}
           onClick={() => {
             setActiveTab("investor");
