@@ -293,7 +293,7 @@ const AdminManagerList = () => {
   };
 
   return (
-    <div className={`font-sans ${isDarkMode ? 'text-gray-200' : 'bg-white text-black'} p-6 max-w-[1200px] mx-auto rounded-lg`}>
+    <div className={`font-sans ${isDarkMode ? 'text-gray-200' : 'bg-white text-black'} p-6 max-w-full mx-auto rounded-lg`}>
       <h1 className="text-3xl font-bold text-yellow-400 mb-4 text-center">
         Admin Management Panel
       </h1>
@@ -312,8 +312,11 @@ const AdminManagerList = () => {
         </button>
 
         <button
-          onClick={() => navigate("/trading-group")}
-          className="px-6 py-2 bg-yellow-500 text-black rounded-md hover:bg-yellow-600 transition-colors"
+          onClick={() => {
+            if (isSuperuserUser) navigate("/trading-group");
+            else showMessage('Access Denied', 'Only superusers can access Trading Group');
+          }}
+          className={`${!isSuperuserUser ?'hidden' :''} px-6 py-2 bg-yellow-500 text-black rounded-md hover:bg-yellow-600 transition-colors`}
         >
           Trading Group
         </button>
