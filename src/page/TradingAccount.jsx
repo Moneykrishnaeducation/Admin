@@ -31,9 +31,6 @@ const _currencyFormatter = (v) => {
 
 const TradingAccountPage = () => {
   const [data, setData] = useState([]);
-  const [page, _setPage] = useState(1);
-  const [pageSize, _setPageSize] = useState(10);
-
   const [loading, setLoading] = useState(false);
   const [error] = useState(null);
   const [expandedId, setExpandedId] = useState(null);
@@ -73,13 +70,13 @@ const TradingAccountPage = () => {
   // Internal transfer modal state
   const [internalTransferOpen, setInternalTransferOpen] = useState(false);
 
-  // fetch users (admin) with pagination
-  const fetchUsers = React.useCallback(
-    async ({ page: p = 1, pageSize: ps = 10, query = "" }) => {
+  // fetch users (admin) with pagination - using server-side pagination
+  const handleFetch = React.useCallback(
+    async ({ page = 1, pageSize = 10, query = "" } = {}) => {
       const endpoint = "/admin/trading-accounts/";
       const params = new URLSearchParams();
-      params.set("page", String(p));
-      params.set("pageSize", String(ps));
+      params.set("page", String(page));
+      params.set("pageSize", String(pageSize));
       if (query) params.set("query", query);
       try {
         setLoading(true);
@@ -119,7 +116,6 @@ const TradingAccountPage = () => {
             isEnabled: isEnabled,
           };
         });
-        setData(mapped);
         return { data: mapped, total };
       } catch (err) {
         console.error("Failed to load users:", err);
@@ -131,11 +127,6 @@ const TradingAccountPage = () => {
     },
     []
   );
-
-  React.useEffect(() => {
-    fetchUsers({ page, pageSize, query: "" });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, pageSize]);
 
   // Reference for modal backdrop to handle outside click
   const _interTransModalRef = useRef(null);
@@ -453,10 +444,10 @@ const TradingAccountPage = () => {
       </div>
       <TableStructure
         columns={columns}
-        serverSide={false}
+        serverSide={true}
         data={data}
         isLoading={loading}
-        initialPageSize={10}
+        onFetch={handleFetch}
         renderRowSubComponent={renderRowSubComponent}
         onRowClick={onRowClick}
       />
