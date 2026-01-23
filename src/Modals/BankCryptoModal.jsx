@@ -5,7 +5,6 @@ import { adminApiClient } from "../utils/fetch-utils.js";
 const BankCryptoModal = ({
   visible,
   onClose,
-  userRow,
   onSave,
   userId,
   isDarkMode,
@@ -134,9 +133,9 @@ const BankCryptoModal = ({
 
   /* ================= THEME CLASSES ================= */
   const cardBg = isDarkMode ? "bg-black" : "bg-white";
-  const borderCls = isDarkMode ? "border-gray-700" : "border-gray-200";
-  const textMain = isDarkMode ? "text-white" : "text-black";
-  const textMuted = isDarkMode ? "text-gray-400" : "text-gray-500";
+  const borderCls = isDarkMode ? "border-yellow-300" : "border-gray-300";
+  const textMain = isDarkMode ? "text-yellow-300" : "text-gray-700";
+  // const textMuted = isDarkMode ? "text-yellow-500" : "text-gray-500";
 
   const inputBase = `
     w-full rounded-lg border px-3 py-2 text-sm
@@ -192,7 +191,7 @@ const BankCryptoModal = ({
     >
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-h-[65vh] overflow-y-auto pr-1">
         {/* BANK */}
-        <div className={`rounded-xl border ${borderCls} ${cardBg} p-5`}>
+        <div className={`rounded-xl border-2 ${borderCls} ${cardBg} p-5`}>
           <h4 className={`font-semibold mb-4 ${textMain}`}>
             Bank Details
           </h4>
@@ -209,16 +208,14 @@ const BankCryptoModal = ({
                 value={data[key]}
                 onChange={handleChange(key)}
                 readOnly={!isEditMode}
-                className={`${inputBase} ${
-                  isEditMode ? inputEditable : inputReadOnly
-                }`}
+                className={`${inputBase} ${isEditMode ? inputEditable : inputReadOnly} ${isDarkMode ? 'text-yellow-200' : 'text-black'} border ${isDarkMode ? 'border-yellow-600' : 'border-gray-300'} placeholder-${isDarkMode ? 'yellow-500' : 'gray-500'}`}
               />
             ))}
           </div>
         </div>
 
         {/* CRYPTO */}
-        <div className={`rounded-xl border ${borderCls} ${cardBg} p-5`}>
+        <div className={`rounded-xl border-2 ${borderCls} ${cardBg} p-5`}>
           <h4 className={`font-semibold mb-4 ${textMain}`}>
             Crypto Details
           </h4>
@@ -233,9 +230,7 @@ const BankCryptoModal = ({
                 value={data[key]}
                 onChange={handleChange(key)}
                 readOnly={!isEditMode}
-                className={`${inputBase} ${
-                  isEditMode ? inputEditable : inputReadOnly
-                }`}
+                className={`${inputBase} ${isEditMode ? inputEditable : inputReadOnly} ${isDarkMode ? 'text-yellow-200' : 'text-black'} border ${isDarkMode ? 'border-yellow-600' : 'border-gray-300'} placeholder-${isDarkMode ? 'yellow-500' : 'gray-500'}`}
               />
             ))}
           </div>
