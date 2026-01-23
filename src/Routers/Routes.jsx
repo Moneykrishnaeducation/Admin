@@ -96,6 +96,7 @@ import ManagerMamAccount from '../ManagerComponent/ManagerMamAccount';
 const AppRoutes = ({ role }) => {
   const location = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [routeRefreshKey, setRouteRefreshKey] = useState(0);
 
   /* ---------------- Responsive sidebar ---------------- */
   useEffect(() => {
@@ -160,6 +161,7 @@ const AppRoutes = ({ role }) => {
         <Navbar
           isSidebarOpen={isSidebarOpen}
           setIsSidebarOpen={setIsSidebarOpen}
+          setRouteRefreshKey={setRouteRefreshKey}
         />
       )}
 
@@ -174,7 +176,7 @@ const AppRoutes = ({ role }) => {
           isSidebarOpen={isSidebarOpen}
           setIsSidebarOpen={setIsSidebarOpen}
         >
-          <Routes>
+          <Routes key={routeRefreshKey}>
             {allowedRoutes.map((r, i) => (
               <Route key={i} path={r.path} element={r.element} />
             ))}
