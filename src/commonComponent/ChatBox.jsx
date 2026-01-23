@@ -239,22 +239,27 @@ const ChatBot = () => {
 
   // Load clients list ALWAYS in background (polling independent of chat being open)
   useEffect(() => {
+    // Only poll if user is admin, not manager
+    if (userRole && userRole.toLowerCase() === 'manager') {
+      return; // Skip polling for managers
+    }
+    
     // Start polling immediately
     loadClients();
     // Poll clients every 30 seconds continuously for background unread count updates
     const interval = setInterval(loadClients, 3000);
     return () => clearInterval(interval);
-  }, []);
+  }, [userRole]);
 
   // Load messages for selected client - reduced to 15s polling for background
   useEffect(() => {
-    if (selectedClientId) {
+    if (selectedClientId && userRole && userRole.toLowerCase() !== 'manager') {
       loadMessagesForClient(selectedClientId);
       // Poll messages every 15 seconds for smooth updates with less network usage
       const interval = setInterval(() => loadMessagesForClient(selectedClientId), 15000);
       return () => clearInterval(interval);
     }
-  }, [selectedClientId]);
+  }, [selectedClientId, userRole]);
 
   // Cleanup: Abort all pending requests on component unmount
   useEffect(() => {
@@ -292,6 +297,12 @@ const ChatBot = () => {
       });
 
       clearTimeout(timeoutId);
+      
+      // Handle 401/403 - Stop polling if unauthorized
+      if (response.status === 401 || response.status === 403) {
+        setError("Unauthorized - Session expired. Please refresh.");
+        return; // Stop polling on auth error
+      }
       
       if (!response.ok) throw new Error("Failed to load clients");
 
@@ -401,6 +412,13 @@ const ChatBot = () => {
       });
 
       clearTimeout(timeoutId);
+      
+      // Handle 401/403 - Stop polling if unauthorized
+      if (response.status === 401 || response.status === 403) {
+        console.debug(`Messages poll: Unauthorized for client ${clientId}, stopping polling`);
+        setError("Unauthorized - Session expired. Please refresh.");
+        return; // Stop polling on auth error
+      }
       
       if (!response.ok) {
         console.debug(`Messages poll: Failed for client ${clientId}`);
