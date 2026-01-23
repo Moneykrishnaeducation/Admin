@@ -3,6 +3,33 @@ import { RefreshCw, Info } from "lucide-react";
 import { useTheme } from "../context/ThemeContext";
 
 
+// Helper to get a cookie value
+function getCookie(name) {
+  try {
+    const nameEQ = name + "=";
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+      let cookie = cookies[i].trim();
+      if (cookie.indexOf(nameEQ) === 0) {
+        return decodeURIComponent(cookie.substring(nameEQ.length));
+      }
+    }
+  } catch (e) {}
+  return null;
+}
+
+// Check if user is superuser (reads non-HttpOnly `user` cookie)
+function isSuperuser() {
+  try {
+    const userCookie = getCookie('user');
+    if (userCookie) {
+      const user = JSON.parse(userCookie);
+      return user?.is_superuser === true || user?.is_superuser === 'true';
+    }
+  } catch (e) {}
+  return false;
+}
+
 /* ---------------- BADGE ---------------- */
 
 
@@ -204,6 +231,8 @@ function GroupConfigurationGuideToggle({ isDarkMode }) {
 export default function GroupConfiguration() {
   const theme = useTheme() || {};
   const { isDarkMode = true } = theme;
+  const [superuserCheckDone, setSuperuserCheckDone] = useState(false);
+  const [isSuperuserUser, setIsSuperuserUser] = useState(false);
   const [groups, setGroups] = useState([]);
   const [selectedDefault, setSelectedDefault] = useState(null);
   const [selectedDemoDefault, setSelectedDemoDefault] = useState(null);
@@ -256,6 +285,13 @@ export default function GroupConfiguration() {
     } finally {
       setLoading(false);
     }
+  }, []);
+
+  // Check superuser status on mount (UI gating)
+  useEffect(() => {
+    const superuser = isSuperuser();
+    setIsSuperuserUser(superuser);
+    setSuperuserCheckDone(true);
   }, []);
 
 
@@ -432,7 +468,7 @@ const changeDefault = (id, type) => {
 
   if (loading)
     return (
-      <div className={`p-6 max-w-[1050px] mx-auto`}>
+      <div className={`p-6 max-w-full mx-auto`}>
         <div className="animate-pulse space-y-4">
           <div className={`${isDarkMode ? 'bg-yellow-400/30' : 'bg-yellow-400/20'} h-8 rounded w-1/3 mx-auto`} />
 
@@ -476,8 +512,30 @@ const changeDefault = (id, type) => {
       </div>
     );
 
+  // If we have checked and user is not superuser, show Access Denied
+  if (superuserCheckDone && !isSuperuserUser) {
+    return (
+      <div className={`font-sans ${isDarkMode ? 'text-gray-200' : 'bg-white text-black'} p-6 max-w-[1200px] mx-auto rounded-lg min-h-screen flex items-center justify-center`}>
+        <div className={`text-center p-8 rounded-lg border-2 ${isDarkMode ? 'border-red-500 bg-red-900/20' : 'border-red-400 bg-red-100'}`}>
+          <h1 className={`text-3xl font-bold mb-4 ${isDarkMode ? 'text-red-400' : 'text-red-600'}`}>
+            Access Denied
+          </h1>
+          <p className={`text-lg mb-6 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+            Only superusers can access Group Configuration.
+          </p>
+          <button
+            onClick={() => window.location.href = "/dashboard"}
+            className="px-6 py-2 bg-yellow-500 text-black rounded-md hover:bg-yellow-600 transition-colors"
+          >
+            Go to Dashboard
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className={`font-sans ${isDarkMode ? 'bg-gray-900 text-gray-200' : 'bg-white text-black'} p-5 max-w-[1050px] mx-auto rounded-lg`}>
+    <div className={`font-sans ${isDarkMode ? 'bg-gray-900 text-gray-200' : 'bg-white text-black'} p-5 max-w-full m-5 mx-auto rounded-lg`}>
       
       
       
