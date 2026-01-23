@@ -8,19 +8,19 @@ const Modal = ({ open, onClose, title, children, actions, width = "w-80", isDark
   if (!open) return null;
 
   return (
-    <div
-      className="fixed inset-0 flex items-center justify-center z-50 bg-black/60 backdrop-blur-sm"
-      onClick={onClose}
-    >
       <div
-        className={`${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'} p-6 rounded-xl shadow-lg max-h-[90vh] overflow-y-auto ${width} border border-yellow-500/60 shadow-[0_0_20px_rgba(255,215,0,0.12)]`}
-        onClick={(e) => e.stopPropagation()}
+        className="fixed inset-0 flex items-center justify-center z-50 bg-black/60 backdrop-blur-sm"
+        onClick={onClose}
       >
-        <h2 className={`text-xl font-semibold mb-4 ${isDarkMode ? 'text-white' : 'text-black'}`}>{title}</h2>
-        {children}
-        <div className="flex justify-end gap-3 mt-4">{actions}</div>
+        <div
+          className={`w-full max-w-md sm:max-w-2xl mx-2 sm:mx-0 ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'} p-4 sm:p-6 rounded-xl shadow-lg max-h-[90vh] overflow-y-auto ${width} border border-yellow-500/60 shadow-[0_0_20px_rgba(255,215,0,0.12)]`}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <h2 className={`text-xl font-semibold mb-4 ${isDarkMode ? 'text-white' : 'text-black'}`}>{title}</h2>
+          {children}
+          <div className="flex justify-end gap-3 mt-4">{actions}</div>
+        </div>
       </div>
-    </div>
   );
 };
 
