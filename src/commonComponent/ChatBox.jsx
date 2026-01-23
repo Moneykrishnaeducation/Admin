@@ -85,11 +85,15 @@ const ChatBot = () => {
   const originalFaviconRef = useRef(null);
   const prevMessagesRef = useRef({});
   const audioCtxRef = useRef(null);
+  const bcRef = useRef(null);
+  const tabIdRef = useRef(Math.random().toString(36).slice(2));
+  const notifiedIdsRef = useRef(new Set());
+  const playedIdsRef = useRef(new Set());
 
   // Ensure an AudioContext is created/resumed on first user interaction (browsers block autoplay)
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    const onFirstInteract = () => {
+    const onFirstInteract = (e) => {
       try {
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         if (!AudioContext) return;
@@ -99,14 +103,16 @@ const ChatBot = () => {
         if (audioCtxRef.current.state === 'suspended') {
           audioCtxRef.current.resume().catch(() => {});
         }
-      } catch (e) {
+      } catch (err) {
         // ignore
       }
-      window.removeEventListener('pointerdown', onFirstInteract);
+      // remove all attached listeners after first interaction
+      events.forEach((ev) => window.removeEventListener(ev, onFirstInteract));
     };
 
-    window.addEventListener('pointerdown', onFirstInteract, { once: true });
-    return () => window.removeEventListener('pointerdown', onFirstInteract);
+    const events = ['pointerdown', 'click', 'touchstart', 'keydown'];
+    events.forEach((ev) => window.addEventListener(ev, onFirstInteract, { once: true }));
+    return () => events.forEach((ev) => window.removeEventListener(ev, onFirstInteract));
   }, []);
 
   // Get user role on component mount
@@ -830,6 +836,25 @@ const ChatBot = () => {
     // Skip during server-side rendering
     if (typeof window === 'undefined') return;
 
+    // Setup BroadcastChannel to coordinate notifications/audio across tabs
+    try {
+      if (!bcRef.current && typeof BroadcastChannel !== 'undefined') {
+        bcRef.current = new BroadcastChannel('chat-notifs');
+        bcRef.current.onmessage = (ev) => {
+          const data = ev.data || {};
+          if (!data.type) return;
+          if (data.type === 'notified') {
+            notifiedIdsRef.current.add(data.id);
+          } else if (data.type === 'played') {
+            playedIdsRef.current.add(data.id);
+            // If another tab played the sound, avoid playing duplicate sound here
+          }
+        };
+      }
+    } catch (e) {
+      // ignore if BroadcastChannel not supported
+    }
+
     // Avoid playing sounds on initial load
     if (isInitialLoadRef.current) {
       prevMessagesRef.current = { ...messages };
@@ -837,15 +862,58 @@ const ChatBot = () => {
     }
 
     // For each client, detect newly appended messages
+    const bc = bcRef.current;
     Object.keys(messages).forEach((clientId) => {
       const prevList = prevMessagesRef.current[clientId] || [];
       const currList = messages[clientId] || [];
       if (currList.length > prevList.length) {
         const newMsgs = currList.slice(prevList.length);
         newMsgs.forEach((m) => {
-          // Play tone only for incoming user messages
           if (m.sender === 'user') {
-            playNotificationTone();
+            const notifId = `${clientId}:${m.id}`;
+
+            // If page is visible, play sound locally and broadcast to avoid duplicates
+            if (document.visibilityState === 'visible') {
+              if (!playedIdsRef.current.has(notifId)) {
+                playNotificationTone();
+                playedIdsRef.current.add(notifId);
+                if (bc) bc.postMessage({ type: 'played', id: notifId, sender: tabIdRef.current });
+              }
+            } else {
+              // Page hidden: show desktop notification if permitted and not already shown
+              if (!notifiedIdsRef.current.has(notifId)) {
+                if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+                  try {
+                    const title = m.sender_name || 'New message';
+                    const body = m.message ? (m.message.length > 120 ? m.message.slice(0, 117) + '...' : m.message) : 'New chat message';
+                    const icon = originalFaviconRef.current || undefined;
+                    const n = new Notification(title, { body, icon, tag: notifId });
+                    notifiedIdsRef.current.add(notifId);
+                    if (bc) bc.postMessage({ type: 'notified', id: notifId, sender: tabIdRef.current });
+                    // Try to play audio as well (may be blocked in background)
+                    if (!playedIdsRef.current.has(notifId)) {
+                      playNotificationTone();
+                      playedIdsRef.current.add(notifId);
+                      if (bc) bc.postMessage({ type: 'played', id: notifId, sender: tabIdRef.current });
+                    }
+                    n.onclick = () => {
+                      window.focus();
+                      setIsOpen(true);
+                      n.close();
+                    };
+                  } catch (e) {
+                    // ignore
+                  }
+                } else if (typeof Notification !== 'undefined' && Notification.permission !== 'denied') {
+                  // Request permission once
+                  Notification.requestPermission().then((perm) => {
+                    if (perm === 'granted') {
+                      // permission granted — next poll will show notification
+                    }
+                  }).catch(() => {});
+                }
+              }
+            }
           }
         });
       }
@@ -857,6 +925,13 @@ const ChatBot = () => {
       return acc;
     }, {});
   }, [messages]);
+
+  // Cleanup BroadcastChannel on unmount
+  useEffect(() => {
+    return () => {
+      try { bcRef.current && bcRef.current.close(); } catch (e) {}
+    };
+  }, []);
 
   // Hide chatbot for managers
   if (userRole === "manager") {
