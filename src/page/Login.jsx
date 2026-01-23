@@ -181,21 +181,7 @@ const Login = () => {
 
       return () => axios.interceptors.request.eject(interceptor);
     }, []);
-    
-    useEffect(() => {
-      try {
-        const user = getUserFromCookies();
-        if (user && Object.keys(user).length) {
-          const role = user.role || 'manager';
-          // short delay so any UI/animations can settle
-          setTimeout(() => {
-            navigate(role === 'admin' ? '/dashboard' : '/manager/dashboard');
-          }, 120);
-        }
-      } catch (e) {
-        // fail silently
-      }
-    }, []);
+
 
     const handleSubmit = async (e) => {
       e.preventDefault();
@@ -309,7 +295,7 @@ const Login = () => {
         const apiBaseUrl = `${window.location.protocol}//${window.location.host}`;
         await ensureCsrf(apiBaseUrl);
         const response = await axios.post(
-          `${apiBaseUrl}/client/api/send-reset-otp/`,
+          `${apiBaseUrl}/api/send-reset-otp/`,
           { email: forgotEmail },
           { headers: { 'X-CSRFToken': getCookie('csrftoken') }, withCredentials: true }
         );
