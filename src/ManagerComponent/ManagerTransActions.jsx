@@ -170,7 +170,7 @@ const onFetch = useCallback(
       });
 
       return { data: mappedData, total: totalCount };
-    } catch {
+    } catch (error) {
       // console.error("Error fetching transactions:", error);
       setTokenMissing(true);
       return { data: [], total: 0 };
