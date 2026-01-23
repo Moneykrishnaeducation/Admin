@@ -5,74 +5,69 @@ import { AdminAuthenticatedFetch } from "../utils/fetch-utils.js";
 
 const ManagerTradingaccount = () => {
   const [data, setData] = useState([]);
-  const [page] = useState(1);
-  const [pageSize] = useState(10);
-
-  const [loading] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [error] = useState(null);
   const [historyModalOpen, setHistoryModalOpen] = useState(false);
   const [historyAccountId, setHistoryAccountId] = useState("");
   const [historyActiveTab, setHistoryActiveTab] = useState("transactions");
   const [selectedRowData, setSelectedRowData] = useState(null);
 
-  // fetch users (admin) with pagination
-  const fetchUsers = React.useCallback(
-      async ({ page: p = 1, pageSize: ps = 10, query = "" }) => {
-        const endpoint = "/api/admin/trading-accounts/";
-        const params = new URLSearchParams();
-        params.set("page", String(p));
-        params.set("pageSize", String(ps));
-        if (query) params.set("query", query);
-        try {
-          const client = typeof window !== "undefined" && window.adminApiClient ? window.adminApiClient : null;
-          let resJson;
-          if (client && typeof client.get === "function") {
-            resJson = await client.get(`${endpoint}?${params.toString()}`);
-          } else {
-            // Tokens are now in HttpOnly cookies - no need to manually add Authorization header
-            const headers = { "Content-Type": "application/json" };
-            const res = await fetch(`${endpoint}?${params.toString()}`, { credentials: "include", headers });
-            if (!res.ok) throw new Error(`Failed to fetch ${endpoint}: ${res.status}`);
-            resJson = await res.json();
-          }
-          const items = Array.isArray(resJson.data)
-            ? resJson.data
-            : Array.isArray(resJson)
-            ? resJson
-            : resJson.results || [];
-          const total =
-            typeof resJson.total === "number"
-              ? resJson.total
-              : typeof resJson.count === "number"
-              ? resJson.count
-              : items.length;
-          const mapped = items.map((u) => ({
-            userId: u.user_id ?? u.id ?? u.pk,
-            name: `${u.username || "-"}`.trim(),
-            email: u.email,
-            accountId: u.account_id || "-",
-            balance: typeof u.balance === "number" ? u.balance : 0,
-            equity: typeof u.equity === "number" ? u.equity : 0,
-            openPositions: typeof u.open_positions === "number" ? u.open_positions : 0,
-            leverage : u.leverage || "-",
-            status: u.status ? "Running" : "Stopped",
-            country: u.country || "-",
-            isEnabled: Boolean(u.is_is_enabled ?? u.enabled ?? u.is_enabled),
-          }));
-          setData(mapped);
-          return { data: mapped, total };
-        } catch  {
-          // console.error("Failed to load users:", err);
-          return { data: [], total: 0 };
+  // fetch users (admin) with pagination - using server-side pagination
+  const handleFetch = React.useCallback(
+    async ({ page = 1, pageSize = 10, query = "" } = {}) => {
+      const endpoint = "/api/admin/trading-accounts/";
+      const params = new URLSearchParams();
+      params.set("page", String(page));
+      params.set("pageSize", String(pageSize));
+      if (query) params.set("query", query);
+      try {
+        setLoading(true);
+        const client = typeof window !== "undefined" && window.adminApiClient ? window.adminApiClient : null;
+        let resJson;
+        if (client && typeof client.get === "function") {
+          resJson = await client.get(`${endpoint}?${params.toString()}`);
+        } else {
+          // Tokens are now in HttpOnly cookies - no need to manually add Authorization header
+          const headers = { "Content-Type": "application/json" };
+          const res = await fetch(`${endpoint}?${params.toString()}`, { credentials: "include", headers });
+          if (!res.ok) throw new Error(`Failed to fetch ${endpoint}: ${res.status}`);
+          resJson = await res.json();
         }
-      },
-      []
-    );
-
-  React.useEffect(() => {
-    fetchUsers(page, pageSize);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, pageSize]);
+        const items = Array.isArray(resJson.data)
+          ? resJson.data
+          : Array.isArray(resJson)
+          ? resJson
+          : resJson.results || [];
+        const total =
+          typeof resJson.total === "number"
+            ? resJson.total
+            : typeof resJson.count === "number"
+            ? resJson.count
+            : items.length;
+        const mapped = items.map((u) => ({
+          userId: u.user_id ?? u.id ?? u.pk,
+          name: `${u.username || "-"}`.trim(),
+          email: u.email,
+          accountId: u.account_id || "-",
+          balance: typeof u.balance === "number" ? u.balance : 0,
+          equity: typeof u.equity === "number" ? u.equity : 0,
+          openPositions: typeof u.open_positions === "number" ? u.open_positions : 0,
+          leverage : u.leverage || "-",
+          status: u.status ? "Running" : "Stopped",
+          country: u.country || "-",
+          isEnabled: Boolean(u.is_is_enabled ?? u.enabled ?? u.is_enabled),
+        }));
+        return { data: mapped, total };
+      } catch {
+        // console.error("Failed to load users:", err);
+        return { data: [], total: 0 };
+      }
+      finally {
+        setLoading(false);
+      }
+    },
+    []
+  );
 
   // Fetch open positions for all accounts
   React.useEffect(() => {
@@ -196,8 +191,10 @@ const ManagerTradingaccount = () => {
 
       <TableStructure
         columns={columns}
+        serverSide={true}
         data={data}
-        initialPageSize={10}
+        isLoading={loading}
+        onFetch={handleFetch}
       />
 
       <HistoryModal
