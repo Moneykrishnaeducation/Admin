@@ -46,6 +46,7 @@ const ManagerDemo = () => {
 
   // Balance state
   const [newBalance, setNewBalance] = useState("10000.00");
+  
 
   // View modal tabs
   const [viewTab, setViewTab] = useState("history");
