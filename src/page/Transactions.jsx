@@ -3,6 +3,26 @@ import TableStructure from "../commonComponent/TableStructure";
 import { Download, FileText } from "lucide-react";
 import { useTheme } from "../context/ThemeContext";
 
+/* -------------------- Date formatting utility -------------------- */
+const formatDateTime = (dateString) => {
+  if (!dateString) return "N/A";
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return "N/A";
+    
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const seconds = String(date.getSeconds()).padStart(2, '0');
+    
+    return `${day}:${month}:${year} ${hours}:${minutes}:${seconds}`;
+  } catch (error) {
+    return "N/A";
+  }
+};
+
 /* -------------------- Error Boundary -------------------- */
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -196,7 +216,7 @@ export default function Transactions() {
             return isInternalTransfer
               ? {
                   id: item.id,
-                  dateTime: new Date(item.created_at).toLocaleString(),
+                  dateTime: formatDateTime(item.created_at),
                   fromAccountId: item.from_account || "",
                   toAccountId: item.to_account || "",
                   accountHolder: item.it_username || "",
@@ -209,7 +229,7 @@ export default function Transactions() {
                 }
               : {
                   id: item.id,
-                  dateTime: new Date(item.created_at).toLocaleString(),
+                  dateTime: formatDateTime(item.created_at),
                   accountId: item.trading_account_id || "",
                   accountName: item.trading_account_name || "",
                   email: item.email || "",
@@ -224,7 +244,7 @@ export default function Transactions() {
             return typeFilter === "internal_transfer"
               ? {
                   id: item.id,
-                  dateTime: new Date(item.created_at).toLocaleString(),
+                  dateTime: formatDateTime(item.created_at),
                   fromAccountId: item.from_account || "",
                   toAccountId: item.to_account || "",
                   accountHolder: item.it_username || "",
@@ -237,7 +257,7 @@ export default function Transactions() {
                 }
               : {
                   id: item.id,
-                  dateTime: new Date(item.created_at).toLocaleString(),
+                  dateTime: formatDateTime(item.created_at),
                   accountId: item.trading_account_id || "",
                   accountName: item.trading_account_name || "",
                   email: item.email || "",

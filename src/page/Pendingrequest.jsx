@@ -7,6 +7,26 @@ import PendingCommissionModal from "../Modals/PendingCommissionModal";
 import { get, API_BASE } from "../utils/api-config"; // backend GET utility and API_BASE
 import { useTheme } from "../context/ThemeContext";
 
+// Date formatting utility
+const formatDateTime = (dateString) => {
+  if (!dateString) return "N/A";
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return "N/A";
+    
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const seconds = String(date.getSeconds()).padStart(2, '0');
+    
+    return `${day}:${month}:${year} ${hours}:${minutes}:${seconds}`;
+  } catch (error) {
+    return "N/A";
+  }
+};
+
 const PendingRequest = () => {
   let { isDarkMode } = useTheme();
   const buttons = [
@@ -160,7 +180,11 @@ const PendingRequest = () => {
     { Header: "User Id", accessor: "id" },
     { Header: "User Name", accessor: "username" },
     { Header: "Email", accessor: "useremail" },
-    { Header: "Created At", accessor: "created_at" },
+    {
+      Header: "Created At",
+      accessor: "created_at",
+      Cell: (cellValue) => formatDateTime(cellValue),
+    },
     {
       Header: "Commissioning Profile",
       accessor: "commissionProfile",
@@ -219,7 +243,11 @@ const PendingRequest = () => {
     { Header: "Email", accessor: "email" },
     { Header: "Wallet Address", accessor: "wallet_address" },
     { Header: "Exchange", accessor: "exchange" },
-    { Header: "Created At", accessor: "created_at" },
+    {
+      Header: "Created At",
+      accessor: "created_at",
+      Cell: (cellValue) => formatDateTime(cellValue),
+    },
     {
       Header: "Actions",
       accessor: "actions",
@@ -244,7 +272,11 @@ const PendingRequest = () => {
 
   // -------------------- Pending Deposit Columns --------------------
   const pendingDepositsColumns = [
-    { Header: "Date/Time", accessor: "created_at" },
+    {
+      Header: "Date/Time",
+      accessor: "created_at",
+      Cell: (cellValue) => formatDateTime(cellValue),
+    },
     { Header: "User Name", accessor: "username" },
     { Header: "Email", accessor: "email" },
     { Header: "Account ID", accessor: "trading_account_id" },
@@ -271,7 +303,11 @@ const PendingRequest = () => {
 
   // -------------------- Pending Withdrawals Columns --------------------
   const pendingWithdrawalsColumns = [
-    { Header: "Date/Time", accessor: "created_at" },
+    {
+      Header: "Date/Time",
+      accessor: "created_at",
+      Cell: (cellValue) => formatDateTime(cellValue),
+    },
     { Header: "User Name", accessor: "username" },
     { Header: "Email", accessor: "email" },
     { Header: "Account ID", accessor: "trading_account_id" },
@@ -351,7 +387,11 @@ const PendingRequest = () => {
     { Header: "Type", accessor: "transaction_type" },
     { Header: "Amount", accessor: "amount" },
     { Header: "Status", accessor: "status" },
-    { Header: "Created At", accessor: "created_at" },
+    {
+      Header: "Created At",
+      accessor: "created_at",
+      Cell: (cellValue) => formatDateTime(cellValue),
+    },
     {
       Header: "Actions",
       accessor: "actions",
@@ -441,7 +481,11 @@ const PendingRequest = () => {
         return "N/A";
       },
     },
-    { Header: "Uploaded At", accessor: "uploaded_at" },
+    {
+      Header: "Uploaded At",
+      accessor: "uploaded_at",
+      Cell: (cellValue) => formatDateTime(cellValue),
+    },
     {
       Header: "Actions",
       accessor: "actions",
