@@ -208,7 +208,7 @@ const BankCryptoModal = ({
                 value={data[key]}
                 onChange={handleChange(key)}
                 readOnly={!isEditMode}
-                className={`${inputBase} ${isEditMode ? inputEditable : inputReadOnly} ${isDarkMode ? 'text-yellow-200' : 'text-black'} border ${isDarkMode ? 'border-yellow-600' : 'border-gray-300'} placeholder-${isDarkMode ? 'yellow-500' : 'gray-500'}`}
+                className={`${inputBase} ${isEditMode ? inputEditable : inputReadOnly} ${isDarkMode ? 'text-yellow-300' : 'text-black'} border ${isDarkMode ? 'border-yellow-600' : 'border-gray-300'} placeholder-${isDarkMode ? 'yellow-500' : 'gray-500'}`}
               />
             ))}
           </div>
@@ -230,7 +230,7 @@ const BankCryptoModal = ({
                 value={data[key]}
                 onChange={handleChange(key)}
                 readOnly={!isEditMode}
-                className={`${inputBase} ${isEditMode ? inputEditable : inputReadOnly} ${isDarkMode ? 'text-yellow-200' : 'text-black'} border ${isDarkMode ? 'border-yellow-600' : 'border-gray-300'} placeholder-${isDarkMode ? 'yellow-500' : 'gray-500'}`}
+                className={`${inputBase} ${isEditMode ? inputEditable : inputReadOnly} ${isDarkMode ? 'text-yellow-300' : 'text-black'} border ${isDarkMode ? 'border-yellow-600' : 'border-gray-300'} placeholder-${isDarkMode ? 'yellow-500' : 'gray-500'}`}
               />
             ))}
           </div>
