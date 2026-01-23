@@ -56,13 +56,14 @@ const ManagerTickets = () => {
     e.preventDefault();
 
     const formData = new FormData(e.target);
-    const subject = formData.get("subject");
-    const description = formData.get("description");
+    // Append selected files to formData
+    selectedFiles.forEach((file, idx) => {
+      formData.append("documents", file);
+    });
 
     try {
-      await post("tickets/", {
-        subject: subject,
-        description: description,
+      await post("tickets/", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
       });
 
       alert("Ticket created successfully!");
@@ -151,6 +152,23 @@ const ManagerTickets = () => {
     { Header: "Username", accessor: "username" },
     { Header: "Subject", accessor: "subject" },
     { Header: "Description", accessor: "description" },
+    {
+      Header: "Documents",
+      accessor: "documents",
+      Cell: (docs) =>
+        Array.isArray(docs) && docs.length > 0 ? (
+          <a
+            href={docs[0].url || docs[0]}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-400 underline text-sm"
+          >
+            Document
+          </a>
+        ) : (
+          <span className="text-gray-400">No documents</span>
+        ),
+    },
     {
       Header: "Status",
       accessor: "status",
@@ -274,7 +292,7 @@ const ManagerTickets = () => {
 
       {/* CREATE TICKET PAGE */}
       {activePage === "create" && (
-        <div className="flex justify-center items-center">
+        <div className="fixed inset-0 flex justify-center items-center z-50 bg-neutral-900/60 backdrop-blur-lg">
           <div
             className={`w-full max-w-2xl rounded-lg border ${
               isDarkMode

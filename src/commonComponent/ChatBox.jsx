@@ -81,6 +81,33 @@ const ChatBot = () => {
   const messagesAbortControllerRef = useRef(null);
   const lastClientsCountRef = useRef(0);
   const lastMessagesHashRef = useRef({});
+  const originalTitleRef = useRef('');
+  const originalFaviconRef = useRef(null);
+  const prevMessagesRef = useRef({});
+  const audioCtxRef = useRef(null);
+
+  // Ensure an AudioContext is created/resumed on first user interaction (browsers block autoplay)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const onFirstInteract = () => {
+      try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContext) return;
+        if (!audioCtxRef.current) {
+          audioCtxRef.current = new AudioContext();
+        }
+        if (audioCtxRef.current.state === 'suspended') {
+          audioCtxRef.current.resume().catch(() => {});
+        }
+      } catch (e) {
+        // ignore
+      }
+      window.removeEventListener('pointerdown', onFirstInteract);
+    };
+
+    window.addEventListener('pointerdown', onFirstInteract, { once: true });
+    return () => window.removeEventListener('pointerdown', onFirstInteract);
+  }, []);
 
   // Get user role on component mount
   useEffect(() => {
@@ -239,22 +266,27 @@ const ChatBot = () => {
 
   // Load clients list ALWAYS in background (polling independent of chat being open)
   useEffect(() => {
+    // Only poll if user is admin, not manager
+    if (userRole && userRole.toLowerCase() === 'manager') {
+      return; // Skip polling for managers
+    }
+    
     // Start polling immediately
     loadClients();
     // Poll clients every 30 seconds continuously for background unread count updates
     const interval = setInterval(loadClients, 3000);
     return () => clearInterval(interval);
-  }, []);
+  }, [userRole]);
 
   // Load messages for selected client - reduced to 15s polling for background
   useEffect(() => {
-    if (selectedClientId) {
+    if (selectedClientId && userRole && userRole.toLowerCase() !== 'manager') {
       loadMessagesForClient(selectedClientId);
       // Poll messages every 15 seconds for smooth updates with less network usage
       const interval = setInterval(() => loadMessagesForClient(selectedClientId), 15000);
       return () => clearInterval(interval);
     }
-  }, [selectedClientId]);
+  }, [selectedClientId, userRole]);
 
   // Cleanup: Abort all pending requests on component unmount
   useEffect(() => {
@@ -292,6 +324,12 @@ const ChatBot = () => {
       });
 
       clearTimeout(timeoutId);
+      
+      // Handle 401/403 - Stop polling if unauthorized
+      if (response.status === 401 || response.status === 403) {
+        setError("Unauthorized - Session expired. Please refresh.");
+        return; // Stop polling on auth error
+      }
       
       if (!response.ok) throw new Error("Failed to load clients");
 
@@ -401,6 +439,13 @@ const ChatBot = () => {
       });
 
       clearTimeout(timeoutId);
+      
+      // Handle 401/403 - Stop polling if unauthorized
+      if (response.status === 401 || response.status === 403) {
+        console.debug(`Messages poll: Unauthorized for client ${clientId}, stopping polling`);
+        setError("Unauthorized - Session expired. Please refresh.");
+        return; // Stop polling on auth error
+      }
       
       if (!response.ok) {
         console.debug(`Messages poll: Failed for client ${clientId}`);
@@ -625,6 +670,193 @@ const ChatBot = () => {
   
   // Calculate total unread count from all clients
   const totalUnreadCount = Object.values(clientUnreadCounts).reduce((sum, count) => sum + count, 0);
+
+  // Update browser tab title with unread count when chat is closed
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    if (!originalTitleRef.current) originalTitleRef.current = document.title || '';
+    const original = originalTitleRef.current;
+
+    // Use the `unreadCount` state which reflects badge count when chat is closed
+    if (!isOpen && unreadCount > 0) {
+      const display = unreadCount > 99 ? '99+' : unreadCount;
+      document.title = `(${display}) ${original}`;
+    } else {
+      document.title = original;
+    }
+
+    return () => {
+      document.title = original;
+    };
+  }, [unreadCount, isOpen]);
+
+  // Update favicon with unread badge when chat is closed, restore original otherwise
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+
+    // Ensure we store the original favicon href once
+    if (originalFaviconRef.current === null) {
+      const link = document.querySelector('link[rel~="icon"]') || document.querySelector('link[rel="shortcut icon"]');
+      originalFaviconRef.current = link ? link.href : '';
+    }
+
+    const setFaviconHref = (href) => {
+      let link = document.querySelector('link[rel~="icon"]') || document.querySelector('link[rel="shortcut icon"]');
+      if (!link) {
+        link = document.createElement('link');
+        link.rel = 'icon';
+        document.head.appendChild(link);
+      }
+      link.href = href || '';
+    };
+
+    const restoreOriginal = () => setFaviconHref(originalFaviconRef.current);
+
+    // Show badge only when chat is closed and there are unread messages
+    if (!isOpen && unreadCount > 0) {
+      const count = unreadCount > 99 ? '99+' : String(unreadCount);
+      const size = 64; // canvas size (draw larger for better resolution)
+      const ratio = window.devicePixelRatio || 1;
+      const canvas = document.createElement('canvas');
+      canvas.width = size * ratio;
+      canvas.height = size * ratio;
+      const ctx = canvas.getContext('2d');
+      ctx.scale(ratio, ratio);
+
+      const drawBadge = (baseDrawn = false) => {
+        if (!baseDrawn) {
+          // clear area in case
+          ctx.clearRect(0, 0, size, size);
+          // draw transparent background
+          ctx.fillStyle = '#ffffff00';
+          ctx.fillRect(0, 0, size, size);
+        }
+
+        // Draw red badge circle
+        const r = 12;
+        const cx = size - r - 4;
+        const cy = r + 4;
+        ctx.beginPath();
+        ctx.fillStyle = '#ff3b30';
+        ctx.arc(cx, cy, r, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Draw count text
+        ctx.font = 'bold 14px sans-serif';
+        ctx.fillStyle = '#ffffff';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(count, cx, cy + 1);
+
+        // Update favicon
+        try {
+          const dataUrl = canvas.toDataURL('image/png');
+          setFaviconHref(dataUrl);
+        } catch (e) {
+          // fallback: restore original
+          restoreOriginal();
+        }
+      };
+
+      // Try to draw the existing favicon as base
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        try {
+          // draw image scaled to canvas size
+          ctx.clearRect(0, 0, size, size);
+          ctx.drawImage(img, 0, 0, size, size);
+        } catch (e) {
+          ctx.clearRect(0, 0, size, size);
+        }
+        drawBadge(true);
+      };
+      img.onerror = () => {
+        // If original couldn't be used, just draw badge on transparent background
+        drawBadge(false);
+      };
+
+      // Start loading original favicon (or fallback to /favicon.ico)
+      img.src = originalFaviconRef.current || '/favicon.ico';
+
+      // cleanup: restore original on unmount
+      return () => {
+        restoreOriginal();
+      };
+    }
+
+    // If there are no unread messages or chat open, restore original favicon
+    restoreOriginal();
+
+    return () => {
+      restoreOriginal();
+    };
+  }, [unreadCount, isOpen]);
+
+  // Play a short notification tone for every new incoming user message
+  const playNotificationTone = () => {
+    try {
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContext) return;
+      const ctx = audioCtxRef.current || new AudioContext();
+      audioCtxRef.current = ctx;
+      if (ctx.state === 'suspended') {
+        ctx.resume().catch(() => {});
+      }
+
+      const duration = 0.14; // seconds
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(880, now);
+      gain.gain.setValueAtTime(0, now);
+      gain.gain.linearRampToValueAtTime(0.12, now + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + duration + 0.02);
+      // cleanup oscillator after stop
+      osc.onended = () => {
+        try { osc.disconnect(); gain.disconnect(); } catch (e) {}
+      };
+    } catch (e) {
+      // ignore audio errors
+    }
+  };
+
+  useEffect(() => {
+    // Skip during server-side rendering
+    if (typeof window === 'undefined') return;
+
+    // Avoid playing sounds on initial load
+    if (isInitialLoadRef.current) {
+      prevMessagesRef.current = { ...messages };
+      return;
+    }
+
+    // For each client, detect newly appended messages
+    Object.keys(messages).forEach((clientId) => {
+      const prevList = prevMessagesRef.current[clientId] || [];
+      const currList = messages[clientId] || [];
+      if (currList.length > prevList.length) {
+        const newMsgs = currList.slice(prevList.length);
+        newMsgs.forEach((m) => {
+          // Play tone only for incoming user messages
+          if (m.sender === 'user') {
+            playNotificationTone();
+          }
+        });
+      }
+    });
+
+    // Update prevMessagesRef for next comparison
+    prevMessagesRef.current = Object.keys(messages).reduce((acc, k) => {
+      acc[k] = (messages[k] || []).slice();
+      return acc;
+    }, {});
+  }, [messages]);
 
   // Hide chatbot for managers
   if (userRole === "manager") {
