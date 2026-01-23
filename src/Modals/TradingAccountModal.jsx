@@ -276,7 +276,8 @@ const TradingAccountModal = ({
     return defaultActionItems(row);
   };
 
-  const overlayBg = isDarkMode ? "bg-black/70" : "bg-black/50";
+  // Consistent backdrop blur overlay for both themes
+  const overlayBg = "bg-neutral-900/60 backdrop-blur-lg transition-all duration-300";
   const modalBase = isDarkMode
     ? "bg-gray-900 text-gray-100"
     : "bg-white text-gray-900";

@@ -596,7 +596,7 @@ const User = () => {
       {/* Add User Modal */}
       {showAddModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0" onClick={() => setShowAddModal(false)} />
+          <div className="absolute inset-0 bg-neutral-900/60 backdrop-blur-lg transition-all duration-300" onClick={() => setShowAddModal(false)} />
           <div
             className={`relative max-w-2xl w-full mx-4 rounded-lg shadow-xl ${modalBg} border ${isDarkMode ? "border-yellow-700" : "border-gray-200"}`}
             role="dialog"
