@@ -177,7 +177,7 @@ const PendingRequest = () => {
 
 
   const defaultColumns = [
-    { Header: "User Id", accessor: "id" },
+    { Header: "User Id", accessor: "user_id" },
     { Header: "User Name", accessor: "username" },
     { Header: "Email", accessor: "useremail" },
     {
@@ -238,7 +238,7 @@ const PendingRequest = () => {
   ];
   // -------------------- Crypto Details Columns --------------------
   const cryptoDetailsColumns = [
-    { Header: "User Id", accessor: "id" },
+    { Header: "User Id", accessor: "user_id" },
     { Header: "User Name", accessor: "user_name" },
     { Header: "Email", accessor: "email" },
     { Header: "Wallet Address", accessor: "wallet_address" },
@@ -413,7 +413,7 @@ const PendingRequest = () => {
 
   // -------------------- Bank Details Columns --------------------
   const bankDetailsColumns = [
-    { Header: "User Id", accessor: "id" },
+    { Header: "User Id", accessor: "user_id" },
     { Header: "User Name", accessor: "user_name" },
     { Header: "Email", accessor: "email" },
     { Header: "Bank Name", accessor: "bank_name" },
@@ -444,7 +444,7 @@ const PendingRequest = () => {
 
   // -------------------- Document Requests Columns --------------------
   const documentRequestsColumns = [
-    { Header: "User Id", accessor: "id" },
+    { Header: "User Id", accessor: "user_id" },
     { Header: "User Name", accessor: "user_name" },
     { Header: "Email", accessor: "email" },
     {
