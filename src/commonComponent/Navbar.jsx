@@ -37,7 +37,7 @@ function getCookie(name) {
   return '';
 }
 
-const Navbar = ({ isSidebarOpen, setIsSidebarOpen }) => {
+const Navbar = ({ isSidebarOpen, setIsSidebarOpen, setRouteRefreshKey }) => {
   const { isDarkMode } = useTheme();
   const location = useLocation();
   const [isMobileView, setIsMobileView] = React.useState(false);
@@ -167,24 +167,26 @@ const Navbar = ({ isSidebarOpen, setIsSidebarOpen }) => {
 
       <nav
         className={`nav-1 fixed top-0 left-0 h-screen z-50 overflow-y-auto transition-transform duration-300
-          ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"}
-          w-[70vw] sm:w-[50vw] md:w-[40vw] lg:w-[18vw]
+                  ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"}
+                    w-[70vw] sm:w-48 md:w-56 lg:w-64
           ${isDarkMode ? "bg-black text-white" : "bg-white text-black"}
           shadow-lg px-3 py-5`}
       >
         {/* Logo */}
-        <div id="logo" className="mb-10 flex items-center justify-between">
-          <Link to={`${basePath}/`} onClick={() => setIsMobileView && setIsSidebarOpen(false)}>
+        <div id="logo" className="mb-10 relative">
+          <Link to={`${basePath}/dashboard`} onClick={() => setIsSidebarOpen(false)}>
             <img
-              className="h-10 object-contain cursor-pointer hover:scale-105 transition-transform duration-300"
+              className="h-10 object-contain mx-auto cursor-pointer hover:scale-105 transition-transform duration-300"
               src={`/static/admin/logo.svg`}
-              alt="Logo"
+              alt="VTINDEX logo"
+              loading="lazy"
+              decoding="async"
             />
           </Link>
 
-          {/* Close button (mobile only) */}
+          {/* Close button (mobile only) - positioned absolute so logo stays centered */}
           {isMobileView && (
-            <button className="ml-auto" onClick={() => setIsSidebarOpen(false)}>
+            <button className="absolute right-3 top-2" onClick={() => setIsSidebarOpen(false)}>
               <X size={20} />
             </button>
           )}
@@ -200,21 +202,36 @@ const Navbar = ({ isSidebarOpen, setIsSidebarOpen }) => {
             const activeClass = 'bg-gradient-to-r from-yellow-600 via-yellow-500 to-yellow-400 text-black shadow-[0_0_20px_#FFD700]';
             const hoverBorderClass = isDarkMode ? 'hover:border-white' : 'hover:border-black';
 
-            const itemClass = `flex items-center gap-4 px-5 py-1.5 rounded-md text-sm font-medium transition-all duration-200 relative ${isActive ? activeClass : baseTextClass}`;
+            const itemClass = `flex items-center gap-4 px-5 py-3 rounded-md text-sm font-medium transition-all duration-200 relative ${isActive ? activeClass : baseTextClass}`;
 
             const content = (
               <>
                 <span className={`absolute inset-0 rounded-md border-2 border-transparent ${hoverBorderClass} pointer-events-none transition-all duration-200`}></span>
-                <Icon className={`text-xl relative z-10 ${isActive ? 'text-black' : 'text-yellow-400'} transition-all duration-200`} size={20} />
+                <Icon className={`text-xl relative z-10 ${isActive ? 'text-black' : 'text-yellow-400'} transition-all duration-200`} />
                 <span className="relative z-10">{item.label}</span>
               </>
             );
+
+            const handleMenuClick = (event) => {
+              // Close sidebar on mobile
+              if (isMobileView) setIsSidebarOpen(false);
+
+              // If clicking the currently active route, refresh or reload
+              if (location.pathname === item.path) {
+                event?.preventDefault();
+                if (typeof setRouteRefreshKey === 'function') {
+                  setRouteRefreshKey((k) => k + 1);
+                } else {
+                  window.location.assign(item.path);
+                }
+              }
+            };
 
             return (
               <Link
                 key={item.path}
                 to={item.path}
-                onClick={isMobileView ? () => setIsSidebarOpen(false) : undefined}
+                onClick={handleMenuClick}
                 className={itemClass}
                 aria-current={isActive ? 'page' : undefined}
               >

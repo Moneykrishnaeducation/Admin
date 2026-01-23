@@ -26,7 +26,7 @@ const Main = ({ isSidebarOpen, setIsSidebarOpen, children }) => {
   return (
     <div
       className={`w-full transition-all duration-300
-        ${!isMobileView && isSidebarOpen ? 'lg:ml-[18vw]' : 'ml-0'}
+        ${!isMobileView && isSidebarOpen ? 'lg:ml-64' : 'ml-0'}
       `}
     >
       {/* Header */}
