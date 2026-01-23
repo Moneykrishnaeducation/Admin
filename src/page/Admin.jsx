@@ -450,19 +450,16 @@ const AdminManagerList = () => {
 
       {/* CREATE MODAL */}
 {showCreateModal && (
-  <div
-  className={`fixed inset-0 flex items-center justify-center px-3 ${
-    isDarkMode ? "bg-black/70" : "bg-gray-900/70"
-  }`}
->
-  <div
-    className={`relative w-[90%] sm:w-full max-w-md rounded-xl
-    shadow-[0_0_25px_rgba(234,179,8,0.25)]
-    hover:shadow-[0_0_40px_rgba(234,179,8,0.45)]
-    transition-shadow duration-300
-    ${isDarkMode ? "bg-gray-900" : "bg-white"}
-    px-4 py-6 sm:p-8`}
-  >
+  <div className="fixed inset-0 flex items-center justify-center px-3 z-50">
+    <div className="absolute inset-0 bg-neutral-900/60 backdrop-blur-lg transition-all duration-300 z-40" onClick={() => setShowCreateModal(false)} />
+    <div
+      className={`relative w-[90%] sm:w-full max-w-md rounded-xl
+      shadow-[0_0_25px_rgba(234,179,8,0.25)]
+      hover:shadow-[0_0_40px_rgba(234,179,8,0.45)]
+      transition-shadow duration-300
+      ${isDarkMode ? "bg-gray-900" : "bg-white"}
+      px-4 py-6 sm:p-8 z-50`}
+    >
 
 
       {/* Close Button */}

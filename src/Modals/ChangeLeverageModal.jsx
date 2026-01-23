@@ -141,7 +141,11 @@ const ChangeLeverageModal = ({
 
   if (!visible) return null;
 
-  /* ---------------- THEME CLASSES ---------------- */
+
+  // Consistent backdrop blur overlay for both themes
+  const overlayCls =
+    "fixed inset-0 z-50 flex items-center justify-center bg-neutral-900/60 backdrop-blur-lg px-3 transition-all duration-300";
+
   const modalBg = isDarkMode ? "bg-black" : "bg-white";
   const textMain = isDarkMode ? "text-white" : "text-black";
   const textMuted = isDarkMode ? "text-gray-400" : "text-gray-600";
@@ -161,7 +165,7 @@ const ChangeLeverageModal = ({
     "px-4 py-2 rounded-lg bg-gray-500 text-white hover:bg-gray-600 transition";
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-3">
+    <div className={overlayCls}>
       <div
         ref={modalRef}
         className={`

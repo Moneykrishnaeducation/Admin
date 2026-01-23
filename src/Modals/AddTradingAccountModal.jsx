@@ -168,11 +168,15 @@ const AddTradingAccountModal = ({
   /* ======================================================
    * RENDER
    * ====================================================== */
+  // Consistent backdrop blur overlay for both themes
+  const overlayCls = "fixed inset-0 bg-neutral-900/60 backdrop-blur-lg z-40 transition-all duration-300";
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-3">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3">
+      <div className={overlayCls} onClick={onClose} />
       <div
         className={`w-full max-w-2xl rounded-lg shadow-xl ${bg}
-        max-h-[95vh] overflow-y-auto`}
+        max-h-[95vh] overflow-y-auto z-50`}
       >
         {/* HEADER */}
         <div className="flex items-center justify-between p-4 border-b">

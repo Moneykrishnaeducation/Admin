@@ -3,20 +3,20 @@ import TableStructure from "../commonComponent/TableStructure";
 import SubRowButtons from "../commonComponent/SubRowButtons";
 import { get, post } from "../utils/api-config"; // Ensure post is available
 import { useTheme } from '../context/ThemeContext';
-const Modal = ({ open, onClose, title, children, actions, width = "w-80" }) => {
+const Modal = ({ open, onClose, title, children, actions, width = "w-80", isDarkMode }) => {
   if (!open) return null;
-
-
   return (
     <div
-      className="fixed inset-0 flex items-center justify-center z-50  bg-black/60 backdrop-blur-sm"
+      className={`fixed inset-0 flex items-center justify-center z-50 ${isDarkMode ? 'bg-black/70 backdrop-blur-md' : 'bg-white/70 backdrop-blur-sm'} p-2 sm:p-0`}
       onClick={onClose}
     >
       <div
-        className={`bg-black p-6 rounded shadow-lg max-h-[90vh] overflow-y-auto text-white ${width}`}
+        className={
+          `${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'} p-2 sm:p-6 rounded-2xl w-full max-w-md sm:max-w-2xl ${width} max-h-[90vh] overflow-y-auto relative border-2 border-yellow-400 shadow-[0_0_16px_2px_rgba(212,175,55,0.25)]`
+        }
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 className="text-xl font-semibold mb-4 text-white">{title}</h2>
+        <h2 className="text-xl font-semibold mb-4">{title}</h2>
         {children}
         <div className="flex justify-end gap-3 mt-4">{actions}</div>
       </div>
@@ -390,7 +390,7 @@ const DemoAccount = () => {
         open={viewModal}
         onClose={() => setViewModal(false)}
         title={<h2 className="text-[#d4af37] font-semibold">View Account Details</h2>}
-        width="w-[70%]"
+        width="sm:w-[90vw] md:w-[70vw]"
         isDarkMode={isDarkMode}
         actions={[
           <button key="close" className={`px-4 py-2 rounded ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-white' : 'bg-gray-300 hover:bg-gray-400 text-black'}`} onClick={() => setViewModal(false)}>Close</button>,
@@ -399,50 +399,46 @@ const DemoAccount = () => {
         {/* Account Summary */}
         {viewData && (
           <div className="mb-4">
-            <div className={`p-4 rounded-lg border border-yellow-500/30 mb-3 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
-              <div className={`grid grid-cols-1 sm:grid-cols-3 gap-4 ${isDarkMode ? 'text-white' : 'text-black'}`}>
+            <div className={`p-3 sm:p-4 rounded-lg border border-yellow-500/30 mb-3 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
                 <div>
                   <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Balance</p>
                   <p className="text-yellow-400 text-lg font-semibold">${formatCurrency(viewData.account_summary?.balance)}</p>
                 </div>
-
                 <div>
                   <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Equity</p>
                   <p className="text-yellow-400 text-lg font-semibold">${formatCurrency(viewData.account_summary?.equity)}</p>
                 </div>
-
                 <div>
                   <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Open Positions</p>
                   <p className="text-yellow-400 text-lg font-semibold">{viewData.account_summary?.open_positions || 0}</p>
                 </div>
               </div>
             </div>
-
             {/* Controls: History / Positions (left) and Search (right) on one line */}
-            <div className="flex items-center justify-between gap-4 mb-4 flex-nowrap whitespace-nowrap">
-              <div className="flex gap-3 mt-2">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 sm:gap-4 mb-4">
+              <div className="flex gap-2 sm:gap-3 mt-2">
                 <button
-                  className={`px-4 py-2 rounded ${viewTab === 'history' ? 'bg-yellow-600 text-black' : (isDarkMode ? 'bg-gray-700 text-white' : 'bg-gray-300 text-black')}`}
+                  className={`px-4 py-2 rounded w-full sm:w-auto ${viewTab === 'history' ? 'bg-yellow-600 text-black' : (isDarkMode ? 'bg-gray-700 text-white' : 'bg-gray-300 text-black')}`}
                   onClick={() => setViewTab('history')}
                 >History</button>
                 <button
-                  className={`px-4 py-2 rounded ${viewTab === 'positions' ? 'bg-yellow-600 text-black' : (isDarkMode ? 'bg-gray-700 text-white' : 'bg-gray-300 text-black')}`}
+                  className={`px-4 py-2 rounded w-full sm:w-auto ${viewTab === 'positions' ? 'bg-yellow-600 text-black' : (isDarkMode ? 'bg-gray-700 text-white' : 'bg-gray-300 text-black')}`}
                   onClick={() => setViewTab('positions')}
                 >Positions</button>
               </div>
-
-              {/* search handled by table below; removed duplicate top-right search */}
             </div>
           </div>
         )}
-
         {/* Tables */}
-        {viewTab === 'history' && viewData && (
-          <TableStructure columns={historyColumns} data={viewData.transactions || []} />
-        )}
-        {viewTab === 'positions' && viewData && (
-          <TableStructure columns={positionsColumns} data={viewData.positions || []} />
-        )}
+        <div className="overflow-x-auto">
+          {viewTab === 'history' && viewData && (
+            <TableStructure columns={historyColumns} data={viewData.transactions || []} />
+          )}
+          {viewTab === 'positions' && viewData && (
+            <TableStructure columns={positionsColumns} data={viewData.positions || []} />
+          )}
+        </div>
       </Modal>
     </div>
   );

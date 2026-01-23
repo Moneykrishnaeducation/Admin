@@ -74,10 +74,13 @@ const Transactions = ({ visible, onClose, accountId, isDarkMode }) => {
 
   if (!visible) return null;
 
+  // Consistent backdrop blur overlay for both themes
+  const overlayCls = "absolute inset-0 bg-neutral-900/60 backdrop-blur-lg transition-all duration-300";
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center px-2 sm:px-4">
       {/* Overlay */}
-      <div className="absolute inset-0 bg-black/60" onClick={onClose} />
+      <div className={overlayCls} onClick={onClose} />
 
       {/* Modal */}
       <div

@@ -332,13 +332,13 @@ export default function Transactions() {
       )}
 
       {/* Filters */}
-        <div className="flex flex-wrap gap-4 mb-4 justify">
+      <div className="grid grid-cols-2 gap-4 mb-4 sm:grid-cols-4">
         <div>
           <label className={`block text-sm font-medium mb-1 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Type</label>
           <select
             value={typeFilter}
             onChange={(e) => setTypeFilter(e.target.value)}
-            className={`px-3 py-2 rounded border ${isDarkMode ? 'bg-gray-800 text-white border-yellow-400' : 'bg-white text-gray-900 border-gray-300'}`}
+            className={`px-3 py-2 rounded border w-full ${isDarkMode ? 'bg-gray-800 text-white border-yellow-400' : 'bg-white text-gray-900 border-gray-300'}`}
           >
             <option value="all">All</option>
             <option value="deposit">Deposit</option>
@@ -351,7 +351,7 @@ export default function Transactions() {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className={`px-3 py-2 rounded border ${isDarkMode ? 'bg-gray-800 text-white border-yellow-400' : 'bg-white text-gray-900 border-gray-300'}`}
+            className={`px-3 py-2 rounded border w-full ${isDarkMode ? 'bg-gray-800 text-white border-yellow-400' : 'bg-white text-gray-900 border-gray-300'}`}
           >
             <option value="all">All</option>
             <option value="Pending">Pending</option>
@@ -366,7 +366,7 @@ export default function Transactions() {
             type="date"
             value={fromDate}
             onChange={(e) => setFromDate(e.target.value)}
-            className={`px-3 py-2 rounded border ${isDarkMode ? 'bg-gray-800 text-white border-yellow-400' : 'bg-white text-gray-900 border-gray-300'}`}
+            className={`px-3 py-2 rounded border w-full ${isDarkMode ? 'bg-gray-800 text-white border-yellow-400' : 'bg-white text-gray-900 border-gray-300'}`}
           />
         </div>
         <div>
@@ -375,7 +375,7 @@ export default function Transactions() {
             type="date"
             value={toDate}
             onChange={(e) => setToDate(e.target.value)}
-            className={`px-3 py-2 rounded border ${isDarkMode ? 'bg-gray-800 text-white border-yellow-400' : 'bg-white text-gray-900 border-gray-300'}`}
+            className={`px-3 py-2 rounded border w-full ${isDarkMode ? 'bg-gray-800 text-white border-yellow-400' : 'bg-white text-gray-900 border-gray-300'}`}
           />
         </div>
       </div>

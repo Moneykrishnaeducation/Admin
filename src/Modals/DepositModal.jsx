@@ -1,11 +1,13 @@
 import React, { useState } from "react";
 import ModalWrapper from "./ModalWrapper";
 import { AdminAuthenticatedFetch } from "../utils/fetch-utils.js";
+import { useTheme } from "../context/ThemeContext";
 
 const apiClient = new AdminAuthenticatedFetch("/api");
 const client = new AdminAuthenticatedFetch("");
 
 const DepositModal = ({ visible, onClose, accountId, onSubmit }) => {
+  const { isDarkMode } = useTheme();
   const [amount, setAmount] = useState("");
   const [comment, setComment] = useState("");
   const [loading, setLoading] = useState(false);
@@ -15,6 +17,53 @@ const DepositModal = ({ visible, onClose, accountId, onSubmit }) => {
     setToast({ msg, type });
     setTimeout(() => setToast(null), 2500);
   };
+
+  // THEME CLASSES
+  const labelCls = isDarkMode
+    ? "block text-sm font-medium text-gray-300 mb-1"
+    : "block text-sm font-medium text-gray-700 mb-1";
+
+  const inputCls = isDarkMode
+    ? `
+      w-full rounded-lg px-3 py-2
+      bg-gray-800 text-gray-300
+      border border-gray-700
+      cursor-not-allowed
+    `
+    : `
+      w-full rounded-lg px-3 py-2
+      bg-gray-100 text-gray-900
+      border border-gray-300
+      cursor-not-allowed
+    `;
+
+  const editableInputCls = isDarkMode
+    ? `
+      w-full rounded-lg px-3 py-2
+      bg-gray-900 text-white
+      border border-gray-700
+      focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400
+      outline-none transition
+    `
+    : `
+      w-full rounded-lg px-3 py-2
+      bg-white text-gray-900
+      border border-gray-300
+      focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400
+      outline-none transition
+    `;
+
+  const closeBtnCls = isDarkMode
+    ? `
+      bg-gray-700 text-gray-200
+      px-5 py-2 rounded-lg
+      hover:bg-gray-600 transition
+    `
+    : `
+      bg-gray-200 text-gray-800
+      px-5 py-2 rounded-lg
+      hover:bg-gray-300 transition
+    `;
 
   // -------------------------------
   // HANDLE DEPOSIT SUBMISSION
@@ -138,11 +187,7 @@ const DepositModal = ({ visible, onClose, accountId, onSubmit }) => {
       <button
         type="button"
         onClick={onClose}
-        className="
-          bg-gray-200 text-gray-800
-          px-5 py-2 rounded-lg
-          hover:bg-gray-300 transition
-        "
+        className={closeBtnCls}
       >
         Close
       </button>
@@ -170,24 +215,19 @@ const DepositModal = ({ visible, onClose, accountId, onSubmit }) => {
       <form onSubmit={handleSubmit} className="space-y-5">
         {/* ACCOUNT ID */}
         <div>
-          <label className="block text-sm font-medium text-gray-300 mb-1">
+          <label className={labelCls}>
             Account ID
           </label>
           <input
             readOnly
             value={accountId || ""}
-            className="
-              w-full rounded-lg px-3 py-2
-              bg-gray-800 text-gray-300
-              border border-gray-700
-              cursor-not-allowed
-            "
+            className={inputCls}
           />
         </div>
 
         {/* DEPOSIT AMOUNT */}
         <div>
-          <label className="block text-sm font-medium text-gray-300 mb-1">
+          <label className={labelCls}>
             * Deposit Amount ($)
           </label>
           <input
@@ -198,19 +238,13 @@ const DepositModal = ({ visible, onClose, accountId, onSubmit }) => {
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
             placeholder="Enter deposit amount"
-            className="
-              w-full rounded-lg px-3 py-2
-              bg-gray-900 text-white
-              border border-gray-700
-              focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400
-              outline-none transition
-            "
+            className={editableInputCls}
           />
         </div>
 
         {/* COMMENT */}
         <div>
-          <label className="block text-sm font-medium text-gray-300 mb-1">
+          <label className={labelCls}>
             Comment (Optional)
           </label>
           <textarea
@@ -218,13 +252,7 @@ const DepositModal = ({ visible, onClose, accountId, onSubmit }) => {
             value={comment}
             onChange={(e) => setComment(e.target.value)}
             placeholder="Add an optional note for this deposit"
-            className="
-              w-full rounded-lg px-3 py-2
-              bg-gray-900 text-white
-              border border-gray-700
-              focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400
-              outline-none transition resize-none
-            "
+            className={`${editableInputCls} resize-none`}
           />
         </div>
       </form>

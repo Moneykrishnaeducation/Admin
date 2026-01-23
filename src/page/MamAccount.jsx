@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import TableStructure from "../commonComponent/TableStructure";
 const sampleMamAccounts = [
@@ -47,6 +47,7 @@ const sampleInvestorAccounts = [
   },
 ];
 
+
 import SubRowButtons from "../commonComponent/SubRowButtons";
 import DepositModal from "../Modals/DepositModal";
 import WithdrawModal from "../Modals/WithdrawModal";
@@ -54,8 +55,20 @@ import CreditInModal from "../Modals/CreditInModal";
 import CreditOutModal from "../Modals/CreditOutModal";
 import DisableModal from "../Modals/DisableModal";
 import HistoryModal from "../Modals/HistoryModal";
+import { useTheme } from "../context/ThemeContext";
 
 const MamAccount = () => {
+  const { isDarkMode = true } = useTheme() || {};
+
+  // THEME CLASSES
+  const blurOverlayCls = isDarkMode
+    ? "fixed inset-0 bg-black-400 bg-opacity-40 backdrop-blur-md z-40"
+    : "fixed inset-0 bg-white-400 bg-opacity-40 backdrop-blur-md z-40";
+
+  const activeTabCls = "bg-yellow-400 text-black";
+  const inactiveTabCls = isDarkMode
+    ? "bg-gray-700 text-yellow-300"
+    : "bg-gray-300 text-gray-800";
   const location = useLocation();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("mam"); // "mam" or "investor"
@@ -129,71 +142,20 @@ const MamAccount = () => {
     setCreditInModalOpen(true);
   };
 
-  const handleCloseCreditInModal = () => {
-    setCreditInModalOpen(false);
-  };
-
   const handleOpenCreditOutModal = (row) => {
     const acctId = activeTab === 'mam' ? (row.accountId || "") : (row.tradingAccountId || "");
     setModalAccountId(acctId);
     setCreditOutModalOpen(true);
   };
 
-  const handleCloseCreditOutModal = () => {
-    setCreditOutModalOpen(false);
-  };
-
-  const handleOpenDisableModal = (row) => {
-    setDisableAccountId(row.accountId || "");
-    setDisableAction("Enable Account");
-    setDisableModalOpen(true);
-  };
-
-  const handleCloseDisableModal = () => {
-    setDisableModalOpen(false);
-  };
-
-  const handleToggleAccountStatus = async (account) => {
-    try {
-      const acctId = activeTab === 'mam' ? account.accountId : account.tradingAccountId;
-      const payload = {
-        accountId: acctId,
-        action: account.isEnabled ? "disable" : "enable",
-      };
-
-      const response = await fetch(`/api/admin/toggle-account-status/`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(payload),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to update account status: ${response.status}`);
-      }
-
-      const result = await response.json();
-      
-      // Update state with the response data
-      setData(prevData =>
-        prevData.map(acc => {
-          if (activeTab === 'mam') {
-            return acc.accountId === acctId ? { ...acc, isEnabled: result.is_enabled } : acc;
-          } else {
-            return acc.tradingAccountId === acctId ? { ...acc, isEnabled: result.is_enabled } : acc;
-          }
-        })
-      );
-
-      showToast(`Account ${acctId} ${result.is_enabled ? 'Enabled' : 'Disabled'}`, 'success');
-    } catch (error) {
-      showToast('Failed to update account status: ' + error.message, 'error');
-    }
-  };
-
-  const handleDisableProceed = () => {
-    handleToggleAccountStatus({ accountId: disableAccountId, isEnabled: true });
-    setDisableModalOpen(false);
+  const handleToggleAccountStatus = (account) => {
+    // Toggle the isEnabled status
+    const updatedData = data.map(acc =>
+      (activeTab === 'mam' ? acc.accountId === account.accountId : acc.tradingAccountId === account.tradingAccountId)
+        ? { ...acc, isEnabled: !acc.isEnabled }
+        : acc
+    );
+    setData(updatedData);
   };
 
   const handleOpenHistoryModal = (row) => {
@@ -206,10 +168,27 @@ const MamAccount = () => {
     setHistoryModalOpen(false);
   };
 
+  const handleCloseCreditInModal = () => {
+    setCreditInModalOpen(false);
+  };
+
+  const handleCloseCreditOutModal = () => {
+    setCreditOutModalOpen(false);
+  };
+
+  const handleCloseDisableModal = () => {
+    setDisableModalOpen(false);
+  };
+
+  const handleDisableProceed = () => {
+    // Implement disable logic here
+    setDisableModalOpen(false);
+  };
+
   const columnsMam = [
     { Header: "User ID", accessor: "userId" },
     { Header: "Name", accessor: "name" },
-    { Header: "Manager Email", accessor: "managerEmail" },
+    { Header: "MAM Email", accessor: "managerEmail" },
     { Header: "MAM Account ID", accessor: "mamAccountId" },
     { Header: "Account Balance", accessor: "accountBalance" },
     { Header: "Total Profit", accessor: "totalProfit" },
@@ -271,7 +250,7 @@ const MamAccount = () => {
               transition: "max-height 0.3s ease, opacity 0.3s ease",
               opacity: isExpanded ? 1 : 0,
             }}
-            className="bg-gray-800 text-yellow-400 rounded p-2 flex gap-4 flex-wrap items-center justify-between"
+            className={`${isDarkMode ? 'bg-gray-800 text-yellow-400' : 'bg-gray-200 text-gray-800'} rounded p-2 flex gap-4 flex-wrap items-center justify-between`}
           >
             <SubRowButtons actionItems={actionItems} />
             <div className="flex items-center gap-2 ml-auto">
@@ -364,24 +343,24 @@ const MamAccount = () => {
 
       setData(mapped);
       return { data: mapped, total };
-    } catch (err) {
+    } catch {
       return { data: [], total: 0 };
     }
   }, [activeTab]);
 
   return (
-    <div className="p-6 max-w-9xl mx-auto relative">
+    <div className={`p-6 max-w-9xl mx-auto relative ${isDarkMode ? 'bg-black' : 'bg-white'}`}>
       {/* Background blur for table when modal is open */}
       {(depositModalOpen || withdrawModalOpen || creditInModalOpen || creditOutModalOpen || disableModalOpen || historyModalOpen) && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm z-40"></div>
+        <div className={blurOverlayCls}></div>
       )}
 
       <div className="flex gap-4 mb-4  relative">
         <button
           className={`px-5 py-2 rounded-full font-semibold ${
             activeTab === "mam"
-              ? "bg-yellow-400 text-black"
-              : "bg-gray-700 text-yellow-300"
+              ? activeTabCls
+              : inactiveTabCls
           }`}
           onClick={() => {
             setActiveTab("mam");
@@ -395,8 +374,8 @@ const MamAccount = () => {
         <button
           className={`px-5 py-2 rounded-full font-semibold ${
             activeTab === "investor"
-              ? "bg-yellow-400 text-black"
-              : "bg-gray-700 text-yellow-300"
+              ? activeTabCls
+              : inactiveTabCls
           }`}
           onClick={() => {
             setActiveTab("investor");

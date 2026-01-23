@@ -80,8 +80,12 @@ const ChangeUserProfileModal = ({
 
   const footerBorder = isDarkMode ? "border-yellow-700" : "border-gray-200";
 
+  // Consistent backdrop blur overlay for both themes
+  const overlayCls =
+    "fixed inset-0 z-50 flex items-center justify-center bg-neutral-900/60 backdrop-blur-lg px-3 transition-all duration-300";
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-3">
+    <div className={overlayCls}>
       {/* Modal Container */}
       <div
         className={`

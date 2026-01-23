@@ -25,9 +25,10 @@ const ModalWrapper = ({ title, visible, onClose, children, footer, maxWidthClass
   /* ===============================
      THEME CLASSES
   =============================== */
-  const overlayCls = `
-    fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-3
-  `;
+
+  // Consistent backdrop blur overlay for both themes
+  const overlayCls =
+    "fixed inset-0 z-50 bg-neutral-900/60 backdrop-blur-lg transition-all duration-300";
 
   const modalCls = isDarkMode
     ? `
@@ -47,6 +48,7 @@ const ModalWrapper = ({ title, visible, onClose, children, footer, maxWidthClass
     ? "border-t border-yellow-700"
     : "border-t border-gray-200";
 
+
   return (
     <>
       {/* OVERLAY */}
@@ -54,12 +56,7 @@ const ModalWrapper = ({ title, visible, onClose, children, footer, maxWidthClass
 
       {/* MODAL CONTAINER */}
       <div
-        className="
-          fixed inset-0 z-50
-          flex items-center justify-center
-          px-3 sm:px-4
-        "
-        onClick={onClose}
+        className="fixed inset-0 z-50 flex items-center justify-center px-3 sm:px-4 pointer-events-none"
       >
         {/* MODAL BOX */}
         <div
@@ -70,6 +67,7 @@ const ModalWrapper = ({ title, visible, onClose, children, footer, maxWidthClass
             ${modalCls}
             flex flex-col
             max-h-[90vh]
+            pointer-events-auto
           `}
         >
           {/* HEADER */}
