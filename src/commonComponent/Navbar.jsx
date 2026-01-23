@@ -167,14 +167,14 @@ const Navbar = ({ isSidebarOpen, setIsSidebarOpen }) => {
 
       <nav
         className={`nav-1 fixed top-0 left-0 h-screen z-50 overflow-y-auto transition-transform duration-300
-          ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"}
-          w-[70vw] sm:w-[50vw] md:w-[40vw] lg:w-[18vw]
+                  ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"}
+                    w-[70vw] sm:w-48 md:w-56 lg:w-64
           ${isDarkMode ? "bg-black text-white" : "bg-white text-black"}
           shadow-lg px-3 py-5`}
       >
         {/* Logo */}
         <div id="logo" className="mb-10 flex items-center justify-between">
-          <Link to={`${basePath}/`} onClick={() => setIsMobileView && setIsSidebarOpen(false)}>
+          <Link to={`${basePath}/dashboard`} onClick={() => setIsMobileView && setIsSidebarOpen(false)}>
             <img
               className="h-10 object-contain cursor-pointer hover:scale-105 transition-transform duration-300"
               src={`/static/admin/logo.svg`}
@@ -214,7 +214,17 @@ const Navbar = ({ isSidebarOpen, setIsSidebarOpen }) => {
               <Link
                 key={item.path}
                 to={item.path}
-                onClick={isMobileView ? () => setIsSidebarOpen(false) : undefined}
+                onClick={(e) => {
+                  // Close sidebar on mobile
+                  if (isMobileView) setIsSidebarOpen(false);
+
+                  // If clicking the currently active route, force a full reload
+                  if (location.pathname === item.path) {
+                    e.preventDefault();
+                    // Use assign to preserve correct absolute/relative behavior
+                    window.location.assign(item.path);
+                  }
+                }}
                 className={itemClass}
                 aria-current={isActive ? 'page' : undefined}
               >
