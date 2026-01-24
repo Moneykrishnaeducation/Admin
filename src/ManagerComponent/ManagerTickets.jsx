@@ -154,20 +154,22 @@ const ManagerTickets = () => {
     { Header: "Description", accessor: "description" },
     {
       Header: "Documents",
-      accessor: "documents",
-      Cell: (docs) =>
-        Array.isArray(docs) && docs.length > 0 ? (
-          <a
-            href={docs[0].url || docs[0]}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-blue-400 underline text-sm"
-          >
-            Document
-          </a>
-        ) : (
-          <span className="text-gray-400">No documents</span>
-        ),
+      accessor: "messages",
+      Cell: (messages) => {
+        const files = Array.isArray(messages) ? messages.filter(m => m.file) : [];
+        if (files.length > 0) {
+          const url = files[0].file;
+          return (
+            <button
+              onClick={() => window.open(url, '_blank', 'noopener,noreferrer')}
+              className="bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs font-semibold w-fit"
+            >
+              View
+            </button>
+          );
+        }
+        return null;
+      },
     },
     {
       Header: "Status",
@@ -258,33 +260,7 @@ const ManagerTickets = () => {
             <TableStructure
               columns={columns}
               data={dataForTable}
-              actionsColumn={
-                activeTab !== "closed"
-                  ? (row) => {
-                      if (activeTab === "open") {
-                        return (
-                          <button
-                            onClick={() => openTicket(row.id)}
-                            className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded"
-                          >
-                            Open
-                          </button>
-                        );
-                      }
-                      if (activeTab === "pending") {
-                        return (
-                          <button
-                            onClick={() => closeTicket(row.id)}
-                            className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
-                          >
-                            Close
-                          </button>
-                        );
-                      }
-                      return null;
-                    }
-                  : undefined
-              }
+              
             />
           </div>
         </>
