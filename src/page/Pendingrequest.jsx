@@ -56,6 +56,7 @@ const PendingRequest = () => {
   const [activeTab, setActiveTab] = useState("IB Requests");
   const [commissionProfiles, setCommissionProfiles] = useState([]);
   const [refetchTrigger, setRefetchTrigger] = useState(0);
+  const [selectedProfiles, setSelectedProfiles] = useState({}); // Maps IB request ID to selected profile name
 
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedDeposit, setSelectedDeposit] = useState(null);
@@ -121,9 +122,15 @@ const PendingRequest = () => {
     }
   }, [activeTab]);
 
+  // Clear selected profiles when tab changes
   useEffect(() => {
-    // No need to do anything here - TableStructure will handle fetching via onFetch
-  }, []);
+    setSelectedProfiles({});
+  }, [activeTab]);
+
+  // Clear selected profiles when data is refetched
+  useEffect(() => {
+    setSelectedProfiles({});
+  }, [refetchTrigger]);
 
 
   // Run once on page load
@@ -158,11 +165,10 @@ const PendingRequest = () => {
       if (tab === "IB Requests") {
         fullEndpoint = `${endpointBase}/${id}/`;
         if (action === "approve") {
-          // For IB requests, we need to send a profile name
-          // The user should have set this in a modal or form
-          const selectedProfile = prompt("Enter commissioning profile name:");
+          // For IB requests, use the selected profile from the dropdown
+          const selectedProfile = selectedProfiles[id];
           if (!selectedProfile) {
-            alert("Profile name is required");
+            alert("Please select a commissioning profile before approving");
             return;
           }
           bodyData = JSON.stringify({ status: "approved", profile_name: selectedProfile });
@@ -221,15 +227,29 @@ const PendingRequest = () => {
     {
       Header: "Commissioning Profile",
       accessor: "commissionProfile",
-      Cell: (cellValue) => {
+      Cell: (cellValue, row) => {
         return (
           <select
             className={`border px-2 py-1 rounded ${isDarkMode ? "bg-gray-900" : "bg-white text-black"
               }`}
-            defaultValue={cellValue || ""}
-            disabled
+            value={selectedProfiles[row.id] || ""}
+            onChange={(e) => {
+              setSelectedProfiles(prev => ({
+                ...prev,
+                [row.id]: e.target.value
+              }));
+            }}
           >
-            <option value="">{cellValue || "N/A"}</option>
+            <option value="">Select a profile</option>
+            {commissionProfiles.map((profile) => {
+              const profileName = profile.profileName || profile.displayText || profile.name || "";
+              const profileId = profile.profileId || profile.id || "";
+              return (
+                <option key={profileId || profileName} value={profileName}>
+                  {profileName}
+                </option>
+              );
+            })}
           </select>
         );
       },
