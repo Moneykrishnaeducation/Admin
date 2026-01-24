@@ -163,13 +163,19 @@ const TableStructure = ({
                 </tr>
               ))
             ) : (paginatedData.length > 0 ? (
-              paginatedData.map((row, rowIndex) => (
-                <React.Fragment key={row.id || startIndex + rowIndex}>
+              paginatedData.map((row, rowIndex) => {
+                // Create a unique, stable key for each row using its ID (most reliable) or entire row as fallback
+                const rowKey = row.id !== undefined && row.id !== null 
+                  ? String(row.id) 
+                  : JSON.stringify(row);
+                const isExpanded = expandedRow === rowKey;
+                return (
+                <React.Fragment key={rowKey}>
                   <tr
                     className={`border-b ${borderClass} ${rowHover} transition cursor-pointer`}
                     onClick={() => {
                       if (renderRowSubComponent) {
-                        setExpandedRow(expandedRow === (row.id || startIndex + rowIndex) ? null : (row.id || startIndex + rowIndex));
+                        setExpandedRow(isExpanded ? null : rowKey);
                       }
                       if (onRowClick) onRowClick(row);
                     }}
@@ -186,9 +192,10 @@ const TableStructure = ({
                       <td className="p-3">{actionsColumn(row)}</td>
                     )}
                   </tr>
-                  {renderRowSubComponent && expandedRow === (row.id || startIndex + rowIndex) && renderRowSubComponent(row, startIndex + rowIndex)}
+                  {renderRowSubComponent && isExpanded && renderRowSubComponent(row, startIndex + rowIndex)}
                 </React.Fragment>
-              ))) : (
+              );
+              })) : (
                 showEmpty && serverSide ? (
                   <tr className={`border-b ${borderClass} ${rowHover} transition`}>
                     <td colSpan={columns.length + (actionsColumn ? 1 : 0)} className="p-0">
