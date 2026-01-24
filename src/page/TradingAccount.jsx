@@ -547,6 +547,7 @@ const TradingAccountPage = () => {
         accounts={allAccounts.map(d => ({
           account_no: d.accountId,
           account_name: d.name,
+          email: d.email,
           balance: d.balance
         }))}
       />

@@ -155,8 +155,16 @@ const InternalTransferModal = ({ visible, onClose, accounts = [] }) => {
       (a) => String(a.account_no) === String(fromAcc)
     );
 
+    const toAccount = accounts.find(
+      (a) => String(a.account_no) === String(toAcc)
+    );
+
     if (!fromAccount) {
       return showToast("❌ Please select a valid 'From Account'.", "error");
+    }
+
+    if (!toAccount) {
+      return showToast("❌ Please select a valid 'To Account'.", "error");
     }
 
     const availableBalance = parseFloat(fromAccount.balance || 0);
@@ -174,6 +182,30 @@ const InternalTransferModal = ({ visible, onClose, accounts = [] }) => {
 
     showToast("Processing transfer...", "success");
 
+    // Prepare email recipients based on whether accounts belong to same or different users
+    const emailRecipients = [];
+    const fromEmail = fromAccount.email;
+    const toEmail = toAccount.email;
+
+    if (fromEmail) emailRecipients.push(fromEmail);
+    if (toEmail && toEmail !== fromEmail) {
+      emailRecipients.push(toEmail);
+    }
+
+    console.log("Email recipients:", emailRecipients);
+
+    // Create email data
+    const emailData = {
+      recipients: emailRecipients,
+      from_account: fromAccount.account_name || fromAccount.account_no,
+      from_account_number: fromAcc,
+      to_account: toAccount.account_name || toAccount.account_no,
+      to_account_number: toAcc,
+      amount: Number(amount),
+      note: comment,
+    };
+
+    // First, send the internal transfer API request
     fetch("/api/accounts/internal-transfer/", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -188,6 +220,10 @@ const InternalTransferModal = ({ visible, onClose, accounts = [] }) => {
       .then((res) => res.json().then((body) => ({ status: res.status, body })))
       .then(({ status, body }) => {
         if (status === 200 && body.success) {
+          // Send notification emails
+          if (emailRecipients.length > 0) {
+            sendTransferEmails(emailData);
+          }
           showToast("✅ Transfer successful!", "success");
           setTimeout(onClose, 1500);
         } else {
@@ -195,6 +231,25 @@ const InternalTransferModal = ({ visible, onClose, accounts = [] }) => {
         }
       })
       .catch(() => showToast("Transfer failed! Please try again.", "error"));
+  };
+
+  // Function to send transfer notification emails
+  const sendTransferEmails = (emailData) => {
+    fetch("/api/admin/send-transfer-notification/", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify(emailData),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          console.log("✅ Transfer notification emails sent");
+        } else {
+          console.warn("⚠️ Failed to send notification emails:", data.error);
+        }
+      })
+      .catch((err) => console.error("Error sending emails:", err));
   };
 
   if (!visible) return null;
