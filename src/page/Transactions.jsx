@@ -126,8 +126,9 @@ export default function Transactions() {
           mergedParams.append("page", p);
           // backend expects `page_size`
           mergedParams.append("page_size", ps);
-          if (statusFilter !== "all") mergedParams.append("status", statusFilter);
-          if (query) mergedParams.append("search", query);
+          // Do not append statusFilter or query here; always do client-side fallback for robust filtering
+          // if (statusFilter !== "all") mergedParams.append("status", statusFilter);
+          // if (query) mergedParams.append("search", query);
 
           const url = `/api/admin/transactions/?${mergedParams}`;
           const res = await fetch(url, {
@@ -140,9 +141,52 @@ export default function Transactions() {
           }
 
           const data = await res.json();
-          const resResults = Array.isArray(data.results) ? data.results : Array.isArray(data) ? data : [];
-          results = resResults;
-          total = data.total ?? data.count ?? results.length;
+          let resResults = Array.isArray(data.results) ? data.results : Array.isArray(data) ? data : [];
+
+          // Client-side fallback: apply search and status filtering for robust UX
+          if (query) {
+            const lowerQuery = query.toLowerCase();
+            resResults = resResults.filter((item) => {
+              const isInternalTransfer = item.from_account || item.to_account;
+              if (isInternalTransfer) {
+                return (
+                  (item.from_account || "").toLowerCase().includes(lowerQuery) ||
+                  (item.to_account || "").toLowerCase().includes(lowerQuery) ||
+                  (item.it_username || "").toLowerCase().includes(lowerQuery)
+                );
+              } else {
+                return (
+                  (item.trading_account_id || "").toLowerCase().includes(lowerQuery) ||
+                  (item.trading_account_name || "").toLowerCase().includes(lowerQuery) ||
+                  (item.email || "").toLowerCase().includes(lowerQuery)
+                );
+              }
+            });
+          }
+
+          if (statusFilter !== "all") {
+            // Normalize both filter and item status for robust matching
+            const normalize = (s) => {
+              if (!s) return "";
+              s = s.toLowerCase();
+              if (s === "approval" || s === "approved") return "approved";
+              if (s === "complete" || s === "completed") return "completed";
+              if (s === "pending") return "pending";
+              if (s === "failed") return "failed";
+              return s;
+            };
+            const normalizedStatus = normalize(statusFilter);
+            resResults = resResults.filter((item) => {
+              let itemStatus = normalize(item.status);
+              return itemStatus === normalizedStatus;
+            });
+          }
+
+          total = data.total ?? data.count ?? resResults.length;
+          // If server already paginated, slicing here acts as a safe fallback to ensure correct page contents
+          const startIndex = (p - 1) * ps;
+          const endIndex = startIndex + ps;
+          results = resResults.slice(startIndex, endIndex);
         } else {
           let url;
           if (typeFilter === "deposit") {
@@ -196,10 +240,22 @@ export default function Transactions() {
             total = finalResults.length;
           }
 
+          // Fix: Always apply status filter if not 'all', for all typeFilter values
           if (statusFilter !== "all") {
+            // Normalize both filter and item status for robust matching
+            const normalize = (s) => {
+              if (!s) return "";
+              s = s.toLowerCase();
+              if (s === "approval" || s === "approved") return "approved";
+              if (s === "complete" || s === "completed") return "completed";
+              if (s === "pending") return "pending";
+              if (s === "failed") return "failed";
+              return s;
+            };
+            const normalizedStatus = normalize(statusFilter);
             finalResults = finalResults.filter((item) => {
-              const itemStatus = (item.status || "").toLowerCase();
-              return itemStatus === statusFilter.toLowerCase();
+              let itemStatus = normalize(item.status);
+              return itemStatus === normalizedStatus;
             });
             total = finalResults.length;
           }
