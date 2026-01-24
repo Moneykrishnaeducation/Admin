@@ -51,7 +51,7 @@ const Dashboard = () => {
   // Map API data to cards + route links
   const stats = statsData
     ? [
-      { label: "Total Trading Accounts", value: formatValue(statsData.total_trading_accounts), to: "/tradingaccounts" },
+      { label: "Total Trading Accounts", value: formatValue(statsData.live_accounts), to: "/tradingaccounts" },
       { label: "Total Demo Accounts", value: formatValue(statsData.demo_accounts), to: "/demo" },
       { label: "Total Users", value: formatValue(statsData.total_users), to: "/user" },
       { label: "Total Manager", value: formatValue(statsData.total_managers), to: "/admin" },
