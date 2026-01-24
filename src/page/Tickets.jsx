@@ -226,9 +226,16 @@ const Tickets = ({ isAdmin = false }) => {
      FILTERED DATA BY TAB
   ===================================================== */
   const tableData = useMemo(() => {
-    return tickets[tabStatusMap[activeTab]] || [];
+    const arr = tickets[tabStatusMap[activeTab]] || [];
+    // Sort descending by created_at (newest first)
+    return arr.slice().sort((a, b) => {
+      const aDate = new Date(a.created_at || a.createdAt || 0).getTime();
+      const bDate = new Date(b.created_at || b.createdAt || 0).getTime();
+      return bDate - aDate;
+    });
   }, [tickets, activeTab]);
 
+  
   /* =====================================================
      RENDER
   ===================================================== */
