@@ -69,6 +69,92 @@ const TradingAccountPage = () => {
 
   // Internal transfer modal state
   const [internalTransferOpen, setInternalTransferOpen] = useState(false);
+  const [allAccounts, setAllAccounts] = useState([]); // Store all accounts for modal
+
+  // Fetch all trading accounts (for modals like internal transfer)
+  const fetchAllAccounts = React.useCallback(async () => {
+    try {
+      // Try multiple endpoints until one works
+      const endpoints = [
+        "/api/admin/trading-accounts/",
+        "/admin/trading-accounts/",
+        "/api/trading-accounts/"
+      ];
+      
+      let resJson = null;
+      let successfulEndpoint = null;
+      
+      for (const endpoint of endpoints) {
+        try {
+          const params = new URLSearchParams();
+          params.set("page", "1");
+          params.set("page_size", "1000");
+          
+          const url = `${endpoint}?${params.toString()}`;
+          console.log("Trying endpoint:", url);
+          
+          const headers = { "Content-Type": "application/json" };
+          const res = await fetch(url, { credentials: "include", headers });
+          
+          if (res.ok) {
+            resJson = await res.json();
+            successfulEndpoint = endpoint;
+            console.log(`✅ Success with endpoint: ${endpoint}`, resJson);
+            break;
+          }
+        } catch (e) {
+          console.warn(`❌ Failed endpoint: ${endpoint}`, e);
+          continue;
+        }
+      }
+      
+      if (!resJson) {
+        console.error("All endpoints failed");
+        setAllAccounts([]);
+        return;
+      }
+      
+      let items = [];
+      if (Array.isArray(resJson.results)) {
+        items = resJson.results;
+      } else if (Array.isArray(resJson.data)) {
+        items = resJson.data;
+      } else if (Array.isArray(resJson)) {
+        items = resJson;
+      }
+      
+      console.log(`Found ${items.length} accounts from ${successfulEndpoint}`);
+      
+      if (items.length > 0) {
+        console.log("First account sample:", items[0]);
+      }
+      
+      const mapped = items.map((u) => {
+        return {
+          userId: u.user_id || u.id || "-",
+          name: u.account_name || u.username || "-",
+          email: u.email || "-",
+          accountId: u.account_id || "-",
+          balance: typeof u.balance === "number" ? u.balance : 0,
+          leverage: u.leverage || "-",
+          status: u.status === "active" ? "Running" : "Stopped",
+          country: u.country || "-",
+          isEnabled: u.is_enabled !== undefined ? Boolean(u.is_enabled) : true,
+        };
+      });
+      
+      console.log("Final mapped accounts for modal:", mapped);
+      setAllAccounts(mapped);
+    } catch (err) {
+      console.error("Failed to fetch all accounts:", err);
+      setAllAccounts([]);
+    }
+  }, []);
+
+  // Fetch all accounts on component mount
+  React.useEffect(() => {
+    fetchAllAccounts();
+  }, [fetchAllAccounts]);
 
   // fetch users (admin) with pagination - using server-side pagination
   const handleFetch = React.useCallback(
@@ -76,7 +162,7 @@ const TradingAccountPage = () => {
       const endpoint = "/admin/trading-accounts/";
       const params = new URLSearchParams();
       params.set("page", String(page));
-      params.set("pageSize", String(pageSize));
+      params.set("page_size", String(pageSize));
       if (query) params.set("query", query);
       try {
         setLoading(true);
@@ -101,12 +187,13 @@ const TradingAccountPage = () => {
             : typeof resJson.count === "number"
               ? resJson.count
               : items.length;
+        console.log("Trading Accounts Response:", { items, total });
         const mapped = items.map((u) => {
           // Use is_enabled field from API
           const isEnabled = Boolean(u.is_enabled);
           return {
             userId: u.user_id ?? u.id ?? u.pk,
-            name: `${u.username || "-"}`.trim(),
+            name: u.account_name || u.username || "-",
             email: u.email,
             accountId: u.account_id || "-",
             balance: typeof u.balance === "number" ? u.balance : 0,
@@ -116,6 +203,7 @@ const TradingAccountPage = () => {
             isEnabled: isEnabled,
           };
         });
+        console.log("Mapped Trading Accounts:", mapped);
         return { data: mapped, total };
       } catch (err) {
         console.error("Failed to load users:", err);
@@ -456,8 +544,9 @@ const TradingAccountPage = () => {
       <InternalTransferModal
         visible={internalTransferOpen}
         onClose={() => setInternalTransferOpen(false)}
-        accounts={data.map(d => ({
+        accounts={allAccounts.map(d => ({
           account_no: d.accountId,
+          account_name: d.name,
           balance: d.balance
         }))}
       />

@@ -6,6 +6,10 @@ const SearchableSelect = ({ accounts, value, onChange, label, searchValue, onSea
   const dropdownRef = useRef(null);
 
   useEffect(() => {
+    console.log(`SearchableSelect [${label}] - Accounts:`, accounts);
+  }, [accounts, label]);
+
+  useEffect(() => {
     const handleClickOutside = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
         setIsOpen(false);
@@ -17,6 +21,7 @@ const SearchableSelect = ({ accounts, value, onChange, label, searchValue, onSea
 
   const filteredAccounts = accounts.filter((acc) =>
     String(acc.account_no).toLowerCase().includes(searchValue.toLowerCase()) ||
+    String(acc.account_name || "").toLowerCase().includes(searchValue.toLowerCase()) ||
     (acc.balance && String(acc.balance).includes(searchValue))
   );
 
@@ -30,7 +35,7 @@ const SearchableSelect = ({ accounts, value, onChange, label, searchValue, onSea
           className={`w-full px-3 py-2 rounded border text-left ${inputBg} flex justify-between items-center`}
           onClick={() => setIsOpen(!isOpen)}
         >
-          <span>{selectedAccount ? `${selectedAccount.account_no} — ₹${selectedAccount.balance}` : "-- Select --"}</span>
+          <span>{selectedAccount ? `${selectedAccount.account_name || selectedAccount.account_no} (${selectedAccount.account_no}) — ₹${selectedAccount.balance}` : "-- Select --"}</span>
           <span className="text-lg">{isOpen ? "▲" : "▼"}</span>
         </button>
 
@@ -58,7 +63,7 @@ const SearchableSelect = ({ accounts, value, onChange, label, searchValue, onSea
                         onSearchChange("");
                       }}
                     >
-                      {acc.account_no} — ₹{acc.balance}
+                      {acc.account_name || acc.account_no} ({acc.account_no}) — ₹{acc.balance}
                     </button>
                   </li>
                 ))
@@ -86,6 +91,11 @@ const InternalTransferModal = ({ visible, onClose, accounts = [] }) => {
   const [showComment, setShowComment] = useState(false);
   const [searchFrom, setSearchFrom] = useState("");
   const [searchTo, setSearchTo] = useState("");
+
+  // Debug log accounts
+  useEffect(() => {
+    console.log("InternalTransferModal received accounts:", accounts);
+  }, [accounts]);
 
   // toast state
   const [toast, setToast] = useState(null);
