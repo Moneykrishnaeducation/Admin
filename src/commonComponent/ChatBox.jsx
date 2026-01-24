@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { X, MessageCircle, Send, AlertCircle, RefreshCw, Trash2, Menu, ImagePlus, Smile } from "lucide-react";
+import { X, MessageCircle, Send, AlertCircle, RefreshCw, Trash2, Menu, ImagePlus, Smile, Check } from "lucide-react";
 import { useTheme } from "../context/ThemeContext";
 import { getCookie } from "../utils/api";
 
@@ -1236,6 +1236,27 @@ const ChatBot = () => {
                                   >
                                     <Trash2 className="w-4 h-4" />
                                   </button>
+                                </div>
+                                
+                                <div className="flex items-center gap-1">
+                                  {/* Message Timestamp */}
+                                  {msg.timestamp && (
+                                    <span className={`text-[10px] ${
+                                      msg.sender === "admin"
+                                        ? isDarkMode ? "text-yellow-300/60" : "text-yellow-600/60"
+                                        : isDarkMode ? "text-gray-500" : "text-gray-500"
+                                    } px-1`}>
+                                      {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
+                                    </span>
+                                  )}
+                                  
+                                  {/* WhatsApp-style Read Status Indicator - Admin Messages Only */}
+                                  {msg.sender === "admin" && (
+                                    <div className={`flex -space-x-1 ml-1 ${msg.is_read ? "text-blue-500" : "text-gray-400"}`} title={msg.is_read ? "Read" : "Sent"}>
+                                      <Check className="w-3 h-3" />
+                                      {msg.is_read && <Check className="w-3 h-3" />}
+                                    </div>
+                                  )}
                                 </div>
                               </div>
 

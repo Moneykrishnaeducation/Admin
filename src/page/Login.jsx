@@ -652,11 +652,6 @@ const Login = () => {
                 }}
                 onClick={(e) => e.stopPropagation()}
               >
-                <div style={{ textAlign: 'center', marginBottom: 20 }}>
-                  <h2 style={{ color: '#D4AF37', margin: '0 0 8px', letterSpacing: '0.12em', fontSize: '1.5rem' }}>
-                    Reset Password
-                  </h2>
-                </div>
 
                 {/* Step 0: Enter Email */}
                 {forgotPasswordStep === 0 && (
@@ -782,25 +777,24 @@ const Login = () => {
                       >
                         {loading ? 'Verifying...' : 'Verify OTP'}
                       </button>
+
                       <button
-                        onClick={() => {
-                          setForgotPasswordStep(0);
-                          setForgotError('');
-                          setForgotOtp('');
-                        }}
+                        onClick={handleSendForgotOtp}
+                        disabled={loading || forgotOtpExpiry > 0}
                         type="button"
                         style={{
                           borderRadius: '9999px',
-                          background: 'transparent',
-                          color: '#D4AF37',
+                          background: loading || forgotOtpExpiry > 0 ? '#999' : 'linear-gradient(to bottom, #ffd66b, #d4af37)',
+                          color: '#000',
                           fontWeight: 700,
                           padding: '8px 24px',
-                          border: '1px solid #D4AF37',
-                          cursor: 'pointer',
-                          fontSize: '14px'
+                          border: 'none',
+                          cursor: loading || forgotOtpExpiry > 0 ? 'not-allowed' : 'pointer',
+                          fontSize: '14px',
+                          opacity: loading || forgotOtpExpiry > 0 ? 0.5 : 1
                         }}
                       >
-                        Back to Sign In
+                        {forgotOtpExpiry > 0 ? `Resend OTP in ${forgotOtpExpiry}s` : (loading ? 'Sending...' : 'Resend OTP')}
                       </button>
                     </div>
                   </div>
