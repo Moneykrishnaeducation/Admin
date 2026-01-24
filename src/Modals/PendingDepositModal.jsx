@@ -22,9 +22,13 @@ const PendingDepositModal = ({
     transaction_type,
     status,
     description,
-    fileUrl,
+    document_url,
+    document,
     source,
   } = depositData;
+
+  // Use document_url or document, whichever is available
+  const fileUrl = document_url || document;
 
   /* ================= THEME CLASSES ================= */
   const { isDarkMode } = useTheme();
@@ -124,15 +128,28 @@ const PendingDepositModal = ({
           {/* File Preview */}
           {fileUrl && (
             <div className="mt-6">
-              <p className={`font-semibold ${labelText}`}>Attached File</p>
+              <p className={`font-semibold ${labelText}`}>Attached Document</p>
               <div className={`mt-2 rounded-lg p-2 shadow-sm border ${iframeBg}`}>
-                <iframe
-                  src={fileUrl}
-                  title="Deposit File"
-                  width="100%"
-                  height="260"
-                  className="rounded-lg"
-                />
+                {/* Check if URL is an image */}
+                {fileUrl.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
+                  <img
+                    src={fileUrl}
+                    alt="Document"
+                    className="w-full rounded-lg max-h-96 object-contain"
+                    onError={(e) => {
+                      e.target.src = '';
+                      e.target.alt = 'Image failed to load';
+                    }}
+                  />
+                ) : (
+                  <iframe
+                    src={fileUrl}
+                    title="Deposit File"
+                    width="100%"
+                    height="260"
+                    className="rounded-lg"
+                  />
+                )}
               </div>
             </div>
           )}

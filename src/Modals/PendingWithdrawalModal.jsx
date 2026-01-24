@@ -13,7 +13,12 @@ const PendingWithdrawalModal = ({ visible, onClose, withdrawalData, onApprove, o
     trading_account_id,
     amount,
     transaction_type_display,
+    document_url,
+    document,
   } = withdrawalData;
+  
+  // Use document_url or document, whichever is available
+  const fileUrl = document_url || document;
   
   const { isDarkMode } = useTheme();
 
@@ -24,6 +29,8 @@ const PendingWithdrawalModal = ({ visible, onClose, withdrawalData, onApprove, o
   const labelText = isDarkMode ? "text-gray-400" : "text-gray-600";
   const valueText = isDarkMode ? "text-gray-200" : "text-gray-900";
   const divider = isDarkMode ? "border-gray-700" : "border-gray-300";
+  const descBg = isDarkMode ? "bg-gray-900 border-gray-700" : "bg-gray-50 border-gray-200";
+  const iframeBg = isDarkMode ? "bg-gray-900 border-gray-700" : "bg-gray-50 border-gray-200";
 
   const footer = (
     <div className="flex justify-end gap-3 mt-4">
@@ -76,6 +83,35 @@ const PendingWithdrawalModal = ({ visible, onClose, withdrawalData, onApprove, o
             <Info label="Amount (USD)" value={`$${amount}`} labelText={labelText} valueText={valueText} />
             <Info label="Payment Method" value={transaction_type_display} labelText={labelText} valueText={valueText} />
           </div>
+
+          {/* File Preview */}
+          {fileUrl && (
+            <div className="mt-6">
+              <p className={`font-semibold ${labelText}`}>Attached Document</p>
+              <div className={`mt-2 rounded-lg p-2 shadow-sm border ${iframeBg}`}>
+                {/* Check if URL is an image */}
+                {fileUrl.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
+                  <img
+                    src={fileUrl}
+                    alt="Document"
+                    className="w-full rounded-lg max-h-96 object-contain"
+                    onError={(e) => {
+                      e.target.src = '';
+                      e.target.alt = 'Image failed to load';
+                    }}
+                  />
+                ) : (
+                  <iframe
+                    src={fileUrl}
+                    title="Withdrawal File"
+                    width="100%"
+                    height="260"
+                    className="rounded-lg"
+                  />
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </ModalWrapper>
