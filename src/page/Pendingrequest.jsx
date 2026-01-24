@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import TableStructure from "../commonComponent/TableStructure";
 import ErrorBoundary from "../commonComponent/ErrorBoundary";
 import PendingDepositModal from "../Modals/PendingDepositModal";
@@ -41,17 +41,6 @@ const PendingRequest = () => {
   ];
 
   // Mapping of tab to API endpoint for loading data (list GET endpoints)
-  const apiEndpoints = {
-    "IB Requests": "admin/ib-requests/?page=1&pageSize=5",
-    "Bank Details": "admin/bank-detail-requests/?page=1&pageSize=5",
-    "Profile Changes": "admin/profile-change-requests/?page=1&pageSize=5",
-    "Document Requests": "admin/document-requests/?page=1&pageSize=5",
-    "Crypto Details": "admin/crypto-details/?page=1&pageSize=5",
-    "Pending Deposits": "admin/pending-deposits/",
-    "Pending Withdrawals": "admin/pending-withdrawals/",
-    "Commission Withdrawals": "admin/pending-withdrawal-requests/",
-  };
-
   // Mapping of tab to approve/reject endpoint base path (action POST endpoints)
   const approveRejectEndpoints = {
     "IB Requests": "admin/ib-request",
@@ -65,10 +54,8 @@ const PendingRequest = () => {
   };
 
   const [activeTab, setActiveTab] = useState("IB Requests");
-  const [tableData, setTableData] = useState([]);
-  const [loading, setLoading] = useState(false);
-
   const [commissionProfiles, setCommissionProfiles] = useState([]);
+  const [refetchTrigger, setRefetchTrigger] = useState(0);
 
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedDeposit, setSelectedDeposit] = useState(null);
@@ -79,29 +66,79 @@ const PendingRequest = () => {
   const [commissionWithdrawalModalVisible, setCommissionWithdrawalModalVisible] = useState(false);
   const [selectedCommissionWithdrawal, setSelectedCommissionWithdrawal] = useState(null);
 
-  // Fetch commissioning profiles
-  const fetchCommissionProfiles = async () => {
+  // -------------------- Data loader with pagination --------------------
+  const handleFetchTabData = useCallback(async ({ page = 1, pageSize = 10, query = "" }) => {
     try {
-      // Assuming 'get' utility prepends API_BASE
-      const response = await get("commissioning-profiles/");
-      if (Array.isArray(response)) {
-        setCommissionProfiles(response);
+      const apiEndpoints = {
+        "IB Requests": "admin/ib-requests/",
+        "Bank Details": "admin/bank-detail-requests/",
+        "Profile Changes": "admin/profile-change-requests/",
+        "Document Requests": "admin/document-requests/",
+        "Crypto Details": "admin/crypto-details/",
+        "Pending Deposits": "admin/pending-deposits/",
+        "Pending Withdrawals": "admin/pending-withdrawals/",
+        "Commission Withdrawals": "admin/pending-withdrawal-requests/",
+      };
+      const endpoint = apiEndpoints[activeTab];
+      if (!endpoint) {
+        return { data: [], total: 0 };
       }
+
+      // Build URL with pagination parameters
+      const urlWithPagination = `${endpoint}?page=${page}&page_size=${pageSize}`;
+
+      // Assuming 'get' utility correctly prepends API_BASE and handles headers
+      const response = await get(urlWithPagination);
+
+      let respData = response;
+      let dataArray = [];
+      let totalCount = 0;
+
+      // Logic to extract the array from common API response shapes
+      if (Array.isArray(respData)) {
+        dataArray = respData;
+      } else if (respData && typeof respData === "object") {
+        if (Array.isArray(respData.results)) {
+          dataArray = respData.results;
+          totalCount = respData.total || 0;
+        } else if (Array.isArray(respData.data)) {
+          dataArray = respData.data;
+          totalCount = respData.total || 0;
+        } else {
+          const values = Object.values(respData).find(val => Array.isArray(val));
+          if (values) {
+            dataArray = values;
+          } else {
+            dataArray = [];
+          }
+        }
+      }
+
+      return { data: dataArray, total: totalCount };
     } catch (error) {
-      // ignore
+      console.error("Error loading tab data:", error);
+      return { data: [], total: 0 };
     }
-  };
+  }, [activeTab]);
 
   useEffect(() => {
-    if (activeTab) {
-      loadTabData(activeTab);
-    }
+    // No need to do anything here - TableStructure will handle fetching via onFetch
   }, []);
 
 
   // Run once on page load
   useEffect(() => {
-    fetchCommissionProfiles();
+    const loadProfiles = async () => {
+      try {
+        const response = await get("commissioning-profiles/");
+        if (Array.isArray(response)) {
+          setCommissionProfiles(response);
+        }
+      } catch (err) {
+        // ignore
+      }
+    };
+    loadProfiles();
   }, []);
 
   // -------------------- Handle actions --------------------
@@ -120,23 +157,19 @@ const PendingRequest = () => {
       // and sends the status in the body via PATCH method.
       if (tab === "IB Requests") {
         fullEndpoint = `${endpointBase}/${id}/`;
-        // Find the row data to get the selected commissioning profile
-        const row = tableData.find(item => item.id === id);
-        if (!row) {
-          alert("Request data not found");
-          return;
-        }
         if (action === "approve") {
-          const selectedProfile = row.commissionProfile;
+          // For IB requests, we need to send a profile name
+          // The user should have set this in a modal or form
+          const selectedProfile = prompt("Enter commissioning profile name:");
           if (!selectedProfile) {
-            alert("Please select a commissioning profile before approving.");
+            alert("Profile name is required");
             return;
           }
           bodyData = JSON.stringify({ status: "approved", profile_name: selectedProfile });
         } else {
           bodyData = JSON.stringify({ status: "rejected" });
         }
-        method = 'PATCH'; // Use PATCH for IB Requests as per backend
+        method = 'PATCH';
       }
       // Special cases for Profile Changes, Document Requests, Bank Details, and Crypto Details which use PATCH method
       else if (tab === "Profile Changes" || tab === "Document Requests" || tab === "Bank Details" || tab === "Crypto Details") {
@@ -165,9 +198,9 @@ const PendingRequest = () => {
       if (response.ok) {
         const actionPast = action === "approve" ? "approved" : "rejected";
         alert(`Request ${id} in ${tab} has been ${actionPast}`);
-        loadTabData(tab); // Reload list data after action success
+        // Trigger a re-fetch by incrementing the refetch counter
+        setRefetchTrigger(prev => prev + 1);
       } else {
-        const errorText = await response.text();
         alert(`Failed to ${action} request ${id}. Check console for backend error details.`);
       }
     } catch (error) {
@@ -188,29 +221,15 @@ const PendingRequest = () => {
     {
       Header: "Commissioning Profile",
       accessor: "commissionProfile",
-      Cell: (cellValue, _row) => {
-        const rowId = _row?.id;
+      Cell: (cellValue) => {
         return (
           <select
             className={`border px-2 py-1 rounded ${isDarkMode ? "bg-gray-900" : "bg-white text-black"
               }`}
-            value={cellValue || ""}
-            onChange={(e) =>
-              setTableData((prev) =>
-                prev.map((item) =>
-                  item.id === rowId
-                    ? { ...item, commissionProfile: e.target.value }
-                    : item
-                )
-              )
-            }
+            defaultValue={cellValue || ""}
+            disabled
           >
-            <option value="">Select the profile</option>
-            {commissionProfiles.map((p) => (
-              <option key={p.profileId} value={p.profileName}>
-                {p.profileId} - {p.profileName}
-              </option>
-            ))}
+            <option value="">{cellValue || "N/A"}</option>
           </select>
         );
       },
@@ -510,50 +529,10 @@ const PendingRequest = () => {
 
 
 
-  // -------------------- Data loader --------------------
-  const loadTabData = async (tab) => {
-    setLoading(true);
-    try {
-      const endpoint = apiEndpoints[tab];
-      if (!endpoint) {
-        setTableData([]);
-        setLoading(false);
-        return;
-      }
-      // Assuming 'get' utility correctly prepends API_BASE and handles headers
-      const response = await get(endpoint);
-
-      let respData = response;
-      let dataArray = [];
-
-      // Logic to extract the array from common API response shapes
-      if (Array.isArray(respData)) {
-        dataArray = respData;
-      } else if (respData && typeof respData === "object") {
-        if (Array.isArray(respData.results)) {
-          dataArray = respData.results;
-        } else if (Array.isArray(respData.data)) {
-          dataArray = respData.data;
-        } else {
-          const values = Object.values(respData).find(val => Array.isArray(val));
-          if (values) {
-            dataArray = values;
-          } else {
-            dataArray = [];
-          }
-        }
-      }
-      setTableData(dataArray);
-    } catch (error) {
-      setTableData([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  // -------------------- Tab switching --------------------
   const handleTabClick = (tab) => {
     setActiveTab(tab);
-    loadTabData(tab);
+    // TableStructure will automatically fetch data via onFetch when activeTab changes
   };
 
   // Pick correct columns for selected tab
@@ -596,12 +575,12 @@ const PendingRequest = () => {
       {/* Table */}
       <ErrorBoundary>
         <TableStructure
+          key={`table-${activeTab}-${refetchTrigger}`}
           columns={columns}
-          data={tableData}
-          serverSide={false}
-          initialPageSize={5}
-          isLoading={loading}
-          pageSizeOptions={[5, 10, 20]}
+          data={[]}
+          serverSide={true}
+          onFetch={handleFetchTabData}
+          initialPageSize={10}
         />
       </ErrorBoundary>
 
