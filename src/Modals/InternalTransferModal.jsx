@@ -5,14 +5,14 @@ const SearchableSelect = ({ accounts, value, onChange, label, searchValue, onSea
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
 
-  useEffect(() => {
-    console.log(`🔍 SearchableSelect [${label}]:`, {
-      accountsCount: accounts.length,
-      accounts: accounts,
-      currentValue: value,
-      searchValue: searchValue
-    });
-  }, [accounts, label, value, searchValue]);
+  // useEffect(() => {
+  //   console.log(`🔍 SearchableSelect [${label}]:`, {
+  //     accountsCount: accounts.length,
+  //     accounts: accounts,
+  //     currentValue: value,
+  //     searchValue: searchValue
+  //   });
+  // }, [accounts, label, value, searchValue]);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -35,7 +35,7 @@ const SearchableSelect = ({ accounts, value, onChange, label, searchValue, onSea
     return accountNo.includes(search) || accountName.includes(search) || balance.includes(search);
   });
 
-  console.log(`Filtered ${filteredAccounts.length} accounts for search: "${searchValue}"`);
+  // console.log(`Filtered ${filteredAccounts.length} accounts for search: "${searchValue}"`);
 
   const selectedAccount = accounts.find((acc) => String(acc.account_no) === String(value));
 
@@ -46,7 +46,7 @@ const SearchableSelect = ({ accounts, value, onChange, label, searchValue, onSea
         <button
           className={`w-full px-3 py-2 rounded border text-left ${inputBg} flex justify-between items-center cursor-pointer hover:opacity-80`}
           onClick={() => {
-            console.log(`Toggle dropdown for ${label}, currently: ${isOpen}`);
+            // console.log(`Toggle dropdown for ${label}, currently: ${isOpen}`);
             setIsOpen(!isOpen);
           }}
           type="button"
@@ -67,7 +67,7 @@ const SearchableSelect = ({ accounts, value, onChange, label, searchValue, onSea
               className={`w-full px-3 py-2 rounded-t border-b ${inputBg} focus:outline-none focus:ring-2 focus:ring-blue-500`}
               value={searchValue}
               onChange={(e) => {
-                console.log(`Search changed: "${e.target.value}"`);
+                // console.log(`Search changed: "${e.target.value}"`);
                 onSearchChange(e.target.value);
               }}
               autoFocus
@@ -82,7 +82,7 @@ const SearchableSelect = ({ accounts, value, onChange, label, searchValue, onSea
                         String(value) === String(acc.account_no) ? "bg-blue-500 text-white" : ""
                       }`}
                       onClick={() => {
-                        console.log(`Selected account: ${acc.account_no}`);
+                        // console.log(`Selected account: ${acc.account_no}`);
                         onChange(acc.account_no);
                         setIsOpen(false);
                         onSearchChange("");
@@ -127,9 +127,9 @@ const InternalTransferModal = ({ visible, onClose, accounts = [] }) => {
   const [searchTo, setSearchTo] = useState("");
 
   // Debug log accounts
-  useEffect(() => {
-    console.log("InternalTransferModal received accounts:", accounts);
-  }, [accounts]);
+  // useEffect(() => {
+  //   console.log("InternalTransferModal received accounts:", accounts);
+  // }, [accounts]);
 
   // toast state
   const [toast, setToast] = useState(null);
@@ -192,7 +192,7 @@ const InternalTransferModal = ({ visible, onClose, accounts = [] }) => {
       emailRecipients.push(toEmail);
     }
 
-    console.log("Email recipients:", emailRecipients);
+    // console.log("Email recipients:", emailRecipients);
 
     // Create email data
     const emailData = {
@@ -244,12 +244,12 @@ const InternalTransferModal = ({ visible, onClose, accounts = [] }) => {
       .then((res) => res.json())
       .then((data) => {
         if (data.success) {
-          console.log("✅ Transfer notification emails sent");
+          showToast("✅ Transfer notification emails sent", "success");
         } else {
-          console.warn("⚠️ Failed to send notification emails:", data.error);
+          showToast("⚠️ Failed to send notification emails", "error");
         }
       })
-      .catch((err) => console.error("Error sending emails:", err));
+      .catch(() => showToast("Error sending emails", "error"));
   };
 
   if (!visible) return null;

@@ -91,7 +91,7 @@ const TradingAccountPage = () => {
           params.set("page_size", "1000");
           
           const url = `${endpoint}?${params.toString()}`;
-          console.log("Trying endpoint:", url);
+          // console.log("Trying endpoint:", url);
           
           const headers = { "Content-Type": "application/json" };
           const res = await fetch(url, { credentials: "include", headers });
@@ -99,7 +99,7 @@ const TradingAccountPage = () => {
           if (res.ok) {
             resJson = await res.json();
             successfulEndpoint = endpoint;
-            console.log(`✅ Success with endpoint: ${endpoint}`, resJson);
+            // console.log(`✅ Success with endpoint: ${endpoint}`, resJson);
             break;
           }
         } catch (e) {
@@ -123,11 +123,11 @@ const TradingAccountPage = () => {
         items = resJson;
       }
       
-      console.log(`Found ${items.length} accounts from ${successfulEndpoint}`);
+      // console.log(`Found ${items.length} accounts from ${successfulEndpoint}`);
       
-      if (items.length > 0) {
-        console.log("First account sample:", items[0]);
-      }
+      // if (items.length > 0) {
+      //   console.log("First account sample:", items[0]);
+      // }
       
       const mapped = items.map((u) => {
         return {
@@ -143,10 +143,10 @@ const TradingAccountPage = () => {
         };
       });
       
-      console.log("Final mapped accounts for modal:", mapped);
+      // console.log("Final mapped accounts for modal:", mapped);
       setAllAccounts(mapped);
-    } catch (err) {
-      console.error("Failed to fetch all accounts:", err);
+    } catch  {
+      // console.error("Failed to fetch all accounts:", err);
       setAllAccounts([]);
     }
   }, []);
@@ -187,7 +187,7 @@ const TradingAccountPage = () => {
             : typeof resJson.count === "number"
               ? resJson.count
               : items.length;
-        console.log("Trading Accounts Response:", { items, total });
+        // console.log("Trading Accounts Response:", { items, total });
         const mapped = items.map((u) => {
           // Use is_enabled field from API
           const isEnabled = Boolean(u.is_enabled);
@@ -203,7 +203,7 @@ const TradingAccountPage = () => {
             isEnabled: isEnabled,
           };
         });
-        console.log("Mapped Trading Accounts:", mapped);
+        // console.log("Mapped Trading Accounts:", mapped);
         return { data: mapped, total };
       } catch (err) {
         console.error("Failed to load users:", err);
@@ -555,7 +555,7 @@ const TradingAccountPage = () => {
         visible={algoModalOpen}
         onClose={() => setAlgoModalOpen(false)}
         accountId={selectedAccountId}
-        onProceed={(action) => console.log("Algo:", action)}
+        onProceed={(action) => {action==="enable" ? showToast(`Algo Trading ${action} for ${selectedAccountId}`, 'success') : showToast(`Algo Trading Disabled for ${selectedAccountId}`, 'error'); setAlgoModalOpen(false);}}
       />
 
       <ChangeLeverageModal

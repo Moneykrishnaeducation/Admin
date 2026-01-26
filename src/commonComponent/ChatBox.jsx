@@ -413,7 +413,7 @@ const ChatBot = () => {
           }
         } catch (err) {
           // Silently fail for profile loading - doesn't block chat
-          console.debug("Admin profiles failed to load, will retry");
+          // console.debug("Admin profiles failed to load, will retry");
         }
       }
       
@@ -421,7 +421,7 @@ const ChatBot = () => {
     } catch (err) {
       // Silently fail - don't show errors for background polling
       if (err.name !== "AbortError") {
-        console.debug("Background polling: clients load failed, will retry");
+        // console.debug("Background polling: clients load failed, will retry");
       }
     }
   };
@@ -448,13 +448,13 @@ const ChatBot = () => {
       
       // Handle 401/403 - Stop polling if unauthorized
       if (response.status === 401 || response.status === 403) {
-        console.debug(`Messages poll: Unauthorized for client ${clientId}, stopping polling`);
+        // console.debug(`Messages poll: Unauthorized for client ${clientId}, stopping polling`);
         setError("Unauthorized - Session expired. Please refresh.");
         return; // Stop polling on auth error
       }
       
       if (!response.ok) {
-        console.debug(`Messages poll: Failed for client ${clientId}`);
+        // console.debug(`Messages poll: Failed for client ${clientId}`);
         throw new Error("Failed to load messages");
       }
 
@@ -506,7 +506,7 @@ const ChatBot = () => {
     } catch (err) {
       // Silently fail for background polling - will retry on next interval
       if (err.name !== "AbortError") {
-        console.debug(`Background polling: Messages failed for client ${clientId}, will retry`);
+        // console.debug(`Background polling: Messages failed for client ${clientId}, will retry`);
       }
     }
   };
