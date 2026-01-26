@@ -198,7 +198,9 @@ const ManagerTickets = () => {
   const dataForTable = useMemo(() => {
     if (!tickets || typeof tickets !== "object") return [];
     const key = activeTab.toLowerCase() === "open" ? "open" : activeTab.toLowerCase();
-    return tickets[key] || [];
+    const arr = tickets[key] || [];
+    // Sort by created_at descending
+    return arr.slice().sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
   }, [tickets, activeTab]);
 
   // ---------------------------------------------------
