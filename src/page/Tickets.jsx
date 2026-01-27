@@ -21,7 +21,7 @@ const formatDateTime = (dateString) => {
     const seconds = String(date.getSeconds()).padStart(2, '0');
     
     return `${day}:${month}:${year} ${hours}:${minutes}:${seconds}`;
-  } catch (error) {
+  } catch  {
     return "N/A";
   }
 };
@@ -219,7 +219,35 @@ const Tickets = ({ isAdmin = false }) => {
     { Header: "User Name", accessor: "username" },
     { Header: "Subject", accessor: "subject" },
     { Header: "Description", accessor: "description" },
-    { Header: "Status", accessor: "status" },
+    {
+      Header: "Status",
+      accessor: "status",
+      Cell: (value, row) => {
+        const status = value ?? row?.status;
+        let colorClass = '';
+        let bgClass = '';
+        if (status === 'open') {
+          colorClass = 'text-white';
+          bgClass = 'bg-green-500';
+        } else if (status === 'pending') {
+          colorClass = 'text-black';
+          bgClass = 'bg-yellow-300';
+        } else if (status === 'closed') {
+          colorClass = 'text-white';
+          bgClass = 'bg-gray-500';
+        } else {
+          colorClass = 'text-gray-700';
+          bgClass = 'bg-gray-200';
+        }
+        return (
+          <span className={`inline-block px-3 py-1 rounded-full font-semibold text-xs ${bgClass} ${colorClass}`}
+            style={{ minWidth: 70, textAlign: 'center' }}
+          >
+            {status ? status.charAt(0).toUpperCase() + status.slice(1) : '-'}
+          </span>
+        );
+      },
+    },
   ];
 
   /* =====================================================
@@ -300,7 +328,6 @@ const Tickets = ({ isAdmin = false }) => {
                     >
                       Open
                     </button>
-
                     <button
                       onClick={() => viewTicket(row.id)}
                       className="bg-yellow-300 hover:bg-gray-600 text-white px-3 py-1 rounded"
@@ -318,6 +345,17 @@ const Tickets = ({ isAdmin = false }) => {
                     className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
                   >
                     Close
+                  </button>
+                );
+              }
+
+              if (activeTab === "Closed") {
+                return (
+                  <button
+                    onClick={() => viewTicket(row.id)}
+                    className="bg-yellow-300 hover:bg-gray-600 text-white px-3 py-1 rounded"
+                  >
+                    View
                   </button>
                 );
               }
