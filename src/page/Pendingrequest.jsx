@@ -216,6 +216,7 @@ const PendingRequest = () => {
 
 
   const defaultColumns = [
+    { Header: "ID", accessor: "request_id" },
     { Header: "User Id", accessor: "user_id" },
     { Header: "User Name", accessor: "username" },
     { Header: "Email", accessor: "useremail" },
@@ -228,15 +229,16 @@ const PendingRequest = () => {
       Header: "Commissioning Profile",
       accessor: "commissionProfile",
       Cell: (cellValue, row) => {
+        const rowId = row.original?.request_id || row.request_id;
         return (
           <select
             className={`border px-2 py-1 rounded ${isDarkMode ? "bg-gray-900" : "bg-white text-black"
               }`}
-            value={selectedProfiles[row.id] || ""}
+            value={selectedProfiles[rowId] || ""}
             onChange={(e) => {
               setSelectedProfiles(prev => ({
                 ...prev,
-                [row.id]: e.target.value
+                [rowId]: e.target.value
               }));
             }}
           >
@@ -257,26 +259,30 @@ const PendingRequest = () => {
     {
       Header: "Actions",
       accessor: "actions",
-      Cell: (cellValue, row) => (
-        <div className="flex gap-2">
-          <button
-            className="bg-green-500 text-white px-2 py-1 rounded"
-            onClick={() => handleAction(row.id, "approve", activeTab)}
-          >
-            Approve
-          </button>
-          <button
-            className="bg-red-500 text-white px-2 py-1 rounded"
-            onClick={() => handleAction(row.id, "reject", activeTab)}
-          >
-            Reject
-          </button>
-        </div>
-      ),
+      Cell: (cellValue, row) => {
+        const rowId = row.original?.request_id || row.request_id;
+        return (
+          <div className="flex gap-2">
+            <button
+              className="bg-green-500 text-white px-2 py-1 rounded"
+              onClick={() => handleAction(rowId, "approve", activeTab)}
+            >
+              Approve
+            </button>
+            <button
+              className="bg-red-500 text-white px-2 py-1 rounded"
+              onClick={() => handleAction(rowId, "reject", activeTab)}
+            >
+              Reject
+            </button>
+          </div>
+        );
+      },
     },
   ];
   // -------------------- Crypto Details Columns --------------------
   const cryptoDetailsColumns = [
+    { Header: "ID", accessor: "id" },
     { Header: "User Id", accessor: "user_id" },
     { Header: "User Name", accessor: "user_name" },
     { Header: "Email", accessor: "email" },
@@ -290,22 +296,25 @@ const PendingRequest = () => {
     {
       Header: "Actions",
       accessor: "actions",
-      Cell: (cellValue, row) => (
-        <div className="flex gap-2">
-          <button
-            className="bg-green-500 text-white px-2 py-1 rounded"
-            onClick={() => handleAction(row.id, "approve", activeTab)}
-          >
-            Approve
-          </button>
-          <button
-            className="bg-red-500 text-white px-2 py-1 rounded"
-            onClick={() => handleAction(row.id, "reject", activeTab)}
-          >
-            Reject
-          </button>
-        </div>
-      ),
+      Cell: (cellValue, row) => {
+        const rowId = row.original?.id || row.id;
+        return (
+          <div className="flex gap-2">
+            <button
+              className="bg-green-500 text-white px-2 py-1 rounded"
+              onClick={() => handleAction(rowId, "approve", activeTab)}
+            >
+              Approve
+            </button>
+            <button
+              className="bg-red-500 text-white px-2 py-1 rounded"
+              onClick={() => handleAction(rowId, "reject", activeTab)}
+            >
+              Reject
+            </button>
+          </div>
+        );
+      },
     },
   ];
 
@@ -452,6 +461,7 @@ const PendingRequest = () => {
 
   // -------------------- Bank Details Columns --------------------
   const bankDetailsColumns = [
+    { Header: "ID", accessor: "id" },
     { Header: "User Id", accessor: "user_id" },
     { Header: "User Name", accessor: "user_name" },
     { Header: "Email", accessor: "email" },
@@ -462,27 +472,31 @@ const PendingRequest = () => {
     {
       Header: "Actions",
       accessor: "actions",
-      Cell: (cellValue, row) => (
-        <div className="flex gap-2">
-          <button
-            className="bg-green-500 text-white px-2 py-1 rounded"
-            onClick={() => handleAction(row.id, "approve", activeTab)}
-          >
-            Approve
-          </button>
-          <button
-            className="bg-red-500 text-white px-2 py-1 rounded"
-            onClick={() => handleAction(row.id, "reject", activeTab)}
-          >
-            Reject
-          </button>
-        </div>
-      ),
+      Cell: (cellValue, row) => {
+        const rowId = row.original?.id || row.id;
+        return (
+          <div className="flex gap-2">
+            <button
+              className="bg-green-500 text-white px-2 py-1 rounded"
+              onClick={() => handleAction(rowId, "approve", activeTab)}
+            >
+              Approve
+            </button>
+            <button
+              className="bg-red-500 text-white px-2 py-1 rounded"
+              onClick={() => handleAction(rowId, "reject", activeTab)}
+            >
+              Reject
+            </button>
+          </div>
+        );
+      },
     },
   ];
 
   // -------------------- Document Requests Columns --------------------
   const documentRequestsColumns = [
+    { Header: "ID", accessor: "id" },
     { Header: "User Id", accessor: "user_id" },
     { Header: "User Name", accessor: "user_name" },
     { Header: "Email", accessor: "email" },
@@ -528,22 +542,25 @@ const PendingRequest = () => {
     {
       Header: "Actions",
       accessor: "actions",
-      Cell: (cellValue, row) => (
-        <div className="flex gap-2">
-          <button
-            className="bg-green-500 text-white px-2 py-1 rounded"
-            onClick={() => handleAction(row.id, "approve", activeTab)}
-          >
-            Approve
-          </button>
-          <button
-            className="bg-red-500 text-white px-2 py-1 rounded"
-            onClick={() => handleAction(row.id, "reject", activeTab)}
-          >
-            Reject
-          </button>
-        </div>
-      ),
+      Cell: (cellValue, row) => {
+        const rowId = row.original?.id || row.id;
+        return (
+          <div className="flex gap-2">
+            <button
+              className="bg-green-500 text-white px-2 py-1 rounded"
+              onClick={() => handleAction(rowId, "approve", activeTab)}
+            >
+              Approve
+            </button>
+            <button
+              className="bg-red-500 text-white px-2 py-1 rounded"
+              onClick={() => handleAction(rowId, "reject", activeTab)}
+            >
+              Reject
+            </button>
+          </div>
+        );
+      },
     },
   ];
 
