@@ -124,13 +124,12 @@ const Verify = ({
 
       if (!resp.ok) throw new Error("Upload failed");
 
+      // Mark as uploaded but do NOT auto-trigger verification.
       updateDoc(type, {
         uploading: false,
-        status: "pending",
+        status: "uploaded",
         file: null,
       });
-
-      await verifyDocument(type, true);
     } catch (err) {
       alert(err.message);
       updateDoc(type, { uploading: false });
@@ -191,7 +190,7 @@ const Verify = ({
         onClick={() => setVerifyModalOpen(false)}
       />
 
-      <div className={`relative max-w-lg w-full mx-2 rounded-lg shadow-xl ${modalBg}`}>
+      <div className={`relative max-w-lg w-full h-[75vh] mx-2 rounded-lg shadow-xl ${modalBg}`}>
         {/* HEADER */}
         <div className="relative flex justify-between items-start p-3 sm:p-4 border-b">
           <div className="font-bold text-sm sm:text-base pr-8">
@@ -204,7 +203,7 @@ const Verify = ({
         </div>
 
         {/* BODY */}
-        <div className="p-3 sm:p-4 space-y-4 sm:space-y-6">
+        <div className="p-3 h-[65vh] overflow-y-auto sm:p-4 space-y-4 sm:space-y-6">
           <DocumentBlock
             title="ID Proof"
             doc={docs.id}
@@ -302,24 +301,34 @@ function DocumentBlock({
         {doc.file?.name || `Select ${title}`}
       </label>
 
-      <div className="flex gap-1 sm:gap-2 mt-2">
+      <div className="flex gap-2 mt-2">
         <button
-          className={`flex-1 py-2 rounded transition text-xs sm:text-sm font-semibold ${
-            doc.status === "verified" || doc.status === "approved"
-              ? "bg-green-600 text-white cursor-not-allowed opacity-75"
-              : "bg-blue-600 text-white hover:bg-blue-700"
+          className={`px-3 py-2 rounded text-xs sm:text-sm font-semibold flex-1 ${
+            doc.uploading ? 'bg-gray-400 text-white cursor-not-allowed' : 'bg-indigo-600 text-white hover:bg-indigo-700'
           }`}
-          disabled={!doc.file && (doc.status !== "verified" && doc.status !== "approved") || doc.verifying || doc.status === "verified" || doc.status === "approved"}
+          disabled={!doc.file || doc.uploading}
           onClick={async () => {
             await onUpload();
+          }}
+        >
+          {doc.uploading ? 'Uploading...' : '📤 Upload'}
+        </button>
+
+        <button
+          className={`px-3 py-2 rounded text-xs sm:text-sm font-semibold flex-1 ${
+            (doc.status === 'verified' || doc.status === 'approved') ? 'bg-green-600 text-white opacity-75 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700'
+          }`}
+          disabled={
+            doc.verifying ||
+            doc.status === 'verified' ||
+            doc.status === 'approved' ||
+            (doc.status !== 'uploaded' && doc.status !== 'pending')
+          }
+          onClick={async () => {
             await onVerify();
           }}
         >
-          {doc.verifying 
-            ? "Verifying..." 
-            : (doc.status === "verified" || doc.status === "approved")
-              ? "✅ Verified" 
-              : "✅ Verify"}
+          {doc.verifying ? 'Verifying...' : (doc.status === 'verified' || doc.status === 'approved') ? '✅ Verified' : '✅ Verify'}
         </button>
       </div>
     </div>
