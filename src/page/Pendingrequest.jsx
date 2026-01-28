@@ -22,7 +22,7 @@ const formatDateTime = (dateString) => {
     const seconds = String(date.getSeconds()).padStart(2, '0');
     
     return `${day}:${month}:${year} ${hours}:${minutes}:${seconds}`;
-  } catch (error) {
+  } catch {
     return "N/A";
   }
 };
@@ -53,6 +53,18 @@ const PendingRequest = () => {
     "Commission Withdrawals": "admin/transaction",
   };
 
+  // Mapping of tab to sort field for descending order
+  const sortFields = {
+    "IB Requests": "created_at",
+    "Bank Details": "id",
+    "Profile Changes": "id",
+    "Document Requests": "uploaded_at",
+    "Crypto Details": "created_at",
+    "Pending Deposits": "created_at",
+    "Pending Withdrawals": "created_at",
+    "Commission Withdrawals": "created_at",
+  };
+
   const [activeTab, setActiveTab] = useState("IB Requests");
   const [commissionProfiles, setCommissionProfiles] = useState([]);
   const [refetchTrigger, setRefetchTrigger] = useState(0);
@@ -67,60 +79,94 @@ const PendingRequest = () => {
   const [commissionWithdrawalModalVisible, setCommissionWithdrawalModalVisible] = useState(false);
   const [selectedCommissionWithdrawal, setSelectedCommissionWithdrawal] = useState(null);
 
-  // -------------------- Data loader with pagination --------------------
-  const handleFetchTabData = useCallback(async ({ page = 1, pageSize = 10, query = "" }) => {
-    try {
-      const apiEndpoints = {
-        "IB Requests": "admin/ib-requests/",
-        "Bank Details": "admin/bank-detail-requests/",
-        "Profile Changes": "admin/profile-change-requests/",
-        "Document Requests": "admin/document-requests/",
-        "Crypto Details": "admin/crypto-details/",
-        "Pending Deposits": "admin/pending-deposits/",
-        "Pending Withdrawals": "admin/pending-withdrawals/",
-        "Commission Withdrawals": "admin/pending-withdrawal-requests/",
-      };
-      const endpoint = apiEndpoints[activeTab];
-      if (!endpoint) {
-        return { data: [], total: 0 };
-      }
+  // -------------------- Data loader --------------------
+  const [tableData, setTableData] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-      // Build URL with pagination parameters
-      const urlWithPagination = `${endpoint}?page=${page}&page_size=${pageSize}`;
-
-      // Assuming 'get' utility correctly prepends API_BASE and handles headers
-      const response = await get(urlWithPagination);
-
-      let respData = response;
-      let dataArray = [];
-      let totalCount = 0;
-
-      // Logic to extract the array from common API response shapes
-      if (Array.isArray(respData)) {
-        dataArray = respData;
-      } else if (respData && typeof respData === "object") {
-        if (Array.isArray(respData.results)) {
-          dataArray = respData.results;
-          totalCount = respData.total || 0;
-        } else if (Array.isArray(respData.data)) {
-          dataArray = respData.data;
-          totalCount = respData.total || 0;
-        } else {
-          const values = Object.values(respData).find(val => Array.isArray(val));
-          if (values) {
-            dataArray = values;
-          } else {
-            dataArray = [];
-          }
+  // Fetch all data for the active tab when tab changes
+  useEffect(() => {
+    const fetchTabData = async () => {
+      setLoading(true);
+      try {
+        const apiEndpoints = {
+          "IB Requests": "admin/ib-requests/",
+          "Bank Details": "admin/bank-detail-requests/",
+          "Profile Changes": "admin/profile-change-requests/",
+          "Document Requests": "admin/document-requests/",
+          "Crypto Details": "admin/crypto-details/",
+          "Pending Deposits": "admin/pending-deposits/",
+          "Pending Withdrawals": "admin/pending-withdrawals/",
+          "Commission Withdrawals": "admin/pending-withdrawal-requests/",
+        };
+        const endpoint = apiEndpoints[activeTab];
+        if (!endpoint) {
+          setTableData([]);
+          setLoading(false);
+          return;
         }
-      }
 
-      return { data: dataArray, total: totalCount };
-    } catch (error) {
-      console.error("Error loading tab data:", error);
-      return { data: [], total: 0 };
-    }
-  }, [activeTab]);
+        // Fetch all data for the tab (use large page_size to get all)
+        let allData = [];
+        let nextPage = 1;
+        let keepFetching = true;
+        while (keepFetching) {
+          const url = `${endpoint}?page=${nextPage}&page_size=1000`; // Large page size to fetch all
+          const resp = await get(url);
+          let pageData = [];
+          if (Array.isArray(resp)) {
+            pageData = resp;
+          } else if (resp && typeof resp === "object") {
+            if (Array.isArray(resp.results)) {
+              pageData = resp.results;
+            } else if (Array.isArray(resp.data)) {
+              pageData = resp.data;
+            } else {
+              const values = Object.values(resp).find(val => Array.isArray(val));
+              if (values) {
+                pageData = values;
+              }
+            }
+          }
+          allData = allData.concat(pageData);
+          // Stop if less than page_size returned or no next page
+          keepFetching = pageData.length === 1000;
+          nextPage++;
+        }
+
+        // Filter for Pending Withdrawals tab: only show 'Withdrawal from Trading Account', not 'Commission Withdrawal'
+        if (activeTab === "Pending Withdrawals") {
+          allData = allData.filter(row => {
+            const method = (row.transaction_type_display || "").toLowerCase();
+            return method === "withdrawal from trading account";
+          });
+        }
+
+        // Sort data in descending order by the appropriate field for the active tab
+        const sortField = sortFields[activeTab];
+        allData.sort((a, b) => {
+          if (sortField === "id") {
+            const aId = a.id || a.request_id || 0;
+            const bId = b.id || b.request_id || 0;
+            return bId - aId;
+          } else {
+            // Assume date field
+            const aDate = new Date(a[sortField] || 0).getTime();
+            const bDate = new Date(b[sortField] || 0).getTime();
+            return bDate - aDate;
+          }
+        });
+
+        setTableData(allData);
+      } catch (error) {
+        console.error("Error loading tab data:", error);
+        setTableData([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTabData();
+  }, [activeTab, refetchTrigger]);
 
   // Clear selected profiles when tab changes
   useEffect(() => {
@@ -216,13 +262,18 @@ const PendingRequest = () => {
 
 
   const defaultColumns = [
-    { Header: "ID", accessor: "request_id" },
+   
     { Header: "User Id", accessor: "user_id" },
     { Header: "User Name", accessor: "username" },
     { Header: "Email", accessor: "useremail" },
     {
       Header: "Created At",
       accessor: "created_at",
+      Cell: (cellValue) => formatDateTime(cellValue),
+    },
+    {
+      Header: "Updated At",
+      accessor: "updated_at",
       Cell: (cellValue) => formatDateTime(cellValue),
     },
     {
@@ -291,6 +342,11 @@ const PendingRequest = () => {
     {
       Header: "Created At",
       accessor: "created_at",
+      Cell: (cellValue) => formatDateTime(cellValue),
+    },
+    {
+      Header: "Updated At",
+      accessor: "updated_at",
       Cell: (cellValue) => formatDateTime(cellValue),
     },
     {
@@ -461,7 +517,6 @@ const PendingRequest = () => {
 
   // -------------------- Bank Details Columns --------------------
   const bankDetailsColumns = [
-    { Header: "ID", accessor: "id" },
     { Header: "User Id", accessor: "user_id" },
     { Header: "User Name", accessor: "user_name" },
     { Header: "Email", accessor: "email" },
@@ -496,7 +551,6 @@ const PendingRequest = () => {
 
   // -------------------- Document Requests Columns --------------------
   const documentRequestsColumns = [
-    { Header: "ID", accessor: "id" },
     { Header: "User Id", accessor: "user_id" },
     { Header: "User Name", accessor: "user_name" },
     { Header: "Email", accessor: "email" },
@@ -614,9 +668,9 @@ const PendingRequest = () => {
         <TableStructure
           key={`table-${activeTab}-${refetchTrigger}`}
           columns={columns}
-          data={[]}
-          serverSide={true}
-          onFetch={handleFetchTabData}
+          data={tableData}
+          total={tableData.length}
+          serverSide={false}
           initialPageSize={10}
         />
       </ErrorBoundary>
