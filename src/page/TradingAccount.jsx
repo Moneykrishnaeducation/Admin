@@ -30,6 +30,7 @@ const _currencyFormatter = (v) => {
 
 
 const TradingAccountPage = () => {
+    const [activeClientFilter, setActiveClientFilter] = useState('');
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error] = useState(null);
@@ -188,7 +189,7 @@ const TradingAccountPage = () => {
               ? resJson.count
               : items.length;
         // console.log("Trading Accounts Response:", { items, total });
-        const mapped = items.map((u) => {
+        let mapped = items.map((u) => {
           // Use is_enabled field from API
           const isEnabled = Boolean(u.is_enabled);
           return {
@@ -201,12 +202,18 @@ const TradingAccountPage = () => {
             status: u.status ? "Running" : "Stopped",
             country: u.country || "-",
             isEnabled: isEnabled,
+            groupName: u.group_name || "",
             alias: u.alias || "",
+            activeClient: (typeof u.balance === "number" && u.balance > 10) ? 1 : 0,
           };
         });
-        // console.log("Mapped Trading Accounts:", mapped);
-        return { data: mapped, total };
-      } catch (err) {
+        // Filter by activeClient if filter is set
+        if (activeClientFilter === '1') {
+          mapped = mapped.filter(row => row.activeClient === 1);
+        } else if (activeClientFilter === '0') {
+          mapped = mapped.filter(row => row.activeClient === 0);
+        }
+        return { data: mapped, total: mapped.length };
         console.error("Failed to load users:", err);
         return { data: [], total: 0 };
       }
@@ -388,6 +395,21 @@ const TradingAccountPage = () => {
     },
     { Header: "Leverage", accessor: "leverage" },
     {
+      Header: "Active Client",
+      accessor: "activeClient",
+      filter: "select",
+      filterOptions: [
+        { value: '', label: 'All' },
+        { value: '1', label: 'Active' },
+        { value: '0', label: 'Inactive' },
+      ],
+      Cell: (value, row) => (
+        <span className={value > 0 ? "text-green-500 font-bold" : "text-gray-400"}>
+          {value > 0 ? "Active" : "Inactive"}
+        </span>
+      ),
+    },
+    {
       Header: "Status",
       accessor: "status",
       Cell: (accessor) => (
@@ -506,6 +528,32 @@ const TradingAccountPage = () => {
 
   return (
     <div className="p-4 relative">
+      <div className="mb-4 flex flex-col items-center justify-center gap-3">
+        <div className="flex gap-4">
+          <button
+            className={`w-32 py-2 text-base font-semibold border-2 transition-colors duration-200 rounded-full shadow-sm
+              ${activeClientFilter === '1'
+                ? 'bg-yellow-400 text-black border-yellow-500'
+                : 'bg-yellow-100 text-yellow-700 border-yellow-300 hover:bg-yellow-300 hover:text-black'}
+            `}
+            style={{ minWidth: 120 }}
+            onClick={() => setActiveClientFilter('1')}
+          >
+            Active
+          </button>
+          <button
+            className={`w-32 py-2 text-base font-semibold border-2 transition-colors duration-200 rounded-full shadow-sm
+              ${activeClientFilter === '0'
+                ? 'bg-yellow-400 text-black border-yellow-500'
+                : 'bg-yellow-100 text-yellow-700 border-yellow-300 hover:bg-yellow-500 hover:text-white'}
+            `}
+            style={{ minWidth: 120 }}
+            onClick={() => setActiveClientFilter('0')}
+          >
+            Inactive
+          </button>
+        </div>
+      </div>
       {error && <div className="text-red-400 mb-2">{error}</div>}
 
       {/* Toast Notification */}
