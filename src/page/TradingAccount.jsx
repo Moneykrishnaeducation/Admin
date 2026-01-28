@@ -203,14 +203,14 @@ const TradingAccountPage = () => {
             isEnabled: isEnabled,
             groupName: u.group_name || "",
             alias: u.alias || "",
-            activeClient: balance >= 10 ? 1 : 0,
+            activeClient: Number(balance) >= 10 ? 1 : 0,
           };
         });
         // Filter by activeClient if filter is set
         if (activeClientFilter === '1') {
-          mapped = mapped.filter(row => row.activeClient === 1);
+          mapped = mapped.filter(row => Number(row.balance) >= 10);
         } else if (activeClientFilter === '0') {
-          mapped = mapped.filter(row => row.activeClient === 0);
+          mapped = mapped.filter(row => Number(row.balance) < 10);
         }
         return { data: mapped, total: mapped.length };
       }
@@ -396,7 +396,7 @@ const TradingAccountPage = () => {
       accessor: "activeClient",
       Cell: (value, row) => {
         // Use balance to determine label
-        const bal = row && typeof row.balance === 'number' ? row.balance : 0;
+        const bal = Number(row && row.balance);
         return (
           <span className={bal >= 10 ? "text-green-500 font-bold" : "text-gray-400"}>
             {bal >= 10 ? "Active" : "Inactive"}
