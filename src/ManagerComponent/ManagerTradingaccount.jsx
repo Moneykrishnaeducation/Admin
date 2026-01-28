@@ -61,7 +61,7 @@ const ManagerTradingaccount = () => {
           country: u.country || "-",
           isEnabled: Boolean(u.is_is_enabled ?? u.enabled ?? u.is_enabled),
           // Active Client logic: 1 if balance > 10, else 0
-          activeClient: (typeof u.balance === "number" && u.balance > 10) ? 1 : 0,
+          activeClient: (typeof u.balance === "number" && u.balance >= 10) ? 1 : 0,
           groupName: u.group_name || "",
           alias: u.alias || "",
         }));
