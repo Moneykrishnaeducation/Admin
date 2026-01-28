@@ -48,7 +48,7 @@ const TradingAccountPage = () => {
   const [creditInModalOpen, setCreditInModalOpen] = useState(false);
   const [creditOutModalOpen, setCreditOutModalOpen] = useState(false);
   const [disableModalOpen, setDisableModalOpen] = useState(false);
-  const [disableModalClosed, setDisableModalClosed] = useState(false);
+  // const [disableModalClosed, setDisableModalClosed] = useState(false);
   const [historyModalOpen, setHistoryModalOpen] = useState(false);
   const [algoModalOpen, setAlgoModalOpen] = useState(false);
   const [leverageModalOpen, setLeverageModalOpen] = useState(false);
@@ -188,40 +188,37 @@ const TradingAccountPage = () => {
             : typeof resJson.count === "number"
               ? resJson.count
               : items.length;
-        // console.log("Trading Accounts Response:", { items, total });
         let mapped = items.map((u) => {
-          // Use is_enabled field from API
           const isEnabled = Boolean(u.is_enabled);
+          const balance = typeof u.balance === "number" ? u.balance : 0;
           return {
             userId: u.user_id ?? u.id ?? u.pk,
             name: u.account_name || u.username || "-",
             email: u.email,
             accountId: u.account_id || "-",
-            balance: typeof u.balance === "number" ? u.balance : 0,
+            balance,
             leverage: u.leverage || "-",
             status: u.status ? "Running" : "Stopped",
             country: u.country || "-",
             isEnabled: isEnabled,
             groupName: u.group_name || "",
             alias: u.alias || "",
-            activeClient: (typeof u.balance === "number" && u.balance > 10) ? 1 : 0,
+            activeClient: balance > 9 ? 1 : 0,
           };
         });
         // Filter by activeClient if filter is set
         if (activeClientFilter === '1') {
-          mapped = mapped.filter(row => row.activeClient === 1);
+          mapped = mapped.filter(row => row.balance > 9);
         } else if (activeClientFilter === '0') {
-          mapped = mapped.filter(row => row.activeClient === 0);
+          mapped = mapped.filter(row => row.balance <= 9);
         }
         return { data: mapped, total: mapped.length };
-        console.error("Failed to load users:", err);
-        return { data: [], total: 0 };
       }
       finally {
         setLoading(false);
       }
     },
-    []
+    [activeClientFilter]
   );
 
   // Reference for modal backdrop to handle outside click
@@ -397,17 +394,15 @@ const TradingAccountPage = () => {
     {
       Header: "Active Client",
       accessor: "activeClient",
-      filter: "select",
-      filterOptions: [
-        { value: '', label: 'All' },
-        { value: '1', label: 'Active' },
-        { value: '0', label: 'Inactive' },
-      ],
-      Cell: (value, row) => (
-        <span className={value > 0 ? "text-green-500 font-bold" : "text-gray-400"}>
-          {value > 0 ? "Active" : "Inactive"}
-        </span>
-      ),
+      Cell: (value, row) => {
+        // Use balance to determine label
+        const bal = row && typeof row.balance === 'number' ? row.balance : 0;
+        return (
+          <span className={bal > 10 ? "text-green-500 font-bold" : "text-gray-400"}>
+            {bal > 10 ? "Active" : "Inactive"}
+          </span>
+        );
+      },
     },
     {
       Header: "Status",
