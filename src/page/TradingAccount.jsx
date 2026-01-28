@@ -201,6 +201,7 @@ const TradingAccountPage = () => {
             status: u.status ? "Running" : "Stopped",
             country: u.country || "-",
             isEnabled: isEnabled,
+            alias: u.alias || "",
           };
         });
         // console.log("Mapped Trading Accounts:", mapped);
@@ -380,6 +381,7 @@ const TradingAccountPage = () => {
     { Header: "Name", accessor: "name" },
     { Header: "Email", accessor: "email" },
     { Header: "Account ID", accessor: "accountId" },
+    { Header: "Alias", accessor: "alias" },
     {
       Header: "Balance",
       accessor: "balance",
@@ -397,7 +399,7 @@ const TradingAccountPage = () => {
         </span>
       ),
     },
-    { Header: "Country", accessor: "country" },
+    // { Header: "Country", accessor: "country" },
   ];
 
   const onRowClick = (row) => {

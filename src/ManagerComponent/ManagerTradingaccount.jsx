@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useTheme } from "../context/ThemeContext";
 import TableStructure from "../commonComponent/TableStructure";
 import HistoryModal from "../Modals/HistoryModal";
 import { AdminAuthenticatedFetch } from "../utils/fetch-utils.js";
@@ -11,6 +12,8 @@ const ManagerTradingaccount = () => {
   const [historyAccountId, setHistoryAccountId] = useState("");
   const [historyActiveTab, setHistoryActiveTab] = useState("transactions");
   const [selectedRowData, setSelectedRowData] = useState(null);
+  const [activeClientFilter, setActiveClientFilter] = useState(''); // default to all
+  const { isDarkMode } = useTheme();
 
   // fetch users (admin) with pagination - using server-side pagination
   const handleFetch = React.useCallback(
@@ -43,8 +46,9 @@ const ManagerTradingaccount = () => {
             ? resJson.total
             : typeof resJson.count === "number"
             ? resJson.count
-            : items.length;
-        const mapped = items.map((u) => ({
+            : 0;
+        // Always return exactly pageSize items for the current page
+        let mapped = items.map((u) => ({
           userId: u.user_id ?? u.id ?? u.pk,
           name: `${u.username || "-"}`.trim(),
           email: u.email,
@@ -56,8 +60,19 @@ const ManagerTradingaccount = () => {
           status: u.status ? "Running" : "Stopped",
           country: u.country || "-",
           isEnabled: Boolean(u.is_is_enabled ?? u.enabled ?? u.is_enabled),
+          // Active Client logic: 1 if balance > 10, else 0
+          activeClient: (typeof u.balance === "number" && u.balance > 10) ? 1 : 0,
+          groupName: u.group_name || "",
+          alias: u.alias || "",
         }));
-        return { data: mapped, total };
+        // Filter by activeClient if filter is set
+        if (activeClientFilter === '1') {
+          mapped = mapped.filter(row => row.activeClient === 1);
+        } else if (activeClientFilter === '0') {
+          mapped = mapped.filter(row => row.activeClient === 0);
+        }
+        // If the backend returns more than pageSize, slice it (defensive)
+        return { data: mapped.slice(0, pageSize), total: mapped.length };
       } catch {
         // console.error("Failed to load users:", err);
         return { data: [], total: 0 };
@@ -66,7 +81,7 @@ const ManagerTradingaccount = () => {
         setLoading(false);
       }
     },
-    []
+    [activeClientFilter]
   );
 
   // Fetch open positions for all accounts
@@ -118,6 +133,7 @@ const ManagerTradingaccount = () => {
     { Header: "Name", accessor: "name" },
     { Header: "Email", accessor: "email" },
     { Header: "Account ID", accessor: "accountId" },
+    { Header: "Alias", accessor: "alias" },
     {
       Header: "Balance",
       accessor: "balance",
@@ -132,6 +148,21 @@ const ManagerTradingaccount = () => {
             } text-white`}
         >
           {accessor}
+        </span>
+      ),
+    },
+    {
+      Header: "Active Client",
+      accessor: "activeClient",
+      filter: "select",
+      filterOptions: [
+        { value: '', label: 'All' },
+        { value: '1', label: 'Active' },
+        { value: '0', label: 'Inactive' },
+      ],
+      Cell: (value, row) => (
+        <span className={value > 0 ? "text-green-500 font-bold" : "text-gray-400"}>
+          {value > 0 ? "Active" : "Inactive"}
         </span>
       ),
     },
@@ -186,6 +217,33 @@ const ManagerTradingaccount = () => {
     <div className="p-4">
       <h2 className="text-xl font-semibold mb-4 text-yellow-400">Trading Accounts</h2>
 
+      <div className="mb-4 flex flex-col items-center justify-center gap-3">
+        <div className="flex gap-4">
+          <button
+            className={`w-32 py-2 text-base font-semibold border-2 transition-colors duration-200 rounded-full shadow-sm
+              ${activeClientFilter === '1'
+                ? 'bg-yellow-400 text-black border-yellow-500'
+                : 'bg-yellow-100 text-yellow-700 border-yellow-300 hover:bg-yellow-300 hover:text-black'}
+            `}
+            style={{ minWidth: 120 }}
+            onClick={() => setActiveClientFilter('1')}
+          >
+            Active
+          </button>
+          <button
+            className={`w-32 py-2 text-base font-semibold border-2 transition-colors duration-200 rounded-full shadow-sm
+              ${activeClientFilter === '0'
+                ? 'bg-yellow-400 text-black border-yellow-500'
+                : 'bg-yellow-100 text-yellow-700 border-yellow-300 hover:bg-yellow-500 hover:text-white'}
+            `}
+            style={{ minWidth: 120 }}
+            onClick={() => setActiveClientFilter('0')}
+          >
+            Inactive
+          </button>
+        </div>
+      </div>
+
       {loading && <div className="text-white">Loading…</div>}
       {error && <div className="text-red-400">{error}</div>}
 
@@ -195,6 +253,7 @@ const ManagerTradingaccount = () => {
         data={data}
         isLoading={loading}
         onFetch={handleFetch}
+        pageSize={10}
       />
 
       <HistoryModal
