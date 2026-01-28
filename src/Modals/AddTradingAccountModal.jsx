@@ -60,7 +60,7 @@ const AddTradingAccountModal = ({
     try {
       const [leverageData, groupsData] = await Promise.all([
         apiClient.get("/api/available-leverage/"),
-        apiClient.get("/api/available-groups/"),
+        apiClient.get("/api/available-groups/?type=real"),
       ]);
 
       // Extract leverage value - if format is "1:1", take the part after the colon
