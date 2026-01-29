@@ -35,9 +35,8 @@ const ManagerTradingaccount = () => {
         params.set("active", "1");
       } else if (filter === '0') {
         params.set("inactive", "1");
-      } else {
-        params.set("all", "1");
       }
+      // Don't send 'all=1' - let backend default to showing only 'standard' account type
       try {
         setLoading(true);
         const client = typeof window !== "undefined" && window.adminApiClient ? window.adminApiClient : null;
@@ -71,19 +70,60 @@ const ManagerTradingaccount = () => {
           groupName: u.group_name || "",
           alias: u.alias || "",
         }));
-        // Calculate total active/inactive from all items (not just current page)
-        const allActive = items.filter(u => typeof u.balance === 'number' && u.balance >= 10).length;
-        const allInactive = items.filter(u => typeof u.balance === 'number' && u.balance < 10).length;
-        setActiveTotal(allActive);
-        setInactiveTotal(allInactive);
-        // No client-side filter needed, handled by backend
-        // Use backend total if available, else fallback to mapped.length
+        
+        // Use backend total if available
         const totalCount = typeof resJson.count === 'number' ? resJson.count : mapped.length;
         setTotal(totalCount);
+        
+        // Update active/inactive totals based on current filter
+        if (filter === '1') {
+          setActiveTotal(totalCount);
+          setInactiveTotal(0);
+        } else if (filter === '0') {
+          setActiveTotal(0);
+          setInactiveTotal(totalCount);
+        } else {
+          // When filter is 'all', fetch active and inactive counts separately
+          try {
+            const activeParams = new URLSearchParams();
+            activeParams.set("page", "1");
+            activeParams.set("page_size", "1");
+            activeParams.set("active", "1");
+            // Don't send 'all=1' - default to standard accounts
+            
+            const inactiveParams = new URLSearchParams();
+            inactiveParams.set("page", "1");
+            inactiveParams.set("page_size", "1");
+            inactiveParams.set("inactive", "1");
+            // Don't send 'all=1' - default to standard accounts
+            
+            let activeRes, inactiveRes;
+            if (client && typeof client.get === "function") {
+              activeRes = await client.get(`${endpoint}?${activeParams.toString()}`);
+              inactiveRes = await client.get(`${endpoint}?${inactiveParams.toString()}`);
+            } else {
+              const headers = { "Content-Type": "application/json" };
+              const activeResp = await fetch(`${endpoint}?${activeParams.toString()}`, { credentials: "include", headers });
+              const inactiveResp = await fetch(`${endpoint}?${inactiveParams.toString()}`, { credentials: "include", headers });
+              activeRes = await activeResp.json();
+              inactiveRes = await inactiveResp.json();
+            }
+            
+            const activeCnt = typeof activeRes.count === 'number' ? activeRes.count : 0;
+            const inactiveCnt = typeof inactiveRes.count === 'number' ? inactiveRes.count : 0;
+            setActiveTotal(activeCnt);
+            setInactiveTotal(inactiveCnt);
+          } catch (err) {
+            setActiveTotal(0);
+            setInactiveTotal(0);
+          }
+        }
+        
         return { data: mapped, total: totalCount };
       } catch {
         setActiveTotal(0);
         setInactiveTotal(0);
+        setTotal(0);
         return { data: [], total: 0 };
       }
       finally {

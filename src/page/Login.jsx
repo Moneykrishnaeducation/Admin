@@ -427,7 +427,7 @@ const Login = () => {
                           autoComplete="email"
                           placeholder=" "
                           value={email}
-                          onChange={(e) => setEmail(e.target.value)}
+                          onChange={(e) => setEmail(e.target.value.toLowerCase())}
                           onKeyDown={(e) => {
                             if (e.key === 'Enter' && !isLoading) {
                               e.preventDefault();
@@ -666,7 +666,7 @@ const Login = () => {
                       type="email"
                       placeholder="Email"
                       value={forgotEmail}
-                      onChange={(e) => setForgotEmail(e.target.value)}
+                      onChange={(e) => setForgotEmail(e.target.value.toLowerCase())}
                       style={{
                         width: '100%',
                         borderRadius: '1rem',

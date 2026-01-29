@@ -357,29 +357,46 @@ const Header = ({ isSidebarOpen, setIsSidebarOpen }) => {
       )}
 
        {showLogoutPopup && (
-        <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50 animate-fadeIn">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 animate-fadeIn">
           <div
-            className={`w-[90%] sm:w-[350px] p-6 rounded-xl shadow-xl ${
-              isDarkMode ? "bg-gray-900 text-white" : "bg-white text-black"
+            className={`w-[90%] sm:w-[400px] p-8 rounded-2xl shadow-2xl ${
+              isDarkMode ? "bg-black text-white border border-yellow-500" : "bg-white text-black"
             }`}
           >
-            <h2 className="text-lg font-semibold mb-3">Confirm Logout</h2>
-            <p className="text-sm mb-6">Are you sure you want to log out?</p>
+            {/* Icon */}
+            <div className="flex justify-center mb-6">
+              <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center">
+                <FaSignOutAlt className="w-8 h-8 text-red-500" />
+              </div>
+            </div>
 
-            <div className="flex justify-end space-x-3">
-              <button
-                onClick={() => setShowLogoutPopup(false)}
-                className="px-4 py-2 rounded-md border border-gray-400 hover:bg-gray-200 text-sm"
-              >
-                Cancel
-              </button>
+            {/* Title */}
+            <h2 className="text-2xl font-bold text-center mb-3">Logout</h2>
+            
+            {/* Message */}
+            <p className={`text-center text-sm mb-8 ${isDarkMode ? "text-gray-300" : "text-gray-600"}`}>
+              Are you sure you want to logout?
+            </p>
 
+            {/* Buttons */}
+            <div className="flex flex-col space-y-3">
               <button
                 onClick={handleLogout}
                 disabled={logoutLoading}
-                className="px-4 py-2 rounded-md bg-red-600 text-white hover:bg-red-500 text-sm"
+                className="w-full px-4 py-3 rounded-lg bg-red-500 text-white font-semibold hover:bg-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-base"
               >
-                {logoutLoading ? "Logging out..." : "Logout"}
+                {logoutLoading ? "Logging out..." : "Yes, Logout"}
+              </button>
+
+              <button
+                onClick={() => setShowLogoutPopup(false)}
+                className={`w-full px-4 py-3 rounded-lg font-semibold transition-colors text-base ${
+                  isDarkMode
+                    ? "bg-gray-800 text-white hover:bg-gray-700"
+                    : "bg-gray-200 text-black hover:bg-gray-300"
+                }`}
+              >
+                Cancel
               </button>
             </div>
           </div>
