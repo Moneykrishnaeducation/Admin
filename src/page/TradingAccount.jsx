@@ -93,6 +93,7 @@ const TradingAccountPage = () => {
           const params = new URLSearchParams();
           params.set("page", "1");
           params.set("page_size", "1000");
+          // Don't send 'all=1' - let backend default to standard accounts
           
           const url = `${endpoint}?${params.toString()}`;
           // console.log("Trying endpoint:", url);
@@ -165,18 +166,16 @@ const TradingAccountPage = () => {
     async ({ page = 1, pageSize = 10, query = "" } = {}) => {
       setCurrentPage(page);
       setCurrentPageSize(pageSize);
-      const endpoint = "/admin/trading-accounts/";
+      const endpoint = "/api/admin/trading-accounts/";
       const params = new URLSearchParams();
       params.set("page", String(page));
       params.set("page_size", String(pageSize));
       if (query) params.set("query", query);
-      // Backend-driven filtering
+      // Backend-driven filtering - don't send 'all=1', let backend default to standard accounts
       if (activeClientFilter === '1') {
         params.set("active", "1");
       } else if (activeClientFilter === '0') {
         params.set("inactive", "1");
-      } else {
-        params.set("all", "1");
       }
       try {
         setLoading(true);
