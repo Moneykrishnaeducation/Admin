@@ -13,16 +13,31 @@ const ManagerTradingaccount = () => {
   const [historyActiveTab, setHistoryActiveTab] = useState("transactions");
   const [selectedRowData, setSelectedRowData] = useState(null);
   const [activeClientFilter, setActiveClientFilter] = useState(''); // default to all
-  const { isDarkMode } = useTheme();
+  const [total, setTotal] = useState(0);
+  const [activeTotal, setActiveTotal] = useState(0);
+  const [inactiveTotal, setInactiveTotal] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPageSize, setCurrentPageSize] = useState(10);
+  // const { isDarkMode } = useTheme(); // Remove unused var
 
-  // fetch users (admin) with pagination - using server-side pagination
+  // fetch users (admin) with pagination for all, no pagination for filtered
   const handleFetch = React.useCallback(
-    async ({ page = 1, pageSize = 10, query = "" } = {}) => {
-      const endpoint = "/api/admin/trading-accounts/";
+    async ({ page = 1, pageSize = 10, query = "", filter = activeClientFilter } = {}) => {
+      setCurrentPage(page);
+      setCurrentPageSize(pageSize);
+      let endpoint = "/api/admin/trading-accounts/";
       const params = new URLSearchParams();
       params.set("page", String(page));
-      params.set("pageSize", String(pageSize));
+      params.set("page_size", String(pageSize));
       if (query) params.set("query", query);
+      // Add filter param as a query param
+      if (filter === '1') {
+        params.set("active", "1");
+      } else if (filter === '0') {
+        params.set("inactive", "1");
+      } else {
+        params.set("all", "1");
+      }
       try {
         setLoading(true);
         const client = typeof window !== "undefined" && window.adminApiClient ? window.adminApiClient : null;
@@ -30,7 +45,6 @@ const ManagerTradingaccount = () => {
         if (client && typeof client.get === "function") {
           resJson = await client.get(`${endpoint}?${params.toString()}`);
         } else {
-          // Tokens are now in HttpOnly cookies - no need to manually add Authorization header
           const headers = { "Content-Type": "application/json" };
           const res = await fetch(`${endpoint}?${params.toString()}`, { credentials: "include", headers });
           if (!res.ok) throw new Error(`Failed to fetch ${endpoint}: ${res.status}`);
@@ -41,13 +55,6 @@ const ManagerTradingaccount = () => {
           : Array.isArray(resJson)
           ? resJson
           : resJson.results || [];
-        const total =
-          typeof resJson.total === "number"
-            ? resJson.total
-            : typeof resJson.count === "number"
-            ? resJson.count
-            : 0;
-        // Always return exactly pageSize items for the current page
         let mapped = items.map((u) => ({
           userId: u.user_id ?? u.id ?? u.pk,
           name: `${u.username || "-"}`.trim(),
@@ -60,21 +67,23 @@ const ManagerTradingaccount = () => {
           status: u.status ? "Running" : "Stopped",
           country: u.country || "-",
           isEnabled: Boolean(u.is_is_enabled ?? u.enabled ?? u.is_enabled),
-          // Active Client logic: 1 if balance > 10, else 0
           activeClient: (typeof u.balance === "number" && u.balance >= 10) ? 1 : 0,
           groupName: u.group_name || "",
           alias: u.alias || "",
         }));
-        // Filter by activeClient if filter is set
-        if (activeClientFilter === '1') {
-          mapped = mapped.filter(row => row.activeClient === 1);
-        } else if (activeClientFilter === '0') {
-          mapped = mapped.filter(row => row.activeClient === 0);
-        }
-        // If the backend returns more than pageSize, slice it (defensive)
-        return { data: mapped.slice(0, pageSize), total: mapped.length };
+        // Calculate total active/inactive from all items (not just current page)
+        const allActive = items.filter(u => typeof u.balance === 'number' && u.balance >= 10).length;
+        const allInactive = items.filter(u => typeof u.balance === 'number' && u.balance < 10).length;
+        setActiveTotal(allActive);
+        setInactiveTotal(allInactive);
+        // No client-side filter needed, handled by backend
+        // Use backend total if available, else fallback to mapped.length
+        const totalCount = typeof resJson.count === 'number' ? resJson.count : mapped.length;
+        setTotal(totalCount);
+        return { data: mapped, total: totalCount };
       } catch {
-        // console.error("Failed to load users:", err);
+        setActiveTotal(0);
+        setInactiveTotal(0);
         return { data: [], total: 0 };
       }
       finally {
@@ -84,10 +93,14 @@ const ManagerTradingaccount = () => {
     [activeClientFilter]
   );
 
+  // Refetch data when filter changes
+  React.useEffect(() => {
+    handleFetch({ page: currentPage, pageSize: currentPageSize });
+  }, [activeClientFilter, handleFetch, currentPage, currentPageSize]);
+
   // Fetch open positions for all accounts
   React.useEffect(() => {
     if (data.length === 0) return;
-    
     const fetchOpenPositions = async () => {
       try {
         const apiClient = new AdminAuthenticatedFetch('/api');
@@ -99,8 +112,7 @@ const ManagerTradingaccount = () => {
                 ...item,
                 openPositions: response.account_summary?.open_positions || 0,
               };
-            } catch{
-              // console.error(`Error fetching positions for account ${item.accountId}:`, error);
+            } catch {
               return item;
             }
           })
@@ -110,19 +122,10 @@ const ManagerTradingaccount = () => {
         // console.error('Error fetching open positions:', error);
       }
     };
-
     fetchOpenPositions();
-  }, [data.length]);
+  }, [data]);
 
-  const fetchHistory = async (accountId, days = 30) => {
-    try {
-      const apiClient = new AdminAuthenticatedFetch('/api');
-      const response = await apiClient.get(`/trading-account/${accountId}/history/?days_back=${days}`);
-      setHistoryData(response);
-    } catch {
-      // console.error('Error fetching history:', error);
-    }
-  };
+  // Removed unused fetchHistory and setHistoryData
 
   // ======================
   // Table Columns
@@ -160,7 +163,7 @@ const ManagerTradingaccount = () => {
         { value: '1', label: 'Active' },
         { value: '0', label: 'Inactive' },
       ],
-      Cell: (value, row) => (
+      Cell: (value) => (
         <span className={value > 0 ? "text-green-500 font-bold" : "text-gray-400"}>
           {value > 0 ? "Active" : "Inactive"}
         </span>
@@ -217,31 +220,33 @@ const ManagerTradingaccount = () => {
     <div className="p-4">
       <h2 className="text-xl font-semibold mb-4 text-yellow-400">Trading Accounts</h2>
 
-      <div className="mb-4 flex flex-col items-center justify-center gap-3">
-        <div className="flex gap-4">
-          <button
-            className={`w-32 py-2 text-base font-semibold border-2 transition-colors duration-200 rounded-full shadow-sm
-              ${activeClientFilter === '1'
-                ? 'bg-yellow-400 text-black border-yellow-500'
-                : 'bg-yellow-100 text-yellow-700 border-yellow-300 hover:bg-yellow-300 hover:text-black'}
-            `}
-            style={{ minWidth: 120 }}
-            onClick={() => setActiveClientFilter('1')}
+      <div className="mb-4 flex flex-col md:flex-row md:items-center md:justify-end gap-3">
+        <div className="flex gap-4 w-full md:w-auto justify-end">
+          <select
+            className="w-48 py-2 px-3 text-base font-semibold border-2 rounded-md shadow-sm bg-yellow-100 text-yellow-700 border-yellow-300 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+            value={activeClientFilter}
+            onChange={e => setActiveClientFilter(e.target.value)}
+            style={{ minWidth: 180 }}
           >
-            Active
-          </button>
-          <button
-            className={`w-32 py-2 text-base font-semibold border-2 transition-colors duration-200 rounded-full shadow-sm
-              ${activeClientFilter === '0'
-                ? 'bg-yellow-400 text-black border-yellow-500'
-                : 'bg-yellow-100 text-yellow-700 border-yellow-300 hover:bg-yellow-500 hover:text-white'}
-            `}
-            style={{ minWidth: 120 }}
-            onClick={() => setActiveClientFilter('0')}
-          >
-            Inactive
-          </button>
+            <option value="">All Clients</option>
+            <option value="1">Active Clients</option>
+            <option value="0">Inactive Clients</option>
+          </select>
         </div>
+      </div>
+      
+      {/* Show correct range and total above table */}
+      <div className="text-right text-sm text-gray-500 mb-2">
+        {total > 0 ? (
+          <>
+            Showing {(currentPage - 1) * currentPageSize + 1}
+            {' '}to {Math.min(currentPage * currentPageSize, total)}
+            {' '}of {total} {activeClientFilter === '1' ? 'Active' : activeClientFilter === '0' ? 'Inactive' : ''} Clients
+            <br />
+          </>
+        ) : (
+          <>No Clients Found</>
+        )}
       </div>
 
       {loading && <div className="text-white">Loading…</div>}

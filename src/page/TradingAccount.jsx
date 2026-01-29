@@ -34,6 +34,9 @@ const TradingAccountPage = () => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error] = useState(null);
+  const [total, setTotal] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPageSize, setCurrentPageSize] = useState(10);
   const [expandedId, setExpandedId] = useState(null);
 
   // Modal states
@@ -160,11 +163,21 @@ const TradingAccountPage = () => {
   // fetch users (admin) with pagination - using server-side pagination
   const handleFetch = React.useCallback(
     async ({ page = 1, pageSize = 10, query = "" } = {}) => {
+      setCurrentPage(page);
+      setCurrentPageSize(pageSize);
       const endpoint = "/admin/trading-accounts/";
       const params = new URLSearchParams();
       params.set("page", String(page));
       params.set("page_size", String(pageSize));
       if (query) params.set("query", query);
+      // Backend-driven filtering
+      if (activeClientFilter === '1') {
+        params.set("active", "1");
+      } else if (activeClientFilter === '0') {
+        params.set("inactive", "1");
+      } else {
+        params.set("all", "1");
+      }
       try {
         setLoading(true);
         const client = typeof window !== "undefined" && window.adminApiClient ? window.adminApiClient : null;
@@ -182,7 +195,7 @@ const TradingAccountPage = () => {
           : Array.isArray(resJson)
             ? resJson
             : resJson.results || [];
-        const total =
+        const totalCount =
           typeof resJson.total === "number"
             ? resJson.total
             : typeof resJson.count === "number"
@@ -206,13 +219,9 @@ const TradingAccountPage = () => {
             activeClient: Number(balance) >= 10 ? 1 : 0,
           };
         });
-        // Filter by activeClient if filter is set
-        if (activeClientFilter === '1') {
-          mapped = mapped.filter(row => Number(row.balance) >= 10);
-        } else if (activeClientFilter === '0') {
-          mapped = mapped.filter(row => Number(row.balance) < 10);
-        }
-        return { data: mapped, total: mapped.length };
+        setTotal(totalCount);
+        setData(mapped);
+        return { data: mapped, total: totalCount };
       }
       finally {
         setLoading(false);
@@ -523,29 +532,24 @@ const TradingAccountPage = () => {
 
   return (
     <div className="p-4 relative">
-      <div className="mb-4 flex flex-col items-center justify-center gap-3">
-        <div className="flex gap-4">
-          <button
-            className={`w-32 py-2 text-base font-semibold border-2 transition-colors duration-200 rounded-full shadow-sm
-              ${activeClientFilter === '1'
-                ? 'bg-yellow-400 text-black border-yellow-500'
-                : 'bg-yellow-100 text-yellow-700 border-yellow-300 hover:bg-yellow-300 hover:text-black'}
-            `}
-            style={{ minWidth: 120 }}
-            onClick={() => setActiveClientFilter('1')}
+      <div className="mb-4 flex flex-col md:flex-row md:items-center md:justify-end gap-3">
+        <div className="flex gap-4 w-full md:w-auto justify-end">
+          <select
+            className="w-48 py-2 px-3 text-base font-semibold border-2 rounded-md shadow-sm bg-yellow-100 text-yellow-700 border-yellow-300 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+            value={activeClientFilter}
+            onChange={e => setActiveClientFilter(e.target.value)}
+            style={{ minWidth: 180 }}
           >
-            Active
-          </button>
+            <option value="">All Clients</option>
+            <option value="1">Active Clients</option>
+            <option value="0">Inactive Clients</option>
+          </select>
           <button
-            className={`w-32 py-2 text-base font-semibold border-2 transition-colors duration-200 rounded-full shadow-sm
-              ${activeClientFilter === '0'
-                ? 'bg-yellow-400 text-black border-yellow-500'
-                : 'bg-yellow-100 text-yellow-700 border-yellow-300 hover:bg-yellow-500 hover:text-white'}
-            `}
-            style={{ minWidth: 120 }}
-            onClick={() => setActiveClientFilter('0')}
+            className="bg-yellow-400 mx-2 w-full md:w-auto text-black px-4 py-2 rounded-md font-semibold flex items-center gap-2 hover:opacity-90 transition"
+            onClick={() => setInternalTransferOpen(true)}
           >
-            Inactive
+            <span>➕</span>
+            Internal Transfer
           </button>
         </div>
       </div>
@@ -565,15 +569,20 @@ const TradingAccountPage = () => {
         </div>
       )}
 
-      {/* Internal Transfer Button */}
-      <div className="flex justify-center md:absolute md:top-4 md:right-4 md:left-auto mb-4 md:mb-0 z-10">
-        <button
-          className="bg-yellow-400 mx-2 w-full md:w-auto text-black px-4 py-2 rounded-md font-semibold flex items-center gap-2 hover:opacity-90 transition"
-          onClick={() => setInternalTransferOpen(true)}
-        >
-          <span>➕</span>
-          Internal Transfer
-        </button>
+      {/* Internal Transfer Button moved above */}
+
+      {/* Show correct range and total above table */}
+      <div className="text-right text-sm text-gray-500 mb-2">
+        {total > 0 ? (
+          <>
+            Showing {(currentPage - 1) * currentPageSize + 1}
+            {' '}to {Math.min(currentPage * currentPageSize, total)}
+            {' '}of {total} {activeClientFilter === '1' ? 'Active' : activeClientFilter === '0' ? 'Inactive' : ''} Clients
+            <br />
+          </>
+        ) : (
+          <>No Clients Found</>
+        )}
       </div>
       <TableStructure
         columns={columns}
@@ -583,6 +592,7 @@ const TradingAccountPage = () => {
         onFetch={handleFetch}
         renderRowSubComponent={renderRowSubComponent}
         onRowClick={onRowClick}
+        total={total}
       />
 
       {/* Modals */}
