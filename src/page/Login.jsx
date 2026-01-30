@@ -318,7 +318,7 @@ const Login = () => {
         const apiBaseUrl = `${window.location.protocol}//${window.location.host}`;
         await ensureCsrf(apiBaseUrl);
         const response = await axios.post(
-          `${apiBaseUrl}/client/api/verify-otp/`,
+          `${apiBaseUrl}/api/verify-otp/`,
           { email: forgotEmail, otp: forgotOtp },
           { headers: { 'X-CSRFToken': getCookie('csrftoken') }, withCredentials: true }
         );
