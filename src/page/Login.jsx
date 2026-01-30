@@ -344,7 +344,7 @@ const Login = () => {
         const apiBaseUrl = `${window.location.protocol}//${window.location.host}`;
         await ensureCsrf(apiBaseUrl);
         const response = await axios.post(
-          `${apiBaseUrl}/client/api/reset-password/`,
+          `${apiBaseUrl}/api/reset-password/`,
           { email: forgotEmail, new_password: forgotNewPassword },
           { headers: { 'X-CSRFToken': getCookie('csrftoken') }, withCredentials: true }
         );
