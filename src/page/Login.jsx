@@ -182,6 +182,37 @@ const Login = () => {
       return () => axios.interceptors.request.eject(interceptor);
     }, []);
 
+    // Attempt cookie-based auto-login on mount (backend will verify access token cookie)
+    useEffect(() => {
+      const tryAutoLogin = async () => {
+        try {
+          setIsLoading(true);
+          const apiBaseUrl = `${window.location.protocol}//${window.location.host}`;
+          await ensureCsrf(apiBaseUrl);
+          const res = await axios.post(
+            `${apiBaseUrl}/api/login/`,
+            {},
+            { headers: { 'X-CSRFToken': getCookie('csrftoken') }, withCredentials: true }
+          );
+
+          // If backend accepted cookie-based login, save and navigate
+          if (res?.data?.auto_login || res?.data?.access) {
+            saveAuthData(res.data);
+            const userData = getUserFromCookies();
+            const role = userData?.role || res.data?.role || 'admin';
+            navigateAfterDelay(role === 'admin' ? '/dashboard' : '/manager/dashboard');
+          }
+        } catch (err) {
+          // ignore auto-login failure — user can sign in manually
+        } finally {
+          setIsLoading(false);
+        }
+      };
+
+      tryAutoLogin();
+      // run only once on mount
+    }, []);
+
 
     const handleSubmit = async (e) => {
       e.preventDefault();
