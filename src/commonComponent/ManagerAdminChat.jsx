@@ -53,6 +53,7 @@ const EmojiPicker = ({ onEmojiSelect, isDarkMode, onClose }) => {
 
 const ManagerAdminChat = () => {
   const { isDarkMode } = useTheme();
+  const text = "Chat with Admin";
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState([]);
@@ -341,32 +342,56 @@ const ManagerAdminChat = () => {
       <style>{`
         @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
         @keyframes slide-in-up { from { transform: translateY(10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes flip { 0%, 80% { transform: rotateY(360deg); } }
+        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
         .chatbox-enter { animation: slide-in-up 0.3s ease-out; }
         .header-fade { animation: fade-in 0.3s ease-out; }
         .message-slide { animation: slide-in-up 0.2s ease-out; }
         @keyframes typing { 0%, 60%, 100% { opacity: 0.3; } 30% { opacity: 1; } }
         .typing-dot { animation: typing 1.4s infinite; display: inline-block; width: 4px; height: 4px; border-radius: 50%; background-color: currentColor; }
+        .flip-letter { display: inline-block; animation: flip 2s infinite; }
+        .bounce-icon { animation: bounce 2s infinite; }
       `}
       </style>
 
       <div className="fixed bottom-5 right-5 z-50 flex flex-col items-end px-2 sm:px-0 gap-2">
-        {/* Chat button */}
+        {/* Chat button with animated label */}
         {!isOpen && (
-          <button
-            onClick={toggleChat}
-            className={`relative ${
-              isDarkMode ? "bg-black hover:bg-gray-800" : "bg-white hover:bg-gray-50"
-            } p-3 rounded-full shadow-md hover:shadow-xl transition-all hover:scale-110 active:scale-95`}
-            title="Open admin chat"
-          >
-            <MessageCircle className="w-7 h-7 text-yellow-400" />
-            {/* Notification Badge */}
-            {unreadCount > 0 && (
-              <div className="absolute -top-1 -right-1 flex items-center justify-center w-6 h-6 bg-red-500 text-white text-xs font-bold rounded-full shadow-lg animate-bounce">
-                {unreadCount > 99 ? "99+" : unreadCount}
-              </div>
-            )}
-          </button>
+          <div className="flex items-center gap-2">
+            {/* Animated Chat with Us label */}
+            <span
+              className={`bounce-icon hidden md:inline-flex ${
+                isDarkMode ? "bg-black text-white" : "bg-white text-black"
+              } px-3 py-2 rounded-lg shadow-md text-sm font-bold space-x-0.5`}
+            >
+              {text.split("").map((char, index) => (
+                <span
+                  key={index}
+                  className="flip-letter"
+                  style={{ animationDelay: `${index * 0.15}s` }}
+                >
+                  {char === " " ? "\u00A0" : char}
+                </span>
+              ))}
+            </span>
+            
+            {/* Chat Open Button */}
+            <button
+              onClick={toggleChat}
+              className={`relative ${
+                isDarkMode ? "bg-black hover:bg-gray-800" : "bg-white hover:bg-gray-50"
+              } p-3 rounded-full shadow-md hover:shadow-xl transition-all hover:scale-110 active:scale-95`}
+              title="Open admin chat"
+            >
+              <MessageCircle className="w-7 h-7 text-yellow-400" />
+              {/* Notification Badge */}
+              {unreadCount > 0 && (
+                <div className="absolute -top-1 -right-1 flex items-center justify-center w-6 h-6 bg-red-500 text-white text-xs font-bold rounded-full shadow-lg animate-bounce">
+                  {unreadCount > 99 ? "99+" : unreadCount}
+                </div>
+              )}
+            </button>
+          </div>
         )}
 
         {/* Chat box */}
