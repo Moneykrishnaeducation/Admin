@@ -116,10 +116,23 @@ const ManagerAdminChat = () => {
   const handleSend = async () => {
     if ((!input.trim() && !selectedImage)) return;
 
+    const messageText = input;
     setLoading(true);
     try {
+      // Check for greeting/trigger messages
+      const messageLower = messageText.toLowerCase().trim();
+      const greetingWords = [
+        "hi", "hii", "hello", "helo", 
+        "good morning", "good evening"
+      ];
+      const thankYouWords = ["thank you", "thankyou", "ok", "okay", "fine"];
+      
+      // Match exact words only (not partial matches)
+      const isGreeting = greetingWords.includes(messageLower);
+      const isThankYou = thankYouWords.includes(messageLower);
+
       const formData = new FormData();
-      formData.append("message", input);
+      formData.append("message", messageText);
       if (selectedImage) {
         formData.append("image", selectedImage);
       }
@@ -142,6 +155,43 @@ const ManagerAdminChat = () => {
         clearImage();
         setError(null);
         await loadMessages();
+
+        // Auto-reply for greeting messages - add directly to state AFTER loading messages
+        if (isGreeting || isThankYou) {
+          const autoReplyId = `auto-reply-${Date.now()}`;
+          
+          // Different message based on trigger type
+          let replyMessage = "";
+          if (isGreeting) {
+            replyMessage = "Thank you for contacting us! Our support team will be with you shortly to assist you with your inquiry.";
+          } else if (isThankYou) {
+            replyMessage = "Thank you for contacting us!";
+          }
+          
+          const autoReplyMsg = {
+            id: autoReplyId,
+            message: replyMessage,
+            sender: "admin",
+            sender_type: "admin",
+            sender_name: "Support",
+            timestamp: new Date().toISOString(),
+            is_read: false,
+            image_url: null,
+          };
+          
+          // Add auto-reply to messages
+          setMessages((prevMessages) => [...prevMessages, autoReplyMsg]);
+          
+          // Scroll after the DOM updates
+          setTimeout(() => {
+            messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+          }, 100);
+          
+          // Remove auto-reply after 10 seconds
+          setTimeout(() => {
+            setMessages((msgs) => msgs.filter((msg) => msg.id !== autoReplyId));
+          }, 10000);
+        }
       } else {
         const errorText = await response.text();
         console.error(`[Manager Chat API] Failed to send message: ${response.status}`, errorText);
@@ -236,15 +286,15 @@ const ManagerAdminChat = () => {
     }
   };
 
-  // Auto-scroll to bottom
+  // Auto-scroll to bottom - only if user is already at the bottom or chat just opened
   useEffect(() => {
-    if (messagesEndRef.current && isOpen) {
+    if (messagesEndRef.current && isOpen && isScrolledToBottom) {
       // Add a small delay to ensure DOM has updated with new messages
       setTimeout(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
       }, 100);
     }
-  }, [messages, isOpen]);
+  }, [messages, isOpen, isScrolledToBottom]);
 
   // Update badge count
   useEffect(() => {

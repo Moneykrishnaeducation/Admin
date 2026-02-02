@@ -1005,15 +1005,15 @@ const ChatBot = () => {
     }
   }, [isSecondChatOpen, selectedClientId]);
 
-  // Scroll to bottom for support chat
+  // Scroll to bottom for support chat - only if user is already at the bottom
   useEffect(() => {
-    if (supportMessagesEndRef.current && isSecondChatOpen && selectedManagerId) {
+    if (supportMessagesEndRef.current && isSecondChatOpen && selectedManagerId && supportIsScrolledToBottom) {
       // Add a small delay to ensure DOM has updated with new messages
       setTimeout(() => {
         supportMessagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
       }, 100);
     }
-  }, [messages, isSecondChatOpen, selectedManagerId]);
+  }, [messages, isSecondChatOpen, selectedManagerId, supportIsScrolledToBottom]);
 
   const getInitials = (name) => {
     return name
