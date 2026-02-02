@@ -54,6 +54,7 @@ const EmojiPicker = ({ onEmojiSelect, isDarkMode, onClose }) => {
 const ChatBot = () => {
   const { isDarkMode } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
+  const [isSecondChatOpen, setIsSecondChatOpen] = useState(false); // Second chat icon state
   const [input, setInput] = useState("");
   const [selectedClientId, setSelectedClientId] = useState(null);
   const [clients, setClients] = useState([]);
@@ -65,6 +66,7 @@ const ChatBot = () => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [clientUnreadCounts, setClientUnreadCounts] = useState({});
   const [messageCounts, setMessageCounts] = useState({});
+  const [managerUnreadCounts, setManagerUnreadCounts] = useState({}); // Track unread manager messages
   const [isSidebarOpen, setIsSidebarOpen] = useState(true); // Mobile sidebar state
   const [userRole, setUserRole] = useState(null); // Track user role
   const [adminProfiles, setAdminProfiles] = useState({}); // Store admin profile pictures
@@ -72,6 +74,20 @@ const ChatBot = () => {
   const [imagePreview, setImagePreview] = useState(null); // Preview URL for selected image
   const [showEmojiPicker, setShowEmojiPicker] = useState(false); // Toggle emoji picker visibility
   const [isDragging, setIsDragging] = useState(false); // Track drag and drop state
+  
+  // Second Chat (Support) state
+  const [supportInput, setSupportInput] = useState("");
+  const [supportLoading, setSupportLoading] = useState(false);
+  const [supportSelectedImage, setSupportSelectedImage] = useState(null);
+  const [supportImagePreview, setSupportImagePreview] = useState(null);
+  const [showSupportEmojiPicker, setShowSupportEmojiPicker] = useState(false);
+  const [isSupportDragging, setIsSupportDragging] = useState(false);
+  const [supportIsScrolledToBottom, setSupportIsScrolledToBottom] = useState(true);
+  const [selectedManagerId, setSelectedManagerId] = useState(null); // Track selected manager
+  const [isManagerSidebarOpen, setIsManagerSidebarOpen] = useState(true); // Mobile sidebar state for managers
+  const supportMessagesEndRef = useRef(null);
+  const supportMessagesContainerRef = useRef(null);
+  
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
   const previousMessageCountRef = useRef(0);
@@ -269,6 +285,17 @@ const ChatBot = () => {
       setIsSidebarOpen(false);
     }
   }, [selectedClientId]);
+  // Track unread manager messages per manager (just update UI count)
+  useEffect(() => {
+    // When a manager is selected, clear their unread count in UI
+    // (messages are marked as read in the loadManagerMessages API call)
+    if (selectedManagerId) {
+      setManagerUnreadCounts((prev) => ({
+        ...prev,
+        [selectedManagerId]: 0,
+      }));
+    }
+  }, [selectedManagerId]);
 
   // Load clients list ALWAYS in background (polling independent of chat being open)
   useEffect(() => {
@@ -306,6 +333,23 @@ const ChatBot = () => {
     };
   }, []);
 
+  // Load manager messages ALWAYS in background (polling independent of chat being open)
+  useEffect(() => {
+    if (userRole && userRole.toLowerCase() === 'admin') {
+      console.log("[Admin Manager Chat] Starting background manager message polling");
+      loadManagerMessages();
+      // Poll manager messages every 5 seconds continuously for background unread count updates
+      const interval = setInterval(() => {
+        console.log("[Admin Manager Chat] Polling for new manager messages");
+        loadManagerMessages();
+      }, 5000);
+      return () => {
+        console.log("[Admin Manager Chat] Clearing polling interval");
+        clearInterval(interval);
+      };
+    }
+  }, [userRole, selectedManagerId]);
+
   // Helper: Simple hash to detect changes
   const getDataHash = (data) => {
     return JSON.stringify(data).length + Object.keys(data || {}).length;
@@ -322,6 +366,8 @@ const ChatBot = () => {
       clientsAbortControllerRef.current = new AbortController();
       const timeoutId = setTimeout(() => clientsAbortControllerRef.current.abort(), 10000);
       
+      console.log(`[Chat API] Loading clients list`);
+
       const response = await fetch("/api/chat/admin/messages/", {
         headers: {
           "X-CSRFToken": getCookie("csrftoken"),
@@ -331,15 +377,22 @@ const ChatBot = () => {
 
       clearTimeout(timeoutId);
       
+      console.log(`[Chat API] Clients list response: ${response.status}`);
+      
       // Handle 401/403 - Stop polling if unauthorized
       if (response.status === 401 || response.status === 403) {
+        console.warn(`[Chat API] Unauthorized access while loading clients`);
         setError("Unauthorized - Session expired. Please refresh.");
         return; // Stop polling on auth error
       }
       
-      if (!response.ok) throw new Error("Failed to load clients");
+      if (!response.ok) {
+        console.error(`[Chat API] Failed to load clients: ${response.status}`);
+        throw new Error("Failed to load clients");
+      }
 
       const data = await response.json();
+      console.log(`[Chat API] Received ${data.messages.length} total messages from API`);
       
       // Extract unique clients from messages and track unread counts
       const uniqueClients = {};
@@ -446,19 +499,22 @@ const ChatBot = () => {
 
       clearTimeout(timeoutId);
       
+      console.log(`[Chat API] Loading messages for client ${clientId}, Status: ${response.status}`);
+      
       // Handle 401/403 - Stop polling if unauthorized
       if (response.status === 401 || response.status === 403) {
-        // console.debug(`Messages poll: Unauthorized for client ${clientId}, stopping polling`);
+        console.warn(`[Chat API] Unauthorized access for client ${clientId}`);
         setError("Unauthorized - Session expired. Please refresh.");
         return; // Stop polling on auth error
       }
       
       if (!response.ok) {
-        // console.debug(`Messages poll: Failed for client ${clientId}`);
+        console.error(`[Chat API] Failed to load messages for client ${clientId}: ${response.status}`);
         throw new Error("Failed to load messages");
       }
 
       const data = await response.json();
+      console.log(`[Chat API] Received ${data.messages.length} messages for client ${clientId}`);
       
       const newMessages = data.messages.map((msg) => ({
         id: msg.id,
@@ -511,6 +567,66 @@ const ChatBot = () => {
     }
   };
 
+  // Load manager messages for admin (second chat - Manager communication)
+  const loadManagerMessages = async () => {
+    try {
+      console.log("[Admin Manager Chat API] Loading messages from managers");
+      
+      // Build URL with manager_id parameter if a manager is selected
+      let url = "/api/chat/admin/manager_messages/";
+      if (selectedManagerId) {
+        url += `?manager_id=${selectedManagerId}`;
+      }
+      
+      console.log("[Admin Manager Chat API] Request URL:", url);
+      
+      const response = await fetch(url, {
+        headers: {
+          "X-CSRFToken": getCookie("csrftoken"),
+        },
+      });
+
+      console.log(`[Admin Manager Chat API] Response status: ${response.status}`);
+
+      if (response.status === 401 || response.status === 403) {
+        console.warn("[Admin Manager Chat API] Unauthorized - Session expired");
+        setError("Unauthorized - Session expired. Please refresh.");
+        return;
+      }
+
+      if (!response.ok) {
+        console.error(`[Admin Manager Chat API] Failed to load messages: ${response.status}`);
+        throw new Error("Failed to load manager messages");
+      }
+
+      const data = await response.json();
+      console.log(`[Admin Manager Chat API] Received ${data.messages.length} messages from managers`);
+      console.log("[Admin Manager Chat API] Messages - First:", data.messages[0], "Last:", data.messages[data.messages.length - 1]);
+      
+      // Store manager messages with a special key
+      setMessages((prev) => ({
+        ...prev,
+        ['MANAGER_CHAT']: data.messages,
+      }));
+
+      // Extract unique managers from messages
+      const uniqueManagers = {};
+      data.messages.forEach(msg => {
+        if (msg.sender_type === 'manager' && msg.sender && msg.sender_name) {
+          if (!uniqueManagers[msg.sender]) {
+            uniqueManagers[msg.sender] = {
+              id: msg.sender,
+              name: msg.sender_name,
+              email: msg.sender_email,
+            };
+          }
+        }
+      });
+    } catch (err) {
+      console.error("[Admin Manager Chat API] Error loading manager messages:", err);
+    }
+  };
+
   // Handle emoji selection
   const handleEmojiSelect = (emoji) => {
     setInput(input + emoji);
@@ -534,6 +650,8 @@ const ChatBot = () => {
         formData.append("image", selectedImage);
       }
 
+      console.log(`[Main Chat API] Sending message to client ${selectedClientId}`);
+
       const response = await fetch("/api/chat/admin/send/", {
         method: "POST",
         headers: {
@@ -542,7 +660,15 @@ const ChatBot = () => {
         body: formData,
       });
 
-      if (!response.ok) throw new Error("Failed to send message");
+      console.log(`[Main Chat API] Send message response: ${response.status}`);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`[Main Chat API] Failed to send message: ${response.status}`, errorText);
+        throw new Error("Failed to send message");
+      }
+
+      console.log(`[Main Chat API] Message sent successfully`);
 
       // Clear image after sending
       setSelectedImage(null);
@@ -551,9 +677,82 @@ const ChatBot = () => {
       // Reload messages
       await loadMessagesForClient(selectedClientId);
     } catch (err) {
+      console.error("[Main Chat API] Error:", err);
       setError(err.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Send reply to manager
+  const sendReplyToManager = async (managerId, messageText, image) => {
+    try {
+      const formData = new FormData();
+      if (messageText.trim()) {
+        formData.append("message", messageText);
+      }
+      formData.append("manager_id", managerId);
+      if (image) {
+        formData.append("image", image);
+      }
+
+      console.log(`[Admin Reply API] Sending reply to manager ${managerId}`);
+
+      const response = await fetch("/api/chat/admin/send_to_manager/", {
+        method: "POST",
+        headers: {
+          "X-CSRFToken": getCookie("csrftoken"),
+        },
+        body: formData,
+      });
+
+      console.log(`[Admin Reply API] Response status: ${response.status}`);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`[Admin Reply API] Failed: ${response.status}`, errorText);
+        throw new Error("Failed to send reply to manager");
+      }
+
+      console.log(`[Admin Reply API] Reply sent successfully`);
+      return true;
+    } catch (err) {
+      console.error("[Admin Reply API] Error:", err);
+      setError(err.message);
+      return false;
+    }
+  };
+
+  // Handle sending manager reply from second chat
+  const handleSendManagerReply = async () => {
+    if (!selectedManagerId) {
+      setError("Please select a manager");
+      return;
+    }
+    
+    if ((!supportInput.trim() && !supportSelectedImage) || supportLoading) return;
+
+    setSupportLoading(true);
+    setError(null);
+
+    try {
+      const messageText = supportInput;
+      const image = supportSelectedImage;
+      
+      const success = await sendReplyToManager(selectedManagerId, messageText, image);
+      
+      if (success) {
+        setSupportInput("");
+        setSupportSelectedImage(null);
+        setSupportImagePreview(null);
+        // Reload manager messages after sending
+        loadManagerMessages();
+      }
+    } catch (err) {
+      console.error("[Handle Send Manager Reply] Error:", err);
+      setError("Failed to send manager reply");
+    } finally {
+      setSupportLoading(false);
     }
   };
 
@@ -660,6 +859,161 @@ const ChatBot = () => {
       setError(err.message);
     }
   };
+
+  // ==================== SUPPORT CHAT HANDLERS ====================
+
+  // Handle support message send (uses main message sending function)
+  const handleSendSupportMessage = async () => {
+    if ((!supportInput.trim() && !supportSelectedImage) || supportLoading || !selectedClientId) return;
+
+    setSupportLoading(true);
+    try {
+      const formData = new FormData();
+      if (supportInput.trim()) {
+        formData.append("message", supportInput);
+      }
+      formData.append("recipient_id", selectedClientId);
+      if (supportSelectedImage) {
+        formData.append("image", supportSelectedImage);
+      }
+
+      console.log(`[Support Chat API] Sending message to client ${selectedClientId}`);
+      
+      const response = await fetch("/api/chat/admin/send/", {
+        method: "POST",
+        headers: {
+          "X-CSRFToken": getCookie("csrftoken"),
+        },
+        body: formData,
+      });
+
+      console.log(`[Support Chat API] Send message response: ${response.status}`);
+
+      if (response.ok) {
+        console.log(`[Support Chat API] Message sent successfully, refreshing messages`);
+        setSupportInput("");
+        clearSupportImage();
+        // Refresh messages
+        const messagesResponse = await fetch(`/api/chat/admin/messages/?user_id=${selectedClientId}`, {
+          headers: {
+            "X-CSRFToken": getCookie("csrftoken"),
+          },
+        });
+        if (messagesResponse.ok) {
+          const data = await messagesResponse.json();
+          console.log(`[Support Chat API] Loaded ${data.messages.length} messages after send`);
+          setMessages((prev) => ({
+            ...prev,
+            [selectedClientId]: data.messages,
+          }));
+        } else {
+          console.error(`[Support Chat API] Failed to load messages: ${messagesResponse.status}`);
+        }
+      } else {
+        const errorText = await response.text();
+        console.error(`[Support Chat API] Failed to send message: ${response.status}`, errorText);
+        setError("Failed to send support message");
+      }
+    } catch (err) {
+      setError("Error sending support message");
+      console.error("[Support Chat API] Error sending support message:", err);
+    } finally {
+      setSupportLoading(false);
+    }
+  };
+
+  // Handle support image selection
+  const handleSupportImageSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSupportSelectedImage(file);
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setSupportImagePreview(e.target?.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Clear support image
+  const clearSupportImage = () => {
+    setSupportSelectedImage(null);
+    setSupportImagePreview(null);
+  };
+
+  // Handle support emoji selection
+  const handleSupportEmojiSelect = (emoji) => {
+    setSupportInput((prev) => prev + emoji);
+    setShowSupportEmojiPicker(false);
+  };
+
+  // Handle support chat drag and drop
+  const handleSupportDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsSupportDragging(true);
+  };
+
+  const handleSupportDragLeave = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsSupportDragging(false);
+  };
+
+  const handleSupportDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsSupportDragging(false);
+    const file = e.dataTransfer?.files?.[0];
+    if (file && file.type.startsWith("image/")) {
+      setSupportSelectedImage(file);
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setSupportImagePreview(e.target?.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Handle support message delete
+  const handleDeleteSupportMessage = async (messageId) => {
+    if (!window.confirm("Are you sure you want to delete this message?")) return;
+
+    try {
+      const response = await fetch(`/api/chat/delete/${messageId}/`, {
+        method: "DELETE",
+        headers: {
+          "X-CSRFToken": getCookie("csrftoken"),
+        },
+      });
+
+      if (!response.ok) throw new Error("Failed to delete message");
+
+      setMessages((prev) => ({
+        ...prev,
+        [selectedClientId]: (prev[selectedClientId] || []).filter((msg) => msg.id !== messageId),
+      }));
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  // Ensure support messages scroll to bottom when support chat opens or messages change
+  useEffect(() => {
+    if (isSecondChatOpen && selectedClientId) {
+      setSupportIsScrolledToBottom(true);
+    }
+  }, [isSecondChatOpen, selectedClientId]);
+
+  // Scroll to bottom for support chat
+  useEffect(() => {
+    if (supportMessagesEndRef.current && isSecondChatOpen && selectedManagerId) {
+      // Add a small delay to ensure DOM has updated with new messages
+      setTimeout(() => {
+        supportMessagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      }, 100);
+    }
+  }, [messages, isSecondChatOpen, selectedManagerId]);
 
   const getInitials = (name) => {
     return name
@@ -933,10 +1287,56 @@ const ChatBot = () => {
     };
   }, []);
 
+  // Update unread counts for managers when messages change (background tracking)
+  useEffect(() => {
+    const managerMessages = messages['MANAGER_CHAT'] || [];
+    const newUnreadCounts = {};
+    
+    managerMessages.forEach((msg) => {
+      const managerId = msg.sender;
+      // Count unread messages from managers that are NOT being currently viewed
+      if (msg.sender_type === 'manager' && !msg.is_read) {
+        // Only count as unread if we're not viewing this manager's messages in detail
+        if (!selectedManagerId || selectedManagerId !== managerId) {
+          newUnreadCounts[managerId] = (newUnreadCounts[managerId] || 0) + 1;
+        }
+      }
+    });
+    
+    console.log("[Manager Unread Count] Total manager messages:", managerMessages.length);
+    console.log("[Manager Unread Count] Unread counts:", newUnreadCounts);
+    console.log("[Manager Unread Count] Total unread:", Object.values(newUnreadCounts).reduce((sum, count) => sum + count, 0));
+    
+    setManagerUnreadCounts(newUnreadCounts);
+  }, [messages, selectedManagerId, isSecondChatOpen]);
+
   // Hide chatbot for managers
   if (userRole === "manager") {
     return null;
   }
+
+  // Extract unique managers from manager messages
+  const managers = {};
+  (messages['MANAGER_CHAT'] || []).forEach(msg => {
+    if (msg.sender_type === 'manager' && msg.sender && msg.sender_name) {
+      if (!managers[msg.sender]) {
+        managers[msg.sender] = {
+          id: msg.sender,
+          name: msg.sender_name,
+          email: msg.sender_email,
+        };
+      }
+    }
+  });
+  const managersList = Object.values(managers);
+
+  // Filter manager messages by selected manager
+  const selectedManagerMessages = selectedManagerId 
+    ? (messages['MANAGER_CHAT'] || []).filter(msg => {
+        // Show messages from the selected manager or replies to that manager
+        return msg.sender === selectedManagerId || (msg.sender_type === 'admin' && msg.recipient === selectedManagerId);
+      })
+    : (messages['MANAGER_CHAT'] || []);
 
   return (
     <>
@@ -972,6 +1372,25 @@ const ChatBot = () => {
       </style>
 
       <div className="fixed bottom-5 right-5 z-50 flex flex-col items-end px-2 sm:px-0 gap-2">
+        {/* Second Chat button */}
+        {!isSecondChatOpen && (
+          <button
+            onClick={() => setIsSecondChatOpen(true)}
+            className={`relative ${
+              isDarkMode ? "bg-black hover:bg-gray-800" : "bg-white hover:bg-gray-50"
+            } p-3 rounded-full shadow-md hover:shadow-xl transition-all hover:scale-110 active:scale-95`}
+            title="Open support chat"
+          >
+            <MessageCircle className="w-7 h-7 text-blue-400" />
+            {/* Manager Notification Badge */}
+            {Object.values(managerUnreadCounts).reduce((sum, count) => sum + count, 0) > 0 && (
+              <div className="absolute -top-2 -right-2 flex items-center justify-center w-6 h-6 bg-red-500 text-white text-xs font-bold rounded-full shadow-lg animate-bounce">
+                {Object.values(managerUnreadCounts).reduce((sum, count) => sum + count, 0) > 99 ? "99+" : Object.values(managerUnreadCounts).reduce((sum, count) => sum + count, 0)}
+              </div>
+            )}
+          </button>
+        )}
+
         {/* Chat button */}
         {!isOpen && (
           <button
@@ -984,7 +1403,7 @@ const ChatBot = () => {
             <MessageCircle className="w-7 h-7 text-yellow-400" />
             {/* Notification Badge */}
             {totalUnreadCount > 0 && (
-              <div className="absolute -top-1 -right-1 flex items-center justify-center w-6 h-6 bg-red-500 text-white text-xs font-bold rounded-full shadow-lg animate-bounce">
+              <div className="absolute -top-2 -right-2 flex items-center justify-center w-6 h-6 bg-red-500 text-white text-xs font-bold rounded-full shadow-lg animate-bounce">
                 {totalUnreadCount > 99 ? "99+" : totalUnreadCount}
               </div>
             )}
@@ -1436,6 +1855,426 @@ const ChatBot = () => {
                 )}
               </div>
             </div>
+            </div>
+          </>
+        )}
+
+        {/* Second Chat Box */}
+        {isSecondChatOpen && (
+          <>
+            {/* Backdrop overlay - click to close */}
+            <div
+              className="fixed inset-0 bg-black/20 z-40"
+              onClick={() => setIsSecondChatOpen(false)}
+            />
+            <div
+              className={`chatbox-enter mt-3 w-full sm:w-[900px] h-[600px] max-w-sm sm:max-w-none ${
+                isDarkMode ? "bg-black border-gray-700" : "bg-white border-gray-300"
+              } border rounded-xl shadow-lg flex flex-col overflow-hidden relative z-50`}
+            >
+              {/* Header */}
+              <div
+                className={`header-fade ${
+                  isDarkMode ? "bg-gray-900 text-white" : "bg-gray-100 text-black"
+                } px-4 py-3 font-bold flex justify-between items-center`}
+              >
+                <div className="flex items-center gap-3">
+                  {/* Mobile menu button - visible only on small screens */}
+                  <button
+                    onClick={() => setIsManagerSidebarOpen(!isManagerSidebarOpen)}
+                    className="sm:hidden p-1.5 hover:bg-gray-400/20 rounded-lg transition-all"
+                    title={isManagerSidebarOpen ? "Hide managers" : "Show managers"}
+                  >
+                    <Menu className="w-5 h-5" />
+                  </button>
+                  <span>{selectedManagerId ? "Manager Messages" : "Manager Communications"}</span>
+                </div>
+                <button
+                  onClick={() => setIsSecondChatOpen(false)}
+                  className="hover:bg-red-500 hover:text-white rounded-lg p-1.5 transition-all duration-200"
+                  title="Close chat"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="flex flex-1 overflow-hidden gap-2 p-2 relative">
+
+                {/* Managers list - hidden on mobile unless sidebar is open */}
+                <div
+                  className={`absolute sm:relative w-48 h-full sm:h-auto ${
+                    isDarkMode ? "bg-gradient-to-b from-gray-800 to-gray-900" : "bg-white"
+                  } rounded-lg border ${isDarkMode ? "border-purple-400" : "border-purple-400"} overflow-hidden flex flex-col shadow-lg transition-all duration-300 z-40 ${
+                    isManagerSidebarOpen ? "left-0 sm:left-auto" : "-left-full sm:left-auto"
+                  }`}
+                >
+                  <div className={`px-3 py-3 font-bold text-sm border-b flex items-center justify-between ${
+                    isDarkMode ? "bg-purple-600 text-purple-100 border-purple-500" : "bg-purple-500 text-white border-purple-400"
+                  }`}>
+                    <span>Managers ({managersList.length})</span>
+                    {Object.values(managerUnreadCounts).reduce((sum, count) => sum + count, 0) > 0 && (
+                      <span className="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                        {Object.values(managerUnreadCounts).reduce((sum, count) => sum + count, 0)}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex-1 overflow-y-auto">
+                    {managersList.length === 0 ? (
+                      <div
+                        className={`text-xs ${
+                          isDarkMode ? "text-gray-500" : "text-gray-600"
+                        } p-2 text-center`}
+                      >
+                        No managers yet
+                      </div>
+                    ) : (
+                      managersList.map((manager) => (
+                        <button
+                          key={manager.id}
+                          onClick={() => {
+                            setSelectedManagerId(manager.id);
+                            setIsManagerSidebarOpen(false); // Close sidebar on mobile after selection
+                          }}
+                          className={`w-full text-left px-3 py-2.5 text-xs border-b transition-all duration-200 flex items-center justify-between ${
+                            isDarkMode ? "border-gray-700" : "border-purple-200"
+                          } ${
+                            selectedManagerId === manager.id
+                              ? `${
+                                  isDarkMode
+                                    ? "bg-purple-500 text-white font-semibold shadow-md"
+                                    : "bg-purple-400 text-white font-semibold shadow-md"
+                                }`
+                              : `${
+                                  isDarkMode
+                                    ? "bg-gray-700/50 text-gray-200 hover:bg-purple-500/60 hover:text-white hover:shadow-md"
+                                    : "bg-white/60 text-gray-700 hover:bg-purple-200 hover:text-gray-900 hover:shadow-md"
+                                }`
+                          }`}
+                        >
+                          <div className="truncate font-medium">{manager.name}</div>
+                          {managerUnreadCounts[manager.id] > 0 && (
+                            <span className={`ml-2 px-2 py-1 rounded-full text-xs font-bold whitespace-nowrap ${
+                              isDarkMode 
+                                ? "bg-red-600 text-white" 
+                                : "bg-red-500 text-white"
+                            }`}>
+                              {managerUnreadCounts[manager.id] > 99 ? "99+" : managerUnreadCounts[manager.id]}
+                            </span>
+                          )}
+                        </button>
+                      ))
+                    )}
+                  </div>
+                </div>
+
+                {/* Mobile overlay when sidebar is open */}
+                {isManagerSidebarOpen && (
+                  <div
+                    className="sm:hidden absolute inset-0 bg-black/50 z-30 rounded-lg"
+                    onClick={() => setIsManagerSidebarOpen(false)}
+                  />
+                )}
+
+                {/* Messages area */}
+                <div className="flex-1 flex flex-col border rounded-lg border-gray-700 overflow-hidden">
+                  {selectedManagerId ? (
+                    <>
+                      {/* Manager header */}
+                      <div
+                        className={`px-3 py-2 border-b ${
+                          isDarkMode ? "border-gray-700 bg-gray-800" : "border-gray-200 bg-white"
+                        } text-sm font-medium`}
+                      >
+                        <div className="flex flex-col">
+                          <span className={`${isDarkMode ? "text-purple-300" : "text-purple-500"}`}>{managersList.find((m) => m.id === selectedManagerId)?.name}</span>
+                          <span className={`text-xs ${isDarkMode ? "text-gray-400" : "text-gray-500"}`}>
+                            {managersList.find((m) => m.id === selectedManagerId)?.email}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Messages */}
+                      <div 
+                        ref={supportMessagesContainerRef}
+                        className="flex-1 px-3 py-2 overflow-y-auto space-y-2"
+                        onScroll={(e) => {
+                          const element = e.target;
+                          const isBottom = element.scrollHeight - element.scrollTop - element.clientHeight < 50;
+                          setSupportIsScrolledToBottom(isBottom);
+                        }}
+                      >
+                        {selectedManagerMessages.length === 0 ? (
+                          <div
+                            className={`${
+                              isDarkMode ? "text-gray-500" : "text-gray-400"
+                            } text-sm text-center py-8`}
+                          >
+                            No messages yet
+                          </div>
+                        ) : (
+                          selectedManagerMessages.map((msg) => (
+                            <div
+                              key={msg.id}
+                              className={`flex ${
+                                msg.sender_type === "admin" ? "justify-end" : "justify-start"
+                              } group message-slide`}
+                            >
+                              <div className="flex items-end gap-2 max-w-xs">
+                                {/* Profile Avatar for Manager Messages */}
+                                {msg.sender_type === "manager" && (
+                                  msg.sender_profile_pic ? (
+                                    <img
+                                      src={`/media/${msg.sender_profile_pic}`}
+                                      alt={msg.sender_name || "User"}
+                                      className="avatar-fade w-6 h-6 rounded-full flex-shrink-0 object-cover"
+                                      title={msg.sender_name || "User"}
+                                      onError={(e) => {
+                                        e.target.style.display = "none";
+                                        const fallback = e.target.nextElementSibling;
+                                        if (fallback) fallback.style.display = "flex";
+                                      }}
+                                    />
+                                  ) : null
+                                )}
+
+                                {/* Fallback Avatar for Manager Messages with Initials */}
+                                {msg.sender_type === "manager" && !msg.sender_profile_pic && (
+                                  <div
+                                    className={`avatar-fade w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0 ${
+                                      isDarkMode ? "bg-purple-600" : "bg-purple-400"
+                                    }`}
+                                    title={msg.sender_name || "Manager"}
+                                  >
+                                    {msg.sender_name ? getInitials(msg.sender_name) : "MG"}
+                                  </div>
+                                )}
+
+                                <div className="flex flex-col gap-1">
+                                  {/* Message with Image if present */}
+                                  {msg.image_url && (
+                                    <img
+                                      src={msg.image_url}
+                                      alt="Chat image"
+                                      className="max-w-xs rounded-lg cursor-pointer hover:opacity-80 transition-opacity"
+                                      onClick={() => {
+                                        const modal = document.createElement("div");
+                                        modal.className = `fixed inset-0 z-50 flex items-center justify-center ${isDarkMode ? "bg-black/90" : "bg-black/70"}`;
+                                        modal.innerHTML = `
+                                          <div class="relative max-w-2xl max-h-screen flex flex-col items-center justify-center">
+                                            <img src="${msg.image_url}" alt="Full size" class="max-w-full max-h-[80vh] rounded-lg"/>
+                                            <button class="absolute top-4 right-4 p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors" id="closeBtn">
+                                              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                            </button>
+                                          </div>
+                                        `;
+                                        document.body.appendChild(modal);
+                                        
+                                        const closeBtn = modal.querySelector("#closeBtn");
+                                        closeBtn.addEventListener("click", () => modal.remove());
+                                        
+                                        modal.addEventListener("click", (e) => {
+                                          if (e.target === modal) modal.remove();
+                                        });
+                                      }}
+                                    />
+                                  )}
+                                  
+                                  <div
+                                    className={`px-3 py-2 rounded-lg text-xs break-words relative group/message transition-all hover:shadow-md ${
+                                      msg.sender_type === "admin"
+                                        ? "bg-blue-400 text-white rounded-br-none"
+                                        : `${
+                                            isDarkMode
+                                              ? "bg-purple-900 text-white"
+                                              : "bg-purple-100 text-black"
+                                          } rounded-bl-none`
+                                    }`}
+                                  >
+                                    {msg.message}
+
+                                    {/* Delete Button on Hover */}
+                                    <button
+                                      onClick={() => handleDeleteSupportMessage(msg.id)}
+                                      className="absolute -top-8 right-0 opacity-0 group-hover/message:opacity-100 transition-opacity p-1 hover:bg-red-500 hover:text-white rounded"
+                                      title="Delete message"
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </button>
+                                  </div>
+                                  
+                                  <div className="flex items-center gap-1">
+                                    {/* Message Timestamp */}
+                                    {msg.timestamp && (
+                                      <span className={`text-[10px] ${
+                                        msg.sender === "admin"
+                                          ? isDarkMode ? "text-blue-300/60" : "text-blue-600/60"
+                                          : isDarkMode ? "text-gray-500" : "text-gray-500"
+                                      } px-1`}>
+                                        {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
+                                      </span>
+                                    )}
+                                    
+                                    {/* WhatsApp-style Read Status Indicator - Admin Messages Only */}
+                                    {msg.sender_type === "admin" && (
+                                      <div className={`flex -space-x-1 ml-1 ${msg.is_read ? "text-blue-500" : "text-gray-400"}`} title={msg.is_read ? "Read" : "Sent"}>
+                                        <Check className="w-3 h-3" />
+                                        {msg.is_read && <Check className="w-3 h-3" />}
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+
+                                {/* Profile Avatar for Admin Messages */}
+                                {msg.sender_type === "admin" && (
+                                  adminProfiles[msg.sender_id] ? (
+                                    <img
+                                      src={`/media/${adminProfiles[msg.sender_id]}`}
+                                      alt={msg.admin_sender_name || "Admin"}
+                                      className="avatar-fade w-8 h-8 rounded-full flex-shrink-0 object-cover"
+                                      title={msg.admin_sender_name || "Admin"}
+                                      onError={(e) => {
+                                        e.target.style.display = "none";
+                                        const fallback = e.target.nextElementSibling;
+                                        if (fallback) fallback.style.display = "flex";
+                                      }}
+                                    />
+                                  ) : null
+                                )}
+                                
+                                {/* Fallback Avatar with Initials */}
+                                {msg.sender_type === "admin" && !adminProfiles[msg.sender_id] && (
+                                  <div
+                                    className={`avatar-fade w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0 ${
+                                      isDarkMode ? "bg-blue-500" : "bg-blue-400"
+                                    }`}
+                                    title={msg.admin_sender_name || "Admin"}
+                                  >
+                                    {msg.admin_sender_name ? getInitials(msg.admin_sender_name) : "AD"}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          ))
+                        )}
+                        <div ref={supportMessagesEndRef} />
+                      </div>
+
+                      {/* Input */}
+                      <div className={`p-4 border-t ${isDarkMode ? "border-gray-700 bg-gray-900/50" : "border-gray-300 bg-gray-50"} backdrop-blur-sm space-y-2`}>
+                        {/* Image Preview */}
+                        {supportImagePreview && (
+                          <div className="relative inline-block">
+                            <img
+                              src={supportImagePreview}
+                              alt="Preview"
+                              className="max-h-32 rounded-lg"
+                            />
+                            <button
+                              onClick={clearSupportImage}
+                              className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1"
+                              title="Remove image"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                        )}
+
+                        <div className="flex items-end gap-2">
+                          {/* Image Upload Input */}
+                          <input
+                            type="file"
+                            id="image-upload-support"
+                            accept="image/*"
+                            onChange={handleSupportImageSelect}
+                            className="hidden"
+                          />
+                          
+                          <button
+                            onClick={() => document.getElementById('image-upload-support')?.click()}
+                            disabled={supportLoading}
+                            className={`p-3 rounded-2xl transition-all duration-300 ${
+                              isDarkMode
+                                ? "bg-gray-700 hover:bg-gray-600 text-gray-300 hover:text-blue-400"
+                                : "bg-gray-200 hover:bg-gray-300 text-gray-700 hover:text-blue-600"
+                            } disabled:opacity-50 disabled:cursor-not-allowed`}
+                            title="Attach image"
+                          >
+                            <ImagePlus className="w-5 h-5" />
+                          </button>
+
+                          {/* Emoji Picker Button */}
+                          <div className="relative">
+                            <button
+                              onClick={() => setShowSupportEmojiPicker(!showSupportEmojiPicker)}
+                              disabled={supportLoading}
+                              className={`p-3 rounded-2xl transition-all duration-300 ${
+                                isDarkMode
+                                  ? "bg-gray-700 hover:bg-gray-600 text-gray-300 hover:text-blue-400"
+                                  : "bg-gray-200 hover:bg-gray-300 text-gray-700 hover:text-blue-600"
+                              } disabled:opacity-50 disabled:cursor-not-allowed`}
+                              title="Add emoji"
+                            >
+                              <Smile className="w-5 h-5" />
+                            </button>
+                            
+                            {/* Emoji Picker Popup */}
+                            {showSupportEmojiPicker && (
+                              <div className="absolute bottom-14 left-0 z-50 animate-in fade-in slide-in-from-bottom-2 duration-200">
+                                <EmojiPicker onEmojiSelect={handleSupportEmojiSelect} isDarkMode={isDarkMode} onClose={() => setShowSupportEmojiPicker(false)} />
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="flex-1 relative group">
+                            <input
+                              type="text"
+                              value={supportInput}
+                              onChange={(e) => setSupportInput(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter" && !e.shiftKey) {
+                                  e.preventDefault();
+                                  handleSendManagerReply();
+                                }
+                              }}
+                              onDragOver={handleSupportDragOver}
+                              onDragLeave={handleSupportDragLeave}
+                              onDrop={handleSupportDrop}
+                              disabled={supportLoading}
+                              placeholder="Type manager message..."
+                              className={`w-full px-4 py-3 rounded-2xl border-2 transition-all duration-300 outline-none ${
+                                isSupportDragging
+                                  ? isDarkMode ? "border-blue-500 bg-gray-800" : "border-blue-400 bg-blue-50"
+                                  : isDarkMode ? "bg-gray-800 border-gray-700 focus:border-blue-500 text-white placeholder-gray-400" : "bg-white border-gray-300 focus:border-blue-400 text-black placeholder-gray-500"
+                              } disabled:opacity-50 disabled:cursor-not-allowed`}
+                            />
+                          </div>
+
+                          <button
+                            onClick={handleSendManagerReply}
+                            disabled={(!supportInput.trim() && !supportSelectedImage) || supportLoading}
+                            className={`p-3 rounded-2xl transition-all duration-300 ${
+                              (!supportInput.trim() && !supportSelectedImage) || supportLoading
+                                ? isDarkMode ? "bg-gray-700 text-gray-500 cursor-not-allowed" : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                                : isDarkMode ? "bg-blue-500 hover:bg-blue-600 text-white hover:shadow-lg" : "bg-blue-400 hover:bg-blue-500 text-white hover:shadow-lg"
+                            } hover:scale-105 active:scale-95`}
+                            title="Send message"
+                          >
+                            <Send className="w-5 h-5" />
+                          </button>
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <div
+                      className={`flex-1 flex items-center justify-center ${
+                        isDarkMode ? "text-gray-500" : "text-gray-400"
+                      }`}
+                    >
+                      Select a manager to chat
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           </>
         )}

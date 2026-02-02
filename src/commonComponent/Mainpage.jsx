@@ -2,10 +2,13 @@ import React, { useState, useEffect } from 'react';
 import Header from './Header';
 import { useTheme } from '../context/ThemeContext';
 import ChatBot from './ChatBox';
+import ManagerAdminChat from './ManagerAdminChat';
+import { getCookie } from '../utils/api';
 
 const Main = ({ isSidebarOpen, setIsSidebarOpen, children }) => {
   const { isDarkMode } = useTheme();
   const [isMobileView, setIsMobileView] = useState(false);
+  const [userRole, setUserRole] = useState(null);
 
   useEffect(() => {
     const handleResize = () => {
@@ -23,6 +26,29 @@ const Main = ({ isSidebarOpen, setIsSidebarOpen, children }) => {
     return () => window.removeEventListener('resize', handleResize);
   }, [setIsSidebarOpen]);
 
+  // Get user role on mount
+  useEffect(() => {
+    try {
+      const userCookie = getCookie("user");
+      if (userCookie) {
+        try {
+          const userData = JSON.parse(userCookie);
+          setUserRole(userData.role || null);
+          return;
+        } catch {
+          // console.debug("Could not parse user cookie");
+        }
+      }
+      
+      const role = getCookie("userRole") || getCookie("user_role");
+      if (role) {
+        setUserRole(role);
+      }
+    } catch (err) {
+      // console.error("Error getting user role:", err);
+    }
+  }, []);
+
   return (
     <div
       className={`w-full transition-all duration-300
@@ -36,7 +62,7 @@ const Main = ({ isSidebarOpen, setIsSidebarOpen, children }) => {
       />
 
       {/* ChatBot */}
-      <ChatBot />
+      {userRole?.toLowerCase() === 'manager' ? <ManagerAdminChat /> : <ChatBot />}
 
       {/* Main Content */}
       <div
