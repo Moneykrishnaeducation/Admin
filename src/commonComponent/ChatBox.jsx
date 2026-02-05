@@ -497,6 +497,46 @@ const ChatBot = () => {
     }
   };
 
+  // End chat with user
+  const handleEndChat = async () => {
+    if (!selectedId) return;
+
+    const confirmed = window.confirm(`Are you sure you want to end the chat with ${selectedContact?.name}? This will delete all messages in this conversation.`);
+    if (!confirmed) return;
+
+    try {
+      setLoading(true);
+      setError(null);
+      const token = localStorage.getItem('accessToken');
+      
+      const response = await fetch('/api/chat/admin/end_chat/', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ user_id: selectedId })
+      });
+
+      if (response.ok) {
+        const msgKey = chatMode === 'clients' ? selectedId : `manager_${selectedId}`;
+        setMessages(prev => ({
+          ...prev,
+          [msgKey]: []
+        }));
+        setSelectedId(null);
+        setError(null);
+      } else {
+        const errorData = await response.json();
+        setError(errorData.message || 'Failed to end chat');
+      }
+    } catch (err) {
+      setError('Error ending chat: ' + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Get initials from name
   const getInitials = (name) => {
     if (!name) return '?';
@@ -728,9 +768,9 @@ const ChatBot = () => {
                       <div
                         className={`px-3 py-2 border-b ${
                           isDarkMode ? "border-gray-700 bg-gray-800" : "border-gray-200 bg-white"
-                        } text-sm font-medium`}
+                        } text-sm font-medium flex justify-between items-center`}
                       >
-                        <div className="flex flex-col">
+                        <div className="flex flex-col flex-1">
                           <span className={`${chatMode === 'clients' ? isDarkMode ? "text-yellow-300" : "text-yellow-500" : isDarkMode ? "text-purple-300" : "text-purple-500"}`}>
                             {selectedContact?.name}
                           </span>
@@ -738,6 +778,19 @@ const ChatBot = () => {
                             {selectedContact?.email}
                           </span>
                         </div>
+                        <button
+                          onClick={handleEndChat}
+                          disabled={loading}
+                          className={`ml-3 px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-2 whitespace-nowrap ${
+                            isDarkMode
+                              ? "bg-red-800 text-white hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                              : "bg-red-800 text-white hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                          }`}
+                          title="End chat and delete all messages"
+                        >
+                          <X className="w-4 h-4" />
+                          End Chat
+                        </button>
                       </div>
 
                       {/* Messages */}
