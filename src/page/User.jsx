@@ -960,6 +960,7 @@ const User = () => {
           handleAddressSelect={handleAddressSelect}
           handleUploadId={handleUploadId}
           handleUploadAddress={handleUploadAddress}
+          showToast={showToast}
         />
       )}
 

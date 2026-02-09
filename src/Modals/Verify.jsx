@@ -12,6 +12,7 @@ const Verify = ({
   btnGhost,
   setVerifyModalOpen,
   refreshActionPanelForUser,
+  showToast,
 }) => {
   const theme = useTheme() || {};
   const { isDarkMode = true } = theme;
@@ -100,7 +101,14 @@ const Verify = ({
 
   async function uploadDocument(type) {
     const doc = docs[type];
-    if (!doc.file) return alert("Please select a file");
+    if (!doc.file) {
+      if (showToast) {
+        showToast("Please select a file", "error");
+      } else {
+        alert("Please select a file");
+      }
+      return;
+    }
 
     const serverType = type === "id" ? "ID" : "Address";
 
@@ -122,7 +130,18 @@ const Verify = ({
         body: formData,
       });
 
-      if (!resp.ok) throw new Error("Upload failed");
+      if (!resp.ok) {
+        // Try to parse error message from response
+        let errorMessage = "Upload failed";
+        try {
+          const errorData = await resp.json();
+          errorMessage = errorData.error || errorData.message || errorMessage;
+        } catch {
+          // If parsing fails, use status text
+          errorMessage = resp.statusText || errorMessage;
+        }
+        throw new Error(errorMessage);
+      }
 
       // Mark as uploaded but do NOT auto-trigger verification.
       updateDoc(type, {
@@ -130,8 +149,16 @@ const Verify = ({
         status: "uploaded",
         file: null,
       });
+      
+      if (showToast) {
+        showToast(`${serverType} document uploaded successfully`, "success");
+      }
     } catch (err) {
-      alert(err.message);
+      if (showToast) {
+        showToast(err.message, "error");
+      } else {
+        alert(err.message);
+      }
       updateDoc(type, { uploading: false });
     }
   }
