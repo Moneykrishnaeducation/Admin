@@ -866,15 +866,43 @@ const PartnershipModals = ({
                 Client List - {selectedId}
               </h2>
             </div>
-            <div className="overflow-auto max-h-[60vh]">
-              <TableStructure
-                columns={[
-                  { Header: "Name", accessor: "name" },
-                  { Header: "Email", accessor: "email" },
-                  { Header: "User ID", accessor: "user_id" },
-                ]}
-                data={clientListData}
-              />
+            <div className="overflow-auto max-h-[60vh] space-y-6">
+              {clientListData && clientListData.levels && clientListData.levels.length > 0 ? (
+                clientListData.levels.map((levelData) => (
+                  <div key={levelData.level} className={`border rounded-lg p-4 ${isDarkMode ? 'border-yellow-400/20 bg-gray-900/50' : 'border-yellow-400/40 bg-yellow-50/50'}`}>
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="text-lg font-semibold text-yellow-400">
+                        Level {levelData.level}
+                      </h3>
+                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${isDarkMode ? 'bg-yellow-400/20 text-yellow-400' : 'bg-yellow-400/30 text-yellow-600'}`}>
+                        {levelData.clients?.length || 0} {levelData.clients?.length === 1 ? 'Client' : 'Clients'}
+                      </span>
+                    </div>
+                    {levelData.clients && levelData.clients.length > 0 ? (
+                      <div className="overflow-x-auto">
+                        <TableStructure
+                          columns={[
+                            { Header: "Name", accessor: "name" },
+                            { Header: "Email", accessor: "email" },
+                            { Header: "User ID", accessor: "user_id" },
+                          ]}
+                          data={levelData.clients}
+                        />
+                      </div>
+                    ) : (
+                      <p className={`text-center py-4 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                        No clients in this level
+                      </p>
+                    )}
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-8">
+                  <p className={`text-lg ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                    No client data available
+                  </p>
+                </div>
+              )}
             </div>
             <div className="flex justify-end mt-4">
               <button

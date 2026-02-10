@@ -43,7 +43,7 @@ const Partnership = () => {
 
   // New states for client list modal
   // eslint-disable-next-line no-unused-vars
-  const [clientListData, setClientListData] = useState([]);
+  const [clientListData, setClientListData] = useState({ levels: [] });
 
   // New state for statistics data
   const [statisticsData, setStatisticsData] = useState(null);
@@ -1068,26 +1068,26 @@ const Partnership = () => {
       });
       if (res.status === 401) {
         setError("Unauthorized: please log in to view client list.");
-        setClientListData([]);
+        setClientListData({ levels: [] });
         return;
       }
       if (!res.ok) throw new Error(`Failed to fetch client list: ${res.status}`);
       const json = await res.json();
-      let clients = [];
-      if (Array.isArray(json)) {
-        clients = json[0]?.clients ?? [];
+      
+      // Pass the complete levels structure to the modal
+      if (json.levels && Array.isArray(json.levels)) {
+        // API returns the full levels structure
+        setClientListData(json);
+      } else if (Array.isArray(json)) {
+        // Fallback: if API returns array directly, wrap it
+        setClientListData({ levels: json });
       } else {
-        clients = json.levels?.[0]?.clients ?? [];
+        // No valid data
+        setClientListData({ levels: [] });
       }
-      const transformed = clients.map((client) => ({
-        name: client.name,
-        email: client.email,
-        user_id: client.user_id,
-      }));
-      setClientListData(transformed);
     } catch (err) {
       setError(err.message || "Failed to load client list");
-      setClientListData([]);
+      setClientListData({ levels: [] });
     }
   };
 
