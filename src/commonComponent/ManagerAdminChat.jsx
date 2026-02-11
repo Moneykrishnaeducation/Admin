@@ -404,7 +404,7 @@ const ManagerAdminChat = () => {
       `}
       </style>
 
-      <div className="fixed bottom-5 right-5 z-50 flex flex-col items-end px-2 sm:px-0 gap-2">
+      <div className="fixed bottom-15 right-5 z-50 flex flex-col items-end px-2 sm:px-0 gap-2">
         {/* Chat button with animated label */}
         {!isOpen && (
           <div className="flex items-center gap-2">
