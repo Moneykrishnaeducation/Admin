@@ -16,6 +16,8 @@ function getCookie(name) {
   return match ? decodeURIComponent(match.pop()) : '';
 }
 
+
+
 // Helper to set a cookie value
 function setCookie(name, value, days = 7) {
   const expires = new Date();
@@ -98,6 +100,39 @@ const Login = () => {
     }, delay);
   };
 
+      // Attempt cookie-based auto-login on mount (backend will verify access token cookie)
+    useEffect(() => {
+      const tryAutoLogin = async () => {
+        try {
+          setIsLoading(true);
+          const apiBaseUrl = `${window.location.protocol}//${window.location.host}`;
+          await ensureCsrf(apiBaseUrl);
+
+          // Always attempt backend verification, even if user cookie exists
+          const res = await axios.post(
+            '/api/login/',
+            {},
+            { headers: { 'X-CSRFToken': getCookie('csrftoken') }, withCredentials: true }
+          );
+
+          // If backend accepted cookie-based login, save and navigate
+          if (res?.data?.auto_login || res?.data?.access) {
+            saveAuthData(res.data);
+            const userData = getUserFromCookies();
+            const role = userData?.role || res.data?.role || 'admin';
+            navigateAfterDelay(role === 'admin' ? '/dashboard' : '/manager/dashboard');
+          }
+        } catch  {
+          // Optionally show a toast or log error for debugging
+          // showToast('error', 'Auto-login failed');
+        } finally {
+          setIsLoading(false);
+        }
+      };
+
+      tryAutoLogin();
+      // run only once on mount
+    }, []);
 
     // Helper to handle login response
     // Note: Tokens are now stored in HttpOnly cookies by the backend
@@ -182,36 +217,7 @@ const Login = () => {
       return () => axios.interceptors.request.eject(interceptor);
     }, []);
 
-    // Attempt cookie-based auto-login on mount (backend will verify access token cookie)
-    useEffect(() => {
-      const tryAutoLogin = async () => {
-        try {
-          setIsLoading(true);
-          const apiBaseUrl = `${window.location.protocol}//${window.location.host}`;
-          await ensureCsrf(apiBaseUrl);
-          const res = await axios.post(
-            `${apiBaseUrl}/api/login/`,
-            {},
-            { headers: { 'X-CSRFToken': getCookie('csrftoken') }, withCredentials: true }
-          );
 
-          // If backend accepted cookie-based login, save and navigate
-          if (res?.data?.auto_login || res?.data?.access) {
-            saveAuthData(res.data);
-            const userData = getUserFromCookies();
-            const role = userData?.role || res.data?.role || 'admin';
-            navigateAfterDelay(role === 'admin' ? '/dashboard' : '/manager/dashboard');
-          }
-        } catch (err) {
-          // ignore auto-login failure — user can sign in manually
-        } finally {
-          setIsLoading(false);
-        }
-      };
-
-      tryAutoLogin();
-      // run only once on mount
-    }, []);
 
 
     const handleSubmit = async (e) => {
