@@ -78,6 +78,7 @@ import Transactions from "../page/Transactions";
 import Partnership from "../page/Partnership";
 import AdminManagerList from "../page/Admin";
 import GroupConfiguration from "../page/TradingGroup";
+import InternalTransfer from "../page/InternalTransfer";
 
 // Manager pages
 import Dash from "../ManagerComponent/ManagerDashboard";
@@ -139,6 +140,7 @@ const AppRoutes = ({ role }) => {
     { path: "/partnership", element: <RequireAuth><Partnership /></RequireAuth> },
     { path: "/admin", element: <RequireAuth><AdminManagerList /></RequireAuth> },
     { path: "/trading-group", element: <RequireAuth><GroupConfiguration /></RequireAuth> },
+    { path: "/internal-transfer", element: <RequireAuth><InternalTransfer /></RequireAuth> },
   ];
 
   const managerRoutes = [

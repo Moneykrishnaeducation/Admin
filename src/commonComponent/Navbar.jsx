@@ -13,6 +13,7 @@ import {
   Calendar,
   Headphones,
   X,
+  ArrowLeftRight,
 } from "lucide-react";
 
 // Helper to get a cookie value - properly handles URL-encoded cookies
@@ -127,6 +128,7 @@ const Navbar = ({ isSidebarOpen, setIsSidebarOpen, setRouteRefreshKey }) => {
     { path: "/propfirm", icon: Handshake, label: "Prop Firm" },
     { path: "/partnership", icon: Handshake, label: "Partnership" },
     { path: "/transactions", icon: Repeat, label: "Transactions" },
+    { path: "/internal-transfer", icon: ArrowLeftRight, label: "Internal Transfer" },
     ...(isSuperuser ? [{ path: "/mail", icon: Monitor, label: "Mailbox" }] : []),
     { path: "/tickets", icon: Ticket, label: "Ticket" },
     { path: "/activities", icon: Calendar, label: "Activities" },
