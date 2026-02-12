@@ -31,6 +31,33 @@ const apiCall = async (endpoint, options = {}) => {
   return response.json();
 };
 
+/* Small selectable account card used in lists */
+function AccountCard({ acc, selected, onClick, isDarkMode }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`w-full text-left cursor-pointer rounded-lg p-3 border transition-all flex items-center justify-between ${
+        selected
+          ? isDarkMode
+            ? 'border-yellow-400 bg-yellow-400/10'
+            : 'border-yellow-500 bg-yellow-50'
+          : isDarkMode
+          ? 'border-gray-700 bg-gray-900 hover:border-yellow-400/40'
+          : 'border-gray-300 bg-white hover:border-yellow-50'
+      }`}
+    >
+      <div>
+        <p className="text-sm font-semibold">{acc.account_id}</p>
+        <p className="text-xs opacity-70">{acc.group_alias || acc.account_type}</p>
+      </div>
+      <div className={`text-sm font-bold ${isDarkMode ? 'text-yellow-400' : 'text-yellow-600'}`}>
+        ${acc.balance.toFixed(2)}
+      </div>
+    </button>
+  );
+}
+
 export default function InternalTransfer() {
   const { isDarkMode } = useTheme();
   const navigate = useNavigate();
@@ -223,8 +250,10 @@ export default function InternalTransfer() {
       fetchAccounts(value);
     }, 300); // 300ms debounce
   };
+  const isSuccess = message.type === 'success' || /success/i.test(message.text || '');
+
   return (
-    <div className={`w-full h-full overflow-y-auto p-4 ${isDarkMode ? 'bg-black text-white' : 'bg-gray-50 text-gray-900'}`}>
+    <div className={`w-full overflow-y-auto p-4 ${isDarkMode ? 'bg-black text-white' : 'bg-gray-50 text-gray-900'}`}>
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
@@ -270,10 +299,11 @@ export default function InternalTransfer() {
             </p>
           </div>
         ) : (
-          <div className={`p-5 rounded-lg ${isDarkMode ? 'bg-gray-900' : 'bg-white shadow-md'}`}>
+          <div className={`p-4 rounded-lg ${isDarkMode ? 'bg-gray-900' : 'bg-white shadow-md'}`}>
             <form onSubmit={handleTransfer} className="space-y-4">
-              {/* From Account */}
-              <div className="relative">
+              {/* From & To - side by side on md+ */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="relative">
                 <label className={`block text-xs font-medium mb-1.5 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                   From Account <span className="text-red-500">*</span>
                 </label>
@@ -284,7 +314,7 @@ export default function InternalTransfer() {
                   onFocus={() => setShowFromDropdown(true)}
                   onBlur={() => setTimeout(() => setShowFromDropdown(false), 200)}
                   placeholder="Search by account ID or email"
-                  className={`w-full px-3 py-2 text-sm rounded-lg border transition-all ${fromAccount ? 'bg-green-50 border-green-300' : ''} ${
+                  className={`w-full px-3 py-2 text-sm rounded-lg border transition-all ${fromAccount ? 'border-green-300' : ''} ${
                     isDarkMode 
                       ? 'bg-gray-800 border-gray-700 text-white placeholder-gray-500 focus:border-yellow-400' 
                       : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400 focus:border-yellow-500'
@@ -318,10 +348,24 @@ export default function InternalTransfer() {
                     Available Balance: <span className="font-semibold text-yellow-400">${selectedFromAccount.balance.toFixed(2)}</span>
                   </p>
                 )}
-              </div>
+                {/* Visible searchable list of accounts (cards) */}
+                <div className="mt-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-44 overflow-y-auto">
+                    {filterAccounts(fromSearch, accounts).map(acc => (
+                      <AccountCard
+                        key={acc.account_id}
+                        acc={acc}
+                        selected={fromAccount === acc.account_id}
+                        onClick={() => handleFromAccountSelect(acc.account_id)}
+                        isDarkMode={isDarkMode}
+                      />
+                    ))}
+                  </div>
+                </div>
+                </div>
 
-              {/* To Account */}
-              <div className="relative">
+                {/* To Account */}
+                <div className="relative">
                 <label className={`block text-xs font-medium mb-1.5 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                   To Account <span className="text-red-500">*</span>
                 </label>
@@ -332,7 +376,7 @@ export default function InternalTransfer() {
                   onFocus={() => setShowToDropdown(true)}
                   onBlur={() => setTimeout(() => setShowToDropdown(false), 200)}
                   placeholder="Search by account ID or email"
-                  className={`w-full px-3 py-2 text-sm rounded-lg border transition-all ${toAccount ? 'bg-green-50 border-green-300' : ''} ${
+                  className={`w-full px-3 py-2 text-sm rounded-lg border transition-all ${toAccount ? 'border-green-300' : ''} ${
                     isDarkMode 
                       ? 'bg-gray-800 border-gray-700 text-white placeholder-gray-500 focus:border-yellow-400' 
                       : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400 focus:border-yellow-500'
@@ -363,6 +407,23 @@ export default function InternalTransfer() {
                     )}
                   </div>
                 )}
+                {/* Visible searchable list of accounts (cards) */}
+                <div className="mt-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-44 overflow-y-auto">
+                    {filterAccounts(toSearch, accounts)
+                      .filter(acc => acc.account_id !== fromAccount)
+                      .map(acc => (
+                        <AccountCard
+                          key={acc.account_id}
+                          acc={acc}
+                          selected={toAccount === acc.account_id}
+                          onClick={() => handleToAccountSelect(acc.account_id)}
+                          isDarkMode={isDarkMode}
+                        />
+                      ))}
+                  </div>
+                </div>
+                </div>
               </div>
 
               {/* Amount */}
@@ -407,11 +468,11 @@ export default function InternalTransfer() {
               {/* Message */}
               {message.text && (
                 <div className={`p-3 rounded-lg flex items-start gap-2 ${
-                  message.type === 'success' 
+                  isSuccess
                     ? isDarkMode ? 'bg-green-600/20 border border-green-500/30 text-green-300' : 'bg-green-50 border border-green-300 text-green-700'
                     : isDarkMode ? 'bg-red-500/10 border border-red-500/20 text-red-400' : 'bg-red-50 border border-red-200 text-red-700'
                 }`}>
-                  {message.type === 'success' ? (
+                  {isSuccess ? (
                     <CheckCircle className="w-4 h-4 flex-shrink-0 mt-0.5 text-green-500" />
                   ) : (
                     <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5 text-red-500" />
@@ -423,10 +484,12 @@ export default function InternalTransfer() {
               {/* Submit Button */}
               <button
                 type="submit"
-                disabled={isSubmitting || !fromAccount || !toAccount || !amount}
+                disabled={isSubmitting || !fromAccount || !toAccount || !amount || isSuccess}
                 className={`w-full py-3 px-4 rounded-lg font-semibold text-sm text-white transition-all flex items-center justify-center gap-2 ${
-                  isSubmitting || !fromAccount || !toAccount || !amount
-                    ? 'bg-gray-500 cursor-not-allowed'
+                  isSubmitting || !fromAccount || !toAccount || !amount || isSuccess
+                    ? isSuccess
+                      ? (isDarkMode ? 'bg-green-500 cursor-default' : 'bg-green-400 cursor-default')
+                      : 'bg-gray-500 cursor-not-allowed'
                     : 'bg-gradient-to-r from-yellow-600 via-yellow-500 to-yellow-400 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]'
                 }`}
               >
@@ -434,6 +497,11 @@ export default function InternalTransfer() {
                   <>
                     <RefreshCw className="w-5 h-5 animate-spin" />
                     Processing Transfer...
+                  </>
+                ) : isSuccess ? (
+                  <>
+                    <CheckCircle className="w-5 h-5 text-white" />
+                    Transfer Completed
                   </>
                 ) : (
                   <>
