@@ -125,6 +125,7 @@ const Navbar = ({ isSidebarOpen, setIsSidebarOpen, setRouteRefreshKey }) => {
     { path: "/tradingaccounts", icon: CreditCard, label: "Trading Accounts" },
     { path: "/demo", icon: CreditCard, label: "Demo Accounts" },
     { path: "/mamaccount", icon: Users, label: "Mam Account" },
+    { path: "/pamaccount", icon: Users, label: "Pam Account" },
     { path: "/propfirm", icon: Handshake, label: "Prop Firm" },
     { path: "/partnership", icon: Handshake, label: "Partnership" },
     { path: "/transactions", icon: Repeat, label: "Transactions" },
