@@ -68,11 +68,12 @@ const WithdrawModal = ({ visible, onClose, accountId, onSubmit }) => {
         return;
       }
 
-      // STEP 2 → WITHDRAW API CALL
+      // STEP 2 → WITHDRAW API CALL (auto-debit manager if PAM linked)
       const payload = {
         account_id: accountId,
         amount: Number(amount),
         comment: comment || "",
+        debit_manager: true,
       };
 
       let withdrawRes;
@@ -189,6 +190,8 @@ const WithdrawModal = ({ visible, onClose, accountId, onSubmit }) => {
             className={`mt-1 w-full rounded px-3 py-2 ${inputBg}`}
           />
         </div>
+
+        {/* Withdrawals from PAM accounts will automatically debit manager capital on server side */}
 
         {/* Comment */}
         <div>

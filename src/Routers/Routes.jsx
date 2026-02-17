@@ -71,6 +71,7 @@ import User from "../page/User";
 import Tickets from "../page/Tickets";
 import Activities from "../page/Activities";
 import MamAccount from "../page/MamAccount";
+import PamAccount from "../page/pamAccount.jsx";  
 import TradingAccount from "../page/TradingAccount";
 import Pendingrequest from "../page/Pendingrequest";
 import DemoAccount from "../page/DemoAccount";
@@ -133,6 +134,7 @@ const AppRoutes = ({ role }) => {
     { path: "/tickets", element: <RequireAuth><Tickets /></RequireAuth> },
     { path: "/activities", element: <RequireAuth><Activities /></RequireAuth> },
     { path: "/mamaccount", element: <RequireAuth><MamAccount /></RequireAuth> },
+    { path: "/pamaccount", element: <RequireAuth><PamAccount /></RequireAuth> },
     { path: "/pendingrequest", element: <RequireAuth><Pendingrequest /></RequireAuth> },
     { path: "/demo", element: <RequireAuth><DemoAccount /></RequireAuth> },
     { path: "/mail", element: <RequireAuth><Mail /></RequireAuth> },

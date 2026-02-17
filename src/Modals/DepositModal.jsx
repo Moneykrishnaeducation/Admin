@@ -6,7 +6,7 @@ import { useTheme } from "../context/ThemeContext";
 const apiClient = new AdminAuthenticatedFetch("/api");
 const client = new AdminAuthenticatedFetch("");
 
-const DepositModal = ({ visible, onClose, accountId, onSubmit }) => {
+const DepositModal = ({ visible, onClose, accountId, onSubmit, depositContext }) => {
   const { isDarkMode } = useTheme();
   const [amount, setAmount] = useState("");
   const [comment, setComment] = useState("");
@@ -101,12 +101,23 @@ const DepositModal = ({ visible, onClose, accountId, onSubmit }) => {
       }
 
       // STEP 2 → DEPOSIT API CALL
+      // If this is an investor deposit, include investment/pam identifiers and do NOT credit manager capital.
       const payload = {
         account_id: accountId,
         amount: Number(amount),
         comment: comment || "",
         transaction_type: "deposit",
       };
+
+      if (depositContext && depositContext.type === 'investor') {
+        // attach investment/pam context so backend credits investor's PAMInvestment instead of manager
+        if (depositContext.investmentId) payload.investment_id = depositContext.investmentId;
+        if (depositContext.pamAccountId) payload.pam_account_id = depositContext.pamAccountId;
+        payload.credit_manager = false;
+      } else {
+        // default: credit manager capital for PAM-linked accounts
+        payload.credit_manager = true;
+      }
 
       let depositRes;
       try {
@@ -224,6 +235,8 @@ const DepositModal = ({ visible, onClose, accountId, onSubmit }) => {
             className={inputCls}
           />
         </div>
+
+        {/* Deposits to PAM accounts will automatically credit manager capital on server side */}
 
         {/* DEPOSIT AMOUNT */}
         <div>
