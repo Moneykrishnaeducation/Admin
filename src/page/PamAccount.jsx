@@ -1,51 +1,6 @@
 import React, { useState, useCallback, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import TableStructure from "../commonComponent/TableStructure";
-const sampleMamAccounts = [
-  {
-    id: 1,
-    name: "John Manager",
-    managerEmail: "john.manager@example.com",
-    mamAccountId: "MAM001",
-    accountBalance: 50000,
-    totalProfit: 12000,
-    profitShare: 25,
-    riskLevel: "Medium",
-    payoutFrequency: "Monthly",
-    accountId: "2141712206"
-  },
-  {
-    id: 2,
-    name: "Lisa Manager",
-    managerEmail: "lisa.manager@example.com",
-    mamAccountId: "MAM002",
-    accountBalance: 75000,
-    totalProfit: 18000,
-    profitShare: 30,
-    riskLevel: "High",
-    payoutFrequency: "Quarterly",
-    accountId: "2141712207"
-  },
-];
-
-const sampleInvestorAccounts = [
-  {
-    id: 1,
-    investorEmail: "investor1@example.com",
-    mamAccountName: "John Manager",
-    tradingAccountId: "TA1001",
-    amountInvested: 10000,
-    profit: 2500,
-  },
-  {
-    id: 2,
-    investorEmail: "investor2@example.com",
-    mamAccountName: "Lisa Manager",
-    tradingAccountId: "TA1002",
-    amountInvested: 15000,
-    profit: 4000,
-  },
-];
 
 
 import SubRowButtons from "../commonComponent/SubRowButtons";
@@ -143,17 +98,7 @@ const PamAccount = () => {
     setWithdrawModalOpen(false);
   };
 
-  const handleOpenCreditInModal = (row) => {
-    const acctId = activeTab === 'pam' ? (row.accountId || "") : (row.tradingAccountId || "");
-    setModalAccountId(acctId);
-    setCreditInModalOpen(true);
-  };
 
-  const handleOpenCreditOutModal = (row) => {
-    const acctId = activeTab === 'pam' ? (row.accountId || "") : (row.tradingAccountId || "");
-    setModalAccountId(acctId);
-    setCreditOutModalOpen(true);
-  };
 
   const handleToggleAccountStatus = (account) => {
     // Toggle the isEnabled status
@@ -171,43 +116,6 @@ const PamAccount = () => {
     setHistoryModalOpen(true);
   };
 
-  const handleEditManagerCapital = async (row) => {
-    const acctId = row.accountId || row.mamAccountId || '';
-    if (!acctId) return showToast('Missing account id', 'error');
-    const input = window.prompt('Enter manager capital amount (prefix + to add, e.g. +100):', '');
-    if (!input) return;
-    let operation = 'set';
-    let amountStr = input;
-    if (input.trim().startsWith('+')) {
-      operation = 'increment';
-      amountStr = input.trim().slice(1);
-    }
-    const amount = parseFloat(amountStr);
-    if (Number.isNaN(amount)) return showToast('Invalid amount', 'error');
-
-    try {
-      const client = window && window.adminApiClient ? window.adminApiClient : null;
-      let res;
-      if (client && typeof client.patch === 'function') {
-        res = await client.patch(`/api/pam-accounts/${acctId}/manager-capital/`, { amount: String(amount), operation });
-      } else {
-        const r = await fetch(`/api/pam-accounts/${acctId}/manager-capital/`, {
-          method: 'PATCH',
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ amount: String(amount), operation }),
-        });
-        if (!r.ok) throw new Error(`Server ${r.status}`);
-        res = await r.json();
-      }
-
-      showToast('Manager capital updated', 'success');
-      // Update local row in table data
-      setData(prev => prev.map(d => (d.accountId === acctId ? { ...d, managerCapital: Number(res.manager_capital ?? res.managerCapital ?? d.managerCapital ?? 0) } : d)));
-    } catch (err) {
-      showToast(err?.message || 'Failed to update manager capital', 'error');
-    }
-  };
 
   const handleCloseHistoryModal = () => {
     setHistoryModalOpen(false);
@@ -255,8 +163,12 @@ const PamAccount = () => {
 
   const columns = activeTab === "pam" ? columnsMam : columnsInvestor;
 
-  const renderRowSubComponent = (row) => {
-    const isExpanded = expandedRows.has(row.id);
+  const renderRowSubComponent = (row /*, rowIndex */) => {
+    // TableStructure only calls this when the row is expanded, so
+    // assume rendered subcomponent is expanded. Avoid using local
+    // `expandedRows` Set which can be out-of-sync with TableStructure's
+    // internal expansion state.
+    const isExpanded = true;
     
     // Get the latest account data from the state to ensure we have current isEnabled status
     const acctId = activeTab === 'pam' ? row.accountId : row.tradingAccountId;
@@ -273,53 +185,77 @@ const PamAccount = () => {
         label: "Withdrawal",
         onClick: () => handleOpenWithdrawModal(row),
       },
-      {
-        icon: "➕",
-        label: "Credit In",
-        onClick: () => handleOpenCreditInModal(row),
-      },
-      {
-        icon: "➖",
-        label: "Credit Out",
-        onClick: () => handleOpenCreditOutModal(row),
-      },
       { icon: "", label: "History", onClick: () => handleOpenHistoryModal(row) },
-      { icon: "🏦", label: "Edit Capital", onClick: () => handleEditManagerCapital(row) },
     ];
 
     return (
-      <tr style={{ height: isExpanded ? "auto" : "0px", overflow: "hidden", padding: 0, margin: 0, border: 0 }}>
-        <td colSpan={columns.length} className="p-0 m-0 border-0">
+    <tr className="group">
+      <td colSpan={columns.length} className="p-0 border-0">
+        <div
+          className={`
+            transition-all duration-300 ease-in-out overflow-hidden
+            ${isExpanded ? "opacity-100 translate-y-0 py-3" : "opacity-0 -translate-y-2 py-0 h-0"}
+          `}
+        >
           <div
-            style={{
-              maxHeight: isExpanded ? 120 : 0,
-              overflow: "hidden",
-              transition: "max-height 0.3s ease, opacity 0.3s ease",
-              opacity: isExpanded ? 1 : 0,
-            }}
-            className={`${isDarkMode ? 'bg-gray-800 text-yellow-400' : 'bg-gray-200 text-gray-800'} rounded p-2 flex gap-4 flex-wrap items-center justify-between`}
+            className={`
+              mx-2 mb-3 rounded-xl border
+              ${isDarkMode 
+                ? "bg-gray-900/60 border-gray-700 backdrop-blur-md" 
+                : "bg-white border-gray-200 shadow-sm"}
+              px-4 py-3
+            `}
           >
-            <SubRowButtons actionItems={actionItems} />
-            <div className="flex items-center gap-2 ml-auto">
-              <span className={`text-sm font-semibold ${currentAccount.isEnabled ? "text-green-400" : "text-red-400"}`}>
-                {currentAccount.isEnabled ? "Enabled" : "Disabled"}
-              </span>
-              <button
-                onClick={() => handleToggleAccountStatus(currentAccount)}
-                className={`relative w-14 h-7 rounded-full transition-colors duration-300 ${
-                  currentAccount.isEnabled ? "bg-green-500" : "bg-red-500"
-                } hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-400`}
-              >
-                <div
-                  className={`absolute top-1 h-5 w-5 bg-white rounded-full transition-transform duration-300 ${
-                    currentAccount.isEnabled ? "translate-x-7" : "translate-x-1"
-                  }`}
-                />
-              </button>
+            <div className="flex flex-wrap items-center justify-between gap-4">
+
+              {/* Left Actions */}
+              <SubRowButtons actionItems={actionItems} />
+
+              {/* Right Status + Toggle */}
+              <div className="flex items-center gap-4 ml-auto">
+
+                {/* Status Badge */}
+                <span
+                  className={`
+                    text-xs font-semibold px-3 py-1 rounded-full
+                    ${currentAccount.isEnabled
+                      ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
+                      : "bg-red-500/15 text-red-400 border border-red-500/30"}
+                  `}
+                >
+                  {currentAccount.isEnabled ? "Enabled" : "Disabled"}
+                </span>
+
+                {/* Modern Toggle */}
+                <button
+                  onClick={() => handleToggleAccountStatus(currentAccount)}
+                  className={`
+                    relative inline-flex h-7 w-14 items-center rounded-full
+                    transition-colors duration-300 focus:outline-none
+                    ${currentAccount.isEnabled
+                      ? "bg-emerald-500"
+                      : "bg-gray-500"}
+                  `}
+                >
+                  <span
+                    className={`
+                      inline-block h-5 w-5 transform rounded-full bg-white shadow-md
+                      transition-transform duration-300
+                      ${currentAccount.isEnabled
+                        ? "translate-x-8"
+                        : "translate-x-1"}
+                    `}
+                  />
+                </button>
+
+              </div>
             </div>
           </div>
-        </td>
-      </tr>
+        </div>
+      </td>
+    </tr>
+
+
     );
   };
 
@@ -404,116 +340,113 @@ const PamAccount = () => {
   }, [activeTab]);
 
   return (
-    <div className={`p-6 max-w-9xl mx-auto relative ${isDarkMode ? 'bg-black' : 'bg-white'}`}>
-      {/* Background blur for table when modal is open */}
-      {(depositModalOpen || withdrawModalOpen || creditInModalOpen || creditOutModalOpen || disableModalOpen || historyModalOpen) && (
-        <div className={blurOverlayCls}></div>
-      )}
+<div className={`p-6 max-w-9xl mx-auto relative ${isDarkMode ? 'bg-black' : 'bg-white'}`}>
+  
+  {/* Background blur for table when modal is open */}
+  {(depositModalOpen || withdrawModalOpen || creditInModalOpen || creditOutModalOpen || disableModalOpen || historyModalOpen) && (
+    <div className="absolute inset-0 bg-black opacity-50 z-50 backdrop-blur-sm" />
+  )}
 
-      <div className="flex gap-4 mb-4  relative">
+
+{/* Tabs */}
+<div className="relative flex w-fit bg-gray-800 rounded-full p-1 mb-6">
+  <div
+    className={`absolute top-1 bottom-1 w-1/2 bg-yellow-400 rounded-full transition-transform duration-300 ease-in-out ${
+      activeTab === "investor" ? "translate-x-full" : ""
+    }`}
+  />
+  <button
+    className="relative cursor-pointer z-10 px-6 py-2 text-sm font-semibold text-white"
+    onClick={() => setActiveTab("pam")}
+  >
+    PAM Accounts
+  </button>
+  <button
+    className="relative cursor-pointer z-10 px-6 py-2 text-sm font-semibold text-white"
+    onClick={() => setActiveTab("investor")}
+  >
+    Investors
+  </button>
+</div>
+
+
+
+  {/* Table Content */}
+  <div
+    className={`transition-opacity ${depositModalOpen || withdrawModalOpen || creditInModalOpen ? 'pointer-events-none select-none opacity-20 blur-xl' : ''}`}
+  >
+    <TableStructure
+      key={activeTab}
+      columns={columns}
+      data={data}
+      serverSide={true}
+      onFetch={handleFetch}
+      onRowClick={toggleRowExpanded}
+      renderRowSubComponent={renderRowSubComponent}
+    />
+  </div>
+
+  {/* Toast Notification */}
+  {toast && (
+    <div
+      className={`
+        fixed top-4 right-4 px-6 py-4 rounded-xl shadow-2xl z-[999] 
+        ${toast.type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'} 
+        animate-fade-in-up max-w-xs w-full
+      `}
+      role="alert"
+    >
+      <div className="flex items-center justify-between">
+        <span className="font-medium">{toast.message}</span>
         <button
-          className={`px-5 py-2 rounded-full font-semibold ${
-            activeTab === "pam"
-              ? activeTabCls
-              : inactiveTabCls
-          }`}
-          onClick={() => {
-            setActiveTab("pam");
-            const params = new URLSearchParams(location.search);
-            params.set("tab", "pam");
-            navigate(`/pamaccount?${params.toString()}`, { replace: true });
-          }}
+          onClick={() => setToast(null)}
+          className="text-white font-semibold text-lg focus:outline-none"
         >
-          PAM Account
-        </button>
-        <button
-          className={`px-5 py-2 rounded-full font-semibold ${
-            activeTab === "investor"
-              ? activeTabCls
-              : inactiveTabCls
-          }`}
-          onClick={() => {
-            setActiveTab("investor");
-            const params = new URLSearchParams(location.search);
-            params.set("tab", "investor");
-            navigate(`/pamaccount?${params.toString()}`, { replace: true });
-          }}
-        >
-          Investor's List
+          &times;
         </button>
       </div>
-
-      
-
-      <div
-        className={
-          depositModalOpen || withdrawModalOpen || creditInModalOpen
-            ? "pointer-events-none select-none opacity-20 filter blur-2xl"
-            : ""
-        }
-      >
-        <TableStructure
-          key={activeTab}
-          columns={columns}
-          data={data}
-          serverSide={true}
-          onFetch={handleFetch}
-          onRowClick={toggleRowExpanded}
-          renderRowSubComponent={renderRowSubComponent}
-        />
-      </div>
-
-      {/* Toast Notification */}
-      {toast && (
-        <div
-          className={`fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg z-[999] animate-pulse ${
-            toast.type === 'success'
-              ? 'bg-green-500 text-white'
-              : 'bg-red-500 text-white'
-          }`}
-          role="alert"
-        >
-          {toast.message}
-        </div>
-      )}
-
-      <DepositModal
-        visible={depositModalOpen}
-        onClose={handleCloseDepositModal}
-        accountId={modalAccountId}
-        depositContext={depositContext}
-      />
-      <WithdrawModal
-        visible={withdrawModalOpen}
-        onClose={handleCloseWithdrawModal}
-        accountId={modalAccountId}
-      />
-      <CreditInModal
-        visible={creditInModalOpen}
-        onClose={handleCloseCreditInModal}
-        accountId={modalAccountId}
-      />
-      <CreditOutModal
-        visible={creditOutModalOpen}
-        onClose={handleCloseCreditOutModal}
-        accountId={modalAccountId}
-      />
-      <DisableModal
-        visible={disableModalOpen}
-        onClose={handleCloseDisableModal}
-        accountId={disableAccountId}
-        action={disableAction}
-        onProceed={handleDisableProceed}
-        setAction={setDisableAction}
-      />
-      <HistoryModal
-        visible={historyModalOpen}
-        onClose={handleCloseHistoryModal}
-        accountId={historyAccountId}
-        activeTab={historyActiveTab}
-        setActiveTab={setHistoryActiveTab}
-      />
     </div>
+  )}
+
+  {/* Modals */}
+  <DepositModal
+    visible={depositModalOpen}
+    onClose={handleCloseDepositModal}
+    accountId={modalAccountId}
+    depositContext={depositContext}
+  />
+  <WithdrawModal
+    visible={withdrawModalOpen}
+    onClose={handleCloseWithdrawModal}
+    accountId={modalAccountId}
+  />
+  <CreditInModal
+    visible={creditInModalOpen}
+    onClose={handleCloseCreditInModal}
+    accountId={modalAccountId}
+  />
+  <CreditOutModal
+    visible={creditOutModalOpen}
+    onClose={handleCloseCreditOutModal}
+    accountId={modalAccountId}
+  />
+  <DisableModal
+    visible={disableModalOpen}
+    onClose={handleCloseDisableModal}
+    accountId={disableAccountId}
+    action={disableAction}
+    onProceed={handleDisableProceed}
+    setAction={setDisableAction}
+  />
+  <HistoryModal
+    visible={historyModalOpen}
+    onClose={handleCloseHistoryModal}
+    accountId={historyAccountId}
+    activeTab={historyActiveTab}
+    setActiveTab={setHistoryActiveTab}
+  />
+</div>
+
   );
 };
 
