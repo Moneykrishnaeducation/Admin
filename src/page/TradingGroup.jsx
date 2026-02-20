@@ -276,8 +276,10 @@ export default function GroupConfiguration() {
           aliasLocked: false,
         }));
 
-        setGroups([...realGroups, ...demoGroups]);
+        // On the real trading-group page we list only real groups
+        setGroups(realGroups);
         setSelectedDefault(config.default_group?.id || null);
+        // Keep demo default stored but demo groups are shown on the demo page
         setSelectedDemoDefault(config.demo_group?.id || null);
         setLastUpdated(config.last_updated);
       }
@@ -304,7 +306,7 @@ export default function GroupConfiguration() {
 
  /* ---------------- FETCH AVAILABLE GROUPS FOR EDITING ---------------- */
   const fetchAvailableGroups = useCallback(async () => {
-    const endpoint = "/api/available-groups/";
+    const endpoint = "/api/available-groups/?server_type=true";
     try {
       const headers = {
         "Content-Type": "application/json",
@@ -318,16 +320,19 @@ export default function GroupConfiguration() {
 
       if (data.success && data.groups) {
         
-     setGroups(
-          data.groups.map((g) => ({
-            id: g.id,
-            label: g.label,
-            type: g.is_demo ? "demo" : "real",
-            enabled: g.enabled,
-            alias: g.alias || "",
-            is_default: g.is_default,
-            is_demo_default: g.is_demo_default,
-          }))
+        // Only include non-demo groups on the real trading group page
+        setGroups(
+          data.groups
+            .filter((g) => !g.is_demo)
+            .map((g) => ({
+              id: g.id,
+              label: g.label,
+              type: "real",
+              enabled: g.enabled,
+              alias: g.alias || "",
+              is_default: g.is_default,
+              is_demo_default: g.is_demo_default,
+            }))
         );
 
 
@@ -354,24 +359,20 @@ export default function GroupConfiguration() {
 const handleSaveGroupConfig = async (groups = []) => {
   const endpoint = "/api/save-group-configuration/";
 
-  // 1️⃣ Validation: ensure one real and one demo default
+  // 1️⃣ Validation: only require a real default group
   if (!selectedDefault) {
     alert("Please select a Default group for real accounts.");
     return;
   }
-  if (!selectedDemoDefault) {
-    alert("Please select a Demo Default group for demo accounts.");
-    return;
-  }
+  // Demo default is managed separately from the Demo Trading Group page.
 
   try {
     // 2️⃣ Map groups into backend payload
 const payloadGroups = groups.map((g) => ({
   id: g.id,
-  enabled: g.enabled || g.id === selectedDefault || g.id === selectedDemoDefault,
+  enabled: g.enabled || g.id === selectedDefault,
   alias: g.alias ?? "",
-  default: g.id === selectedDefault,        // ✔ FIXED
-  demo: g.id === selectedDemoDefault,       // ✔ FIXED
+  default: g.id === selectedDefault,        // real default only
 }));
 
 

@@ -41,11 +41,23 @@ const Settings = () => {
     serverName: "",
   });
   const [originalData, setOriginalData] = useState(null);
+  const [demoServerData, setDemoServerData] = useState({
+    serverIP: "",
+    loginID: "",
+    password: "",
+    serverName: "",
+  });
+  const [originalDemoData, setOriginalDemoData] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [isDemoEditing, setIsDemoEditing] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [demoLoading, setDemoLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [demoSaving, setDemoSaving] = useState(false);
   const [error, setError] = useState(null);
+  const [demoError, setDemoError] = useState(null);
   const mounted = useRef(true);
+  const demoMounted = useRef(true);
 
   // Check superuser status on component mount
   useEffect(() => {
@@ -60,7 +72,7 @@ const Settings = () => {
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch("/api/server-settings/", {
+        const res = await fetch("/api/server-settings/?server_type=true", {
           method: "GET",
           credentials: "include",
           headers: {
@@ -97,8 +109,48 @@ const Settings = () => {
     };
 
     fetchSettings();
+    // fetch demo settings
+    const fetchDemoSettings = async () => {
+      setDemoLoading(true);
+      setDemoError(null);
+      try {
+        // Request demo settings via the unified endpoint using server_type=false
+        const res = await fetch("/api/server-settings/?server_type=false", {
+          method: "GET",
+          credentials: "include",
+          headers: { Accept: "application/json" },
+        });
+
+        if (!res.ok) {
+          throw new Error(`Failed to load demo server settings: ${res.status}`);
+        }
+
+        const data = await res.json();
+        if (!demoMounted.current) return;
+        setDemoServerData({
+          serverIP: data.server_ip ?? data.serverIP ?? "",
+          loginID: data.login_id ?? data.loginID ?? "",
+          password: data.server_password ?? data.password ?? "",
+          serverName: data.server_name ?? data.serverName ?? "",
+        });
+        setOriginalDemoData({
+          serverIP: data.server_ip ?? data.serverIP ?? "",
+          loginID: data.login_id ?? data.loginID ?? "",
+          password: data.server_password ?? data.password ?? "",
+          serverName: data.server_name ?? data.serverName ?? "",
+        });
+      } catch (err) {
+        if (!demoMounted.current) return;
+        setDemoError(err.message || "Error loading demo server settings");
+      } finally {
+        if (demoMounted.current) setDemoLoading(false);
+      }
+    };
+
+    fetchDemoSettings();
     return () => {
       mounted.current = false;
+      demoMounted.current = false;
     };
   }, []);
 
@@ -117,6 +169,13 @@ const Settings = () => {
     });
   };
 
+  const handleDemoChange = (e) => {
+    setDemoServerData({
+      ...demoServerData,
+      [e.target.name]: e.target.value,
+    });
+  };
+
   const handleEditToggle = () => {
     if (isEditing && originalData) {
       // If cancelling edit, revert to original fetched data
@@ -124,6 +183,14 @@ const Settings = () => {
       setError(null);
     }
     setIsEditing(!isEditing);
+  };
+
+  const handleDemoEditToggle = () => {
+    if (isDemoEditing && originalDemoData) {
+      setDemoServerData(originalDemoData);
+      setDemoError(null);
+    }
+    setIsDemoEditing(!isDemoEditing);
   };
 
   const handleSubmit = async (e) => {
@@ -137,6 +204,7 @@ const Settings = () => {
         // backend expects `server_password`
         server_password: serverData.password,
         server_name: serverData.serverName,
+        server_type: true,
       };
 
       // Try updating via PUT first
@@ -153,7 +221,8 @@ const Settings = () => {
 
       // Fallback to POST (create) if PUT not allowed (status 405)
       if (res.status === 405) {
-        res = await fetch("/api/create-server-settings/", {
+        // Use the unified POST endpoint which respects `server_type` in the body
+        res = await fetch("/api/server-settings/", {
           method: "POST",
           credentials: "include",
           headers: {
@@ -189,6 +258,65 @@ const Settings = () => {
     }
   };
 
+  const handleDemoSubmit = async (e) => {
+    e.preventDefault();
+    setDemoSaving(true);
+    setDemoError(null);
+    try {
+      const payload = {
+        server_ip: demoServerData.serverIP,
+        login_id: demoServerData.loginID,
+        server_password: demoServerData.password,
+        server_name: demoServerData.serverName,
+        server_type: false,
+      };
+
+      let res = await fetch("/api/demo-server-settings/", {
+        method: "PUT",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": getCookie("csrftoken") || "",
+          Accept: "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (res.status === 405) {
+        // Use unified server-settings endpoint for POST fallback
+        res = await fetch("/api/server-settings/", {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": getCookie("csrftoken") || "",
+            Accept: "application/json",
+          },
+          body: JSON.stringify(payload),
+        });
+      }
+
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`Save failed (${res.status}): ${text}`);
+      }
+
+      const saved = await res.json();
+      setOriginalDemoData({
+        serverIP: saved.server_ip ?? saved.serverIP ?? demoServerData.serverIP,
+        loginID: saved.login_id ?? saved.loginID ?? demoServerData.loginID,
+        password: saved.server_password ?? saved.password ?? demoServerData.password,
+        serverName: saved.server_name ?? saved.serverName ?? demoServerData.serverName,
+      });
+      setDemoServerData((prev) => ({ ...prev }));
+      setIsDemoEditing(false);
+    } catch (err) {
+      setDemoError(err.message || "Error saving demo server settings");
+    } finally {
+      setDemoSaving(false);
+    }
+  };
+
   // If superuser check is done but user is not a superuser, show access denied
   if (superuserCheckDone && !isSuperuserUser) {
     return (
@@ -212,7 +340,13 @@ const Settings = () => {
   }
 
   return (
-    <div className={`bg-transparent ${isDarkMode ? 'text-yellow-400' : 'text-gray-900'} flex flex-col items-center justify-center p-4 sm:p-6 md:p-8`}>
+    <>
+
+    <div className="w-full max-w-5xl mx-auto flex flex-col md:flex-row gap-6 items-start">
+
+    {/* Live server credentials */}
+
+    <div className={`flex-1 bg-transparent ${isDarkMode ? 'text-yellow-400' : 'text-gray-900'} flex flex-col items-center justify-center p-4 sm:p-6 md:p-8`}>
 
       <form
         onSubmit={handleSubmit}
@@ -329,6 +463,128 @@ const Settings = () => {
         )}
       </form>
     </div>
+
+    {/* Demo server credentials - duplicated UI */}
+    <div className={`flex-1 bg-transparent ${isDarkMode ? 'text-yellow-400' : 'text-gray-900'} flex flex-col items-center justify-center p-4 sm:p-6 md:p-8`}> 
+
+      <form
+        onSubmit={handleDemoSubmit}
+        className={`${isDarkMode ? 'bg-black' : 'bg-white'} p-4 sm:p-6 md:p-8 rounded-2xl shadow-[0px_0px_10px_rgba(255,255,255,0.2),0px_0px_15px_rgba(255,0,0,0.15)] w-full max-w-lg mx-auto hover:shadow-[0px_0px_15px_rgba(255,255,255,0.35),0px_0px_20px_rgba(255,215,0,0.25)] transition-shadow duration-300`}
+      >
+        {demoLoading ? (
+          <div className={`w-full flex items-center justify-center ${isDarkMode ? 'text-yellow-300' : 'text-gray-600'}`}>
+            <div className="w-full max-w-lg animate-pulse space-y-6 min-h-[220px]">
+              <div className="flex flex-col gap-2">
+                <div className={`${isDarkMode ? 'bg-yellow-400/30' : 'bg-gray-300'} skeleton-gold h-4 rounded w-1/3`} />
+                <div className={`${isDarkMode ? 'bg-yellow-400/20' : 'bg-gray-200'} skeleton-gold h-12 rounded w-full`} />
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <div className={`${isDarkMode ? 'bg-yellow-400/30' : 'bg-gray-300'} skeleton-gold h-4 rounded w-1/3`} />
+                <div className={`${isDarkMode ? 'bg-yellow-400/20' : 'bg-gray-200'} skeleton-gold h-12 rounded w-full`} />
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <div className={`${isDarkMode ? 'bg-yellow-400/30' : 'bg-gray-300'} skeleton-gold h-4 rounded w-1/3`} />
+                <div className={`${isDarkMode ? 'bg-yellow-400/20' : 'bg-gray-200'} skeleton-gold h-12 rounded w-full`} />
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <div className={`${isDarkMode ? 'bg-yellow-400/30' : 'bg-gray-300'} skeleton-gold h-4 rounded w-1/3`} />
+                <div className={`${isDarkMode ? 'bg-yellow-400/20' : 'bg-gray-200'} skeleton-gold h-12 rounded w-full`} />
+              </div>
+
+              <div className="flex flex-col sm:flex-row justify-end gap-3 mt-4">
+                <div className={`${isDarkMode ? 'bg-yellow-400/20' : 'bg-gray-200'} skeleton-gold h-10 w-36 rounded-full`} />
+                <div className={`${isDarkMode ? 'bg-yellow-400/20' : 'bg-gray-200'} skeleton-gold h-10 w-36 rounded-md`} />
+              </div>
+            </div>
+          </div>
+        ) : (
+          <>
+            {demoError && <div className="text-red-400 mb-3">{demoError}</div>}
+
+            <div className="flex flex-col gap-1">
+              <label className={`${isDarkMode ? 'text-yellow-400' : 'text-gray-900'} font-medium text-sm sm:text-base`}>Server IP Address*</label>
+              <input
+                type="text"
+                name="serverIP"
+                value={demoServerData.serverIP}
+                onChange={handleDemoChange}
+                disabled={!isDemoEditing || demoSaving}
+                className={`p-3 sm:p-4 rounded-lg border ${isDarkMode ? 'border-yellow-400/30 bg-black text-yellow-400 focus:border-yellow-500' : 'border-gray-300 bg-white text-gray-900 focus:border-blue-500'} text-sm sm:text-base ${
+                  isDemoEditing ? (isDarkMode ? "bg-black" : "bg-white") : (isDarkMode ? "bg-black/50 cursor-not-allowed" : "bg-gray-100 cursor-not-allowed")
+                }`}
+              />
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <label className={`${isDarkMode ? 'text-yellow-400' : 'text-gray-900'} font-medium text-sm sm:text-base`}>Account Login ID*</label>
+              <input
+                type="text"
+                name="loginID"
+                value={demoServerData.loginID}
+                onChange={handleDemoChange}
+                disabled={!isDemoEditing || demoSaving}
+                className={`p-3 sm:p-4 rounded-lg border ${isDarkMode ? 'border-yellow-400/30 bg-black text-yellow-400 focus:border-yellow-500' : 'border-gray-300 bg-white text-gray-900 focus:border-blue-500'} text-sm sm:text-base ${
+                  isDemoEditing ? (isDarkMode ? "bg-black" : "bg-white") : (isDarkMode ? "bg-black/50 cursor-not-allowed" : "bg-gray-100 cursor-not-allowed")
+                }`}
+              />
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <label className={`${isDarkMode ? 'text-yellow-400' : 'text-gray-900'} font-medium text-sm sm:text-base`}>Account Password*</label>
+              <input
+                type="password"
+                name="password"
+                value={demoServerData.password}
+                onChange={handleDemoChange}
+                disabled={!isDemoEditing || demoSaving}
+                className={`p-3 sm:p-4 rounded-lg border ${isDarkMode ? 'border-yellow-400/30 bg-black text-yellow-400 focus:border-yellow-500' : 'border-gray-300 bg-white text-gray-900 focus:border-blue-500'} text-sm sm:text-base ${
+                  isDemoEditing ? (isDarkMode ? "bg-black" : "bg-white") : (isDarkMode ? "bg-black/50 cursor-not-allowed" : "bg-gray-100 cursor-not-allowed")
+                }`}
+              />
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <label className={`${isDarkMode ? 'text-yellow-400' : 'text-gray-900'} font-medium text-sm sm:text-base`}>Server Name*</label>
+              <input
+                type="text"
+                name="serverName"
+                value={demoServerData.serverName}
+                onChange={handleDemoChange}
+                disabled={!isDemoEditing || demoSaving}
+                className={`p-3 sm:p-4 rounded-lg border ${isDarkMode ? 'border-yellow-400/30 bg-black text-yellow-400 focus:border-yellow-500' : 'border-gray-300 bg-white text-gray-900 focus:border-blue-500'} text-sm sm:text-base ${
+                  isDemoEditing ? (isDarkMode ? "bg-black" : "bg-white") : (isDarkMode ? "bg-black/50 cursor-not-allowed" : "bg-gray-100 cursor-not-allowed")
+                }`}
+              />
+            </div>
+
+            <div className="flex flex-col sm:flex-row justify-end gap-3 mt-4">
+              {isDemoEditing && (
+                <button
+                  type="submit"
+                  disabled={demoSaving}
+                  className="flex-1 sm:flex-none bg-yellow-500 text-black py-2 px-4 rounded-full hover:bg-yellow-600 transition-all disabled:opacity-60"
+                >
+                  {demoSaving ? "Saving..." : "Save Changes"}
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={handleDemoEditToggle}
+                className="flex-1 sm:flex-none bg-yellow-500 text-black py-2 px-4 rounded-md hover:bg-yellow-600 transition-all"
+              >
+                {isDemoEditing ? "Cancel" : "✏️ Edit Demo Settings"}
+              </button>
+            </div>
+          </>
+        )}
+      </form>
+    </div>
+  </div>
+
+    </>
   );
 };
 
