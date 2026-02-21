@@ -6,7 +6,7 @@ import { useTheme } from "../context/ThemeContext";
 const apiClient = new AdminAuthenticatedFetch("/api");
 const client = new AdminAuthenticatedFetch("");
 
-const WithdrawModal = ({ visible, onClose, accountId, onSubmit }) => {
+const WithdrawModal = ({ visible, onClose, accountId, onSubmit, withdrawContext }) => {
   const theme = useTheme() || {};
   const { isDarkMode = true } = theme;
 
@@ -68,13 +68,19 @@ const WithdrawModal = ({ visible, onClose, accountId, onSubmit }) => {
         return;
       }
 
-      // STEP 2 → WITHDRAW API CALL (auto-debit manager if PAM linked)
+      // STEP 2 → WITHDRAW API CALL
+      // Route as investor or manager withdrawal based on withdrawContext.
+      const isInvestorWithdrawal = withdrawContext && withdrawContext.type === 'investor';
       const payload = {
         account_id: accountId,
         amount: Number(amount),
         comment: comment || "",
-        debit_manager: true,
       };
+      if (isInvestorWithdrawal && withdrawContext.investmentId) {
+        payload.investment_id = withdrawContext.investmentId;
+      } else {
+        payload.debit_manager = true;
+      }
 
       let withdrawRes;
       try {

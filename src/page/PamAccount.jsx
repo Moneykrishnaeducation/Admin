@@ -39,6 +39,7 @@ const PamAccount = () => {
   // Modal visibility state
   const [depositModalOpen, setDepositModalOpen] = useState(false);
   const [withdrawModalOpen, setWithdrawModalOpen] = useState(false);
+  const [withdrawContext, setWithdrawContext] = useState(null);
   const [creditInModalOpen, setCreditInModalOpen] = useState(false);
   const [creditOutModalOpen, setCreditOutModalOpen] = useState(false);
   const [disableModalOpen, setDisableModalOpen] = useState(false);
@@ -91,11 +92,17 @@ const PamAccount = () => {
   const handleOpenWithdrawModal = (row) => {
     const acctId = activeTab === 'pam' ? (row.accountId || "") : (row.tradingAccountId || "");
     setModalAccountId(acctId);
+    if (activeTab === 'investor') {
+      setWithdrawContext({ type: 'investor', investmentId: row.id, pamAccountId: row.pamAccountId });
+    } else {
+      setWithdrawContext({ type: 'pam' });
+    }
     setWithdrawModalOpen(true);
   };
 
   const handleCloseWithdrawModal = () => {
     setWithdrawModalOpen(false);
+    setWithdrawContext(null);
   };
 
 
@@ -419,6 +426,7 @@ const PamAccount = () => {
     visible={withdrawModalOpen}
     onClose={handleCloseWithdrawModal}
     accountId={modalAccountId}
+    withdrawContext={withdrawContext}
   />
   <CreditInModal
     visible={creditInModalOpen}
